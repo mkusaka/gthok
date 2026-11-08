@@ -1,0 +1,29 @@
+{
+  "$id": "https://raw.githubusercontent.com/mkusaka/gthok/main/schema/version.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "arch": {
+      "type": "string"
+    },
+    "commit": {
+      "type": "string"
+    },
+    "go": {
+      "type": "string"
+    },
+    "os": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "go",
+    "os",
+    "arch"
+  ],
+  "type": "object"
+}
