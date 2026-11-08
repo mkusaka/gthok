@@ -1,0 +1,56 @@
+{
+  "$id": "https://raw.githubusercontent.com/mkusaka/gthok/main/schema/actions.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "items": {
+    "additionalProperties": false,
+    "properties": {
+      "actions": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "action": {
+              "type": "string"
+            },
+            "effect": {
+              "enum": [
+                "read",
+                "write",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "git": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "scopes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "action",
+            "effect",
+            "scopes",
+            "git"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "family": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "family",
+      "actions"
+    ],
+    "type": "object"
+  },
+  "type": "array"
+}

@@ -1,0 +1,652 @@
+{
+  "$id": "https://raw.githubusercontent.com/mkusaka/gthok/main/schema/normalize-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "description": "Certainty of operation identity, not execution success.",
+          "enum": [
+            "exact",
+            "heuristic",
+            "none"
+          ],
+          "type": "string"
+        },
+        "coverage": {
+          "description": "Depth of understanding; opaque always carries a named cause.",
+          "enum": [
+            "semantic",
+            "conservative",
+            "opaque"
+          ],
+          "type": "string"
+        },
+        "level": {
+          "description": "Normalization layer: native git command or none.",
+          "enum": [
+            "none",
+            "L1"
+          ],
+          "type": "string"
+        },
+        "mutationFree": {
+          "type": "boolean"
+        },
+        "resolution": {
+          "description": "Completeness of targets and parameters; inspect unresolved entries.",
+          "enum": [
+            "complete",
+            "partial",
+            "deferred",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "retrySafe": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "level",
+        "confidence",
+        "resolution",
+        "mutationFree",
+        "coverage",
+        "retrySafe"
+      ],
+      "type": "object"
+    },
+    "delegate": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "command": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "string"
+        },
+        "onError": {
+          "type": "string"
+        },
+        "repoRoot": {
+          "type": "string"
+        },
+        "timeout": {
+          "pattern": "^([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "command",
+        "timeout",
+        "onError",
+        "action"
+      ],
+      "type": "object"
+    },
+    "errors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "normalizerVersion": {
+      "description": "Version of the operation classification rules.",
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "capabilities": {
+            "description": "Side channels the request may use.",
+            "items": {
+              "enum": [
+                "external-exec",
+                "editor",
+                "network",
+                "file-write",
+                "index-refresh",
+                "interactive",
+                "pager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "coverage": {
+            "description": "Depth of understanding of this operation.",
+            "enum": [
+              "semantic",
+              "conservative",
+              "opaque"
+            ],
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "effect": {
+            "description": "Side-effect classification; unknown never proves safety.",
+            "enum": [
+              "read",
+              "write",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "execution": {
+            "description": "Requested execution state, not proof of server-side effects.",
+            "enum": [
+              "will-run",
+              "maybe",
+              "not-selected",
+              "skipped"
+            ],
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          },
+          "origin": {
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "parameters": {
+            "additionalProperties": {},
+            "description": "Action- and layer-specific JSON values; keys are documented in docs/normalization.md.",
+            "type": "object"
+          },
+          "scopes": {
+            "description": "Git data areas touched.",
+            "items": {
+              "enum": [
+                "local-ref",
+                "remote-ref",
+                "index",
+                "worktree",
+                "config",
+                "objects",
+                "stash",
+                "reflog",
+                "remote-config",
+                "submodule",
+                "worktree-admin",
+                "hooks",
+                "file-output"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target": {
+            "additionalProperties": false,
+            "properties": {
+              "commonDir": {
+                "type": "string"
+              },
+              "configKeys": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
+              },
+              "gitDir": {
+                "type": "string"
+              },
+              "paths": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
+              },
+              "pushUrl": {
+                "type": "string"
+              },
+              "refs": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
+              },
+              "remote": {
+                "description": "Remote name, or the URL given in place of a name.",
+                "type": "string"
+              },
+              "remoteUrl": {
+                "description": "Effective (rewritten) URL, credentials removed.",
+                "type": "string"
+              },
+              "repoRoot": {
+                "description": "Top-level worktree directory; empty for bare or unknown.",
+                "type": "string"
+              },
+              "revisions": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
+              },
+              "worktree": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "texts": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "type": "integer"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "redactions": {
+                    "type": "integer"
+                  },
+                  "source": {
+                    "description": "Text input provenance; generated/editor text is not the final submitted value.",
+                    "enum": [
+                      "inline",
+                      "file",
+                      "stdin",
+                      "editor",
+                      "fill",
+                      "template",
+                      "unknown"
+                    ],
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "Unavailable stdin status; omitted on successful capture.",
+                    "enum": [
+                      "not-captured",
+                      "tty",
+                      "too-large",
+                      "timeout",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source",
+                  "bytes",
+                  "redactions"
+                ],
+                "type": "object"
+              },
+              "notes": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "type": "integer"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "redactions": {
+                    "type": "integer"
+                  },
+                  "source": {
+                    "description": "Text input provenance; generated/editor text is not the final submitted value.",
+                    "enum": [
+                      "inline",
+                      "file",
+                      "stdin",
+                      "editor",
+                      "fill",
+                      "template",
+                      "unknown"
+                    ],
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "Unavailable stdin status; omitted on successful capture.",
+                    "enum": [
+                      "not-captured",
+                      "tty",
+                      "too-large",
+                      "timeout",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source",
+                  "bytes",
+                  "redactions"
+                ],
+                "type": "object"
+              },
+              "title": {
+                "additionalProperties": false,
+                "properties": {
+                  "bytes": {
+                    "type": "integer"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "redactions": {
+                    "type": "integer"
+                  },
+                  "source": {
+                    "description": "Text input provenance; generated/editor text is not the final submitted value.",
+                    "enum": [
+                      "inline",
+                      "file",
+                      "stdin",
+                      "editor",
+                      "fill",
+                      "template",
+                      "unknown"
+                    ],
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "Unavailable stdin status; omitted on successful capture.",
+                    "enum": [
+                      "not-captured",
+                      "tty",
+                      "too-large",
+                      "timeout",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "truncated": {
+                    "type": "boolean"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source",
+                  "bytes",
+                  "redactions"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "unknownReason": {
+            "description": "Machine-readable reason for an unknown or opaque classification.",
+            "enum": [
+              "unknown-command",
+              "unknown-flag",
+              "external-command",
+              "shell-alias",
+              "alias-loop",
+              "parse-error",
+              "input-unavailable",
+              "input-too-large",
+              "malformed-request",
+              "interactive",
+              "remote-state",
+              "unverified-version"
+            ],
+            "type": "string"
+          },
+          "unresolved": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "family",
+          "action",
+          "effect",
+          "coverage",
+          "target",
+          "execution",
+          "origin"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "registry": {
+      "additionalProperties": false,
+      "properties": {
+        "commit": {
+          "description": "Pinned Git source commit.",
+          "type": "string"
+        },
+        "compatibility": {
+          "description": "Whether the running Git matches the pinned release; omitted when unknown (offline).",
+          "enum": [
+            "verified",
+            "unverified"
+          ],
+          "type": "string"
+        },
+        "git": {
+          "description": "Pinned Git release, e.g. v2.56.0.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "git",
+        "commit"
+      ],
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Normalization and hook protocol version.",
+      "type": "integer"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "argv": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "global": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "description": "Syntax source kind.",
+          "enum": [
+            "command",
+            "unknown"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "normalizerVersion",
+    "registry",
+    "classification",
+    "operations",
+    "source"
+  ],
+  "type": "object"
+}

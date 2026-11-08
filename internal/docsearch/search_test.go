@@ -154,7 +154,7 @@ func TestEmbeddedCorpusSearch(t *testing.T) {
 		limit     int
 	}{
 		{"parallel hooks", "hook-protocol/parallel-hooks", 1},
-		{"GH_TOKEN gain", "hook-protocol/transform-environment-edits", 3},
+		{"transform environment edits", "hook-protocol/transform-environment-edits", 3},
 		{"trust worktree", "security/project-configuration-trust", 3},
 	} {
 		results := index.Search(tc.query, "dev", tc.limit)

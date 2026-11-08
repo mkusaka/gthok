@@ -174,6 +174,7 @@ int handle_options(const char **argv) {
  else if (skip_prefix(arg, "--pattern=", &value)) { run(value); }
  else if (!strcmp(arg, "-C")) { use(argv[1]); }
  else if (parse_long_opt("count", argv, &value)) { use(value); }
+ else if (!strcmp("--quiet", arg)) { run(); }
 }`)
 	if err != nil {
 		t.Fatal(err)
@@ -182,7 +183,7 @@ int handle_options(const char **argv) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]string{"--pattern": "optional", "-C": "required", "--count": "required"}
+	want := map[string]string{"--pattern": "optional", "-C": "required", "--count": "required", "--quiet": "none"}
 	if len(options) != len(want) {
 		t.Fatalf("options: %+v", options)
 	}

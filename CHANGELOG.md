@@ -16,3 +16,13 @@ All notable changes to gthok. Add entries under **Unreleased**;
 - Installable through mise's GitHub backend: `mise use github:mkusaka/gthok`.
 
 [Unreleased]: https://github.com/mkusaka/gthok/commits/main
+
+### Documentation and contracts
+
+- Replaced inherited documentation and examples with Git operation, matcher,
+  trust, hook, transform, delegate and local-resolution guidance.
+- Listed every registered Git action with example routes/scopes; added public
+  Draft 2020-12 schemas and checked-in regeneration checks.
+- Added tested protected-force-push, history-audit and commit-trailer examples.
+- Recognized fetch-pack hand options, safe reflog display options and bisect
+  start/terms options while preserving arbitrary bisect-run child arguments.

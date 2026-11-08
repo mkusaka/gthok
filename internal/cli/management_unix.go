@@ -232,8 +232,8 @@ Configuration/analysis failures exit 1; usage errors exit 2.`
 	path := managementCommand("path", "Print the global configuration path", code, func(_ *cobra.Command, _ []string) int {
 		return managementConfig("path", "")
 	})
-	schemaCommands := managementGroup("schema", "Print JSON Schemas for configuration, hooks and transforms", code)
-	for _, name := range []string{"config", "project-config", "local-config", "hook-input", "hook-response", "transform-response"} {
+	schemaCommands := managementGroup("schema", "Print Draft 2020-12 JSON Schemas for public contracts", code)
+	for _, name := range []string{"config", "project", "local", "project-config", "local-config", "hook-input", "hook-response", "transform-response", "normalize-result", "explain", "hooks-test", "doctor", "actions", "docs", "version", "log"} {
 		cmd := managementCommand(name, "Print the "+name+" JSON Schema", code, func(cmd *cobra.Command, _ []string) int {
 			body, err := schema.JSON(cmd.Name())
 			if err == nil {

@@ -16,11 +16,7 @@ import (
 
 // The committed schema files must match the tagged Go contracts.
 func TestSchemaFilesUpToDate(t *testing.T) {
-	for name, filename := range map[string]string{
-		"config": "config.schema.json", "project-config": "project.schema.json", "local-config": "local.schema.json",
-		"hook-input": "hook-input.schema.json", "hook-response": "hook-response.schema.json",
-		"transform-response": "transform-response.schema.json",
-	} {
+	for name, filename := range Files() {
 		path := filepath.Join("..", "..", "schema", filename)
 		got, err := os.ReadFile(path)
 		want, generateErr := JSON(name)
@@ -130,6 +126,14 @@ func checkSchema(s map[string]any, v any, at string) error {
 	if negated, ok := s["not"].(map[string]any); ok && checkSchema(negated, v, at) == nil {
 		return fmt.Errorf("%s: matches forbidden schema", at)
 	}
+	if alts, ok := s["anyOf"].([]any); ok {
+		for _, a := range alts {
+			if checkSchema(a.(map[string]any), v, at) == nil {
+				return nil
+			}
+		}
+		return fmt.Errorf("%s: matches no alternative", at)
+	}
 	if alts, ok := s["oneOf"].([]any); ok {
 		for _, a := range alts {
 			if checkSchema(a.(map[string]any), v, at) == nil {
@@ -192,6 +196,10 @@ func checkSchema(s map[string]any, v any, at string) error {
 	case "string":
 		if _, ok := v.(string); !ok {
 			return fmt.Errorf("%s: want string", at)
+		}
+	case "number":
+		if _, ok := v.(float64); !ok {
+			return fmt.Errorf("%s: want number", at)
 		}
 	case "integer":
 		switch n := v.(type) {

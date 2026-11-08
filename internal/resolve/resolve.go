@@ -13,6 +13,7 @@ import (
 
 	"github.com/mkusaka/gthok/internal/gitmeta"
 	"github.com/mkusaka/gthok/internal/model"
+	gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
 )
 
 // Resolver belongs to one invocation. Configure it before use. Env is the
@@ -76,7 +77,7 @@ func (r *Resolver) localLocked(ctx context.Context) *model.ResolvedContext {
 	}
 	for i := 0; i < len(r.globals); i++ {
 		key := r.globals[i]
-		if key == "--bare" || strings.HasPrefix(key, "--config-env=") {
+		if key == "--bare" || strings.HasPrefix(key, "--config-env=") || strings.HasSuffix(key, "-pathspecs") {
 			continue
 		}
 		i++
@@ -128,25 +129,7 @@ func (r *Resolver) localLocked(ctx context.Context) *model.ResolvedContext {
 		}
 		c.Unresolved = append(c.Unresolved, model.Unresolved{Field: "headSha", Reason: reason, Source: "git"})
 	}
-	data, err = r.run(ctx, query{kind: configQuery})
-	if err != nil {
-		c.Unresolved = append(c.Unresolved, model.Unresolved{Field: "remotes", Reason: err.Error(), Source: "git"})
-		return c
-	}
-	r.config = make(map[string][]string)
-	for _, entry := range strings.Split(string(data), "\x00") {
-		if entry == "" {
-			continue
-		}
-		key, value, hasValue := strings.Cut(entry, "\n")
-		if !hasValue {
-			value = "true"
-		}
-		if _, exists := r.config[key]; !exists {
-			r.configOrder = append(r.configOrder, key)
-		}
-		r.config[key] = append(r.config[key], value)
-	}
+	r.loadConfig(ctx)
 	names := make(map[string]bool)
 	for key := range r.config {
 		if rest, ok := strings.CutPrefix(key, "remote."); ok {
@@ -233,6 +216,15 @@ func (r *Resolver) Fill(ctx context.Context, res *model.Result, need []string, a
 	ctx, cancel := context.WithTimeout(ctx, r.timeout())
 	defer cancel()
 	c := r.localLocked(ctx)
+	if r.config == nil {
+		for _, op := range res.Operations {
+			if op.Action == "repository.init" {
+				r.loadConfig(ctx) // init can consult configuration outside a repository.
+				break
+			}
+		}
+	}
+	parsed, _ := gitnormalize.Parse(res.Source.Argv)
 	var operations []model.Operation
 	for _, original := range res.Operations {
 		if original.Execution == model.ExecutionSkipped || original.Execution == model.ExecutionNotSelected {
@@ -258,9 +250,10 @@ func (r *Resolver) Fill(ctx context.Context, res *model.Result, need []string, a
 					setUnresolved(&op, u.Field, u.Reason, u.Source)
 				}
 			}
+			r.semantic(ctx, &op, parsed)
 			if c.GitDir == "" {
 				t.Remote, t.RemoteURL, t.PushURL = cleanURL(t.Remote), cleanURL(t.RemoteURL), cleanURL(t.PushURL)
-				if t.Refs != nil {
+				if t.Refs != nil && op.Action != "repository.init" {
 					t.Refs.Complete = false
 					setUnresolved(&op, "target.refs", "repository metadata is unavailable", "git")
 				}
@@ -269,7 +262,7 @@ func (r *Resolver) Fill(ctx context.Context, res *model.Result, need []string, a
 			}
 			if isPush(op) && t.Remote == "" {
 				t.Remote = r.defaultRemote(true)
-			} else if t.Remote == "" && (op.Family == "remote.fetch" || op.Family == "remote.pull") {
+			} else if t.Remote == "" && !flag(op, "all") && !flag(op, "remoteUpdate") && (op.Family == "remote.fetch" || op.Family == "remote.pull" || op.Action == "remote.fetch" || op.Action == "remote.pull") {
 				t.Remote = r.defaultRemote(false)
 			}
 			if isPush(op) {
@@ -295,9 +288,8 @@ func (r *Resolver) Fill(ctx context.Context, res *model.Result, need []string, a
 }
 
 func setUnresolved(op *model.Operation, field, reason, source string) {
-	for i := range op.Unresolved {
-		if op.Unresolved[i].Field == field {
-			op.Unresolved[i] = model.Unresolved{Field: field, Reason: reason, Source: source}
+	for _, u := range op.Unresolved {
+		if u.Field == field && u.Reason == reason && u.Source == source {
 			return
 		}
 	}
@@ -347,10 +339,19 @@ func clearKnown(op *model.Operation) {
 
 func cloneOperation(op model.Operation) model.Operation {
 	op.Unresolved = append([]model.Unresolved(nil), op.Unresolved...)
-	if op.Target.Refs != nil {
-		refs := *op.Target.Refs
-		refs.Values = append([]string(nil), refs.Values...)
-		op.Target.Refs = &refs
+	op.Scopes = append([]model.Scope(nil), op.Scopes...)
+	op.Capabilities = append([]model.Capability(nil), op.Capabilities...)
+	parameters := make(map[string]any, len(op.Parameters))
+	for key, value := range op.Parameters {
+		parameters[key] = value
+	}
+	op.Parameters = parameters
+	for _, target := range []**model.TargetSet{&op.Target.Refs, &op.Target.Paths, &op.Target.Revisions, &op.Target.ConfigKeys} {
+		if *target != nil {
+			copy := **target
+			copy.Values = append([]string(nil), copy.Values...)
+			*target = &copy
+		}
 	}
 	return op
 }
@@ -364,6 +365,20 @@ func updateResolution(res *model.Result) {
 		unresolved = unresolved || len(op.Unresolved) > 0 || (op.Target.Refs != nil && !op.Target.Refs.Complete)
 		unknown = unknown || op.Family == model.FamilyUnknown || op.Effect == model.EffectUnknown || op.UnknownReason != model.UnknownNone
 		known = known || op.Target.GitDir != ""
+		if op.Coverage == model.CoverageOpaque {
+			res.Classification.Coverage = model.CoverageOpaque
+		}
+		if op.Effect != model.EffectRead || op.UnknownReason != model.UnknownNone {
+			res.Classification.MutationFree, res.Classification.RetrySafe = false, false
+		}
+		for _, capability := range op.Capabilities {
+			switch capability {
+			case model.CapabilityExternalExec, model.CapabilityEditor, model.CapabilityFileWrite, model.CapabilityIndexRefresh:
+				res.Classification.MutationFree, res.Classification.RetrySafe = false, false
+			case model.CapabilityNetwork, model.CapabilityInteractive:
+				res.Classification.RetrySafe = false
+			}
+		}
 	}
 	switch {
 	case unknown:
@@ -477,7 +492,7 @@ func (r *Resolver) localRefs(ctx context.Context, op *model.Operation) {
 		return
 	}
 	for i, name := range refs.Values {
-		if strings.HasPrefix(name, "refs/") {
+		if strings.HasPrefix(name, "refs/") || (name == "HEAD" && r.local.Branch == "" && r.local.HeadSHA != "") {
 			continue
 		}
 		full, err := r.dwim(ctx, name)
@@ -487,5 +502,8 @@ func (r *Resolver) localRefs(ctx context.Context, op *model.Operation) {
 		}
 		refs.Values[i] = full
 	}
-	refs.Complete = len(refs.Values) > 0
+	// Semantic markers can name additional refs beyond the listed values.
+	if !hasUnresolved(*op, "target.refs") {
+		refs.Complete = len(refs.Values) > 0
+	}
 }

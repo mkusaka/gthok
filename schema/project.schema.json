@@ -1334,7 +1334,7 @@
               },
               {
                 "additionalProperties": false,
-                "description": "Run these hooks concurrently as background hooks, then wait for all of them (GitHub Actions steps parallel).",
+                "description": "Run these hooks concurrently as background hooks, then wait for all of them.",
                 "properties": {
                   "parallel": {
                     "items": {
@@ -2742,7 +2742,7 @@
               },
               {
                 "additionalProperties": false,
-                "description": "Run these hooks concurrently as background hooks, then wait for all of them (GitHub Actions steps parallel).",
+                "description": "Run these hooks concurrently as background hooks, then wait for all of them.",
                 "properties": {
                   "parallel": {
                     "items": {

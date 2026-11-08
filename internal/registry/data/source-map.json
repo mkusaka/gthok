@@ -1990,10 +1990,65 @@
     "line": 1608,
     "entrypoint": "cmd_bisect"
   },
+  "bisect start --first-parent": {
+    "file": "builtin/bisect.c",
+    "line": 842,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --no-checkout": {
+    "file": "builtin/bisect.c",
+    "line": 840,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --reset-when-found": {
+    "file": "builtin/bisect.c",
+    "line": 844,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --term-bad": {
+    "file": "builtin/bisect.c",
+    "line": 864,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --term-good": {
+    "file": "builtin/bisect.c",
+    "line": 851,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --term-new": {
+    "file": "builtin/bisect.c",
+    "line": 865,
+    "entrypoint": "bisect_start"
+  },
+  "bisect start --term-old": {
+    "file": "builtin/bisect.c",
+    "line": 852,
+    "entrypoint": "bisect_start"
+  },
   "bisect terms": {
     "file": "builtin/bisect.c",
     "line": 1607,
     "entrypoint": "cmd_bisect"
+  },
+  "bisect terms --term-bad": {
+    "file": "builtin/bisect.c",
+    "line": 601,
+    "entrypoint": "bisect_terms"
+  },
+  "bisect terms --term-good": {
+    "file": "builtin/bisect.c",
+    "line": 601,
+    "entrypoint": "bisect_terms"
+  },
+  "bisect terms --term-new": {
+    "file": "builtin/bisect.c",
+    "line": 601,
+    "entrypoint": "bisect_terms"
+  },
+  "bisect terms --term-old": {
+    "file": "builtin/bisect.c",
+    "line": 601,
+    "entrypoint": "bisect_terms"
   },
   "bisect view": {
     "file": "builtin/bisect.c",
@@ -6274,6 +6329,136 @@
   "fetch-pack": {
     "file": "builtin/fetch-pack.c",
     "line": 49,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --all": {
+    "file": "builtin/fetch-pack.c",
+    "line": 108,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --check-self-contained-and-connected": {
+    "file": "builtin/fetch-pack.c",
+    "line": 153,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --cloning": {
+    "file": "builtin/fetch-pack.c",
+    "line": 157,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --deepen-relative": {
+    "file": "builtin/fetch-pack.c",
+    "line": 136,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --depth": {
+    "file": "builtin/fetch-pack.c",
+    "line": 124,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --diag-url": {
+    "file": "builtin/fetch-pack.c",
+    "line": 116,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --exec": {
+    "file": "builtin/fetch-pack.c",
+    "line": 87,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --filter": {
+    "file": "builtin/fetch-pack.c",
+    "line": 173,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --from-promisor": {
+    "file": "builtin/fetch-pack.c",
+    "line": 165,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --include-tag": {
+    "file": "builtin/fetch-pack.c",
+    "line": 104,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --keep": {
+    "file": "builtin/fetch-pack.c",
+    "line": 95,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --lock-pack": {
+    "file": "builtin/fetch-pack.c",
+    "line": 148,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --no-filter": {
+    "file": "builtin/fetch-pack.c",
+    "line": 177,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --no-progress": {
+    "file": "builtin/fetch-pack.c",
+    "line": 140,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --quiet": {
+    "file": "builtin/fetch-pack.c",
+    "line": 91,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --refetch": {
+    "file": "builtin/fetch-pack.c",
+    "line": 169,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --shallow-exclude": {
+    "file": "builtin/fetch-pack.c",
+    "line": 132,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --shallow-since": {
+    "file": "builtin/fetch-pack.c",
+    "line": 128,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --stateless-rpc": {
+    "file": "builtin/fetch-pack.c",
+    "line": 144,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --stdin": {
+    "file": "builtin/fetch-pack.c",
+    "line": 112,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --thin": {
+    "file": "builtin/fetch-pack.c",
+    "line": 100,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --update-shallow": {
+    "file": "builtin/fetch-pack.c",
+    "line": 161,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack --upload-pack": {
+    "file": "builtin/fetch-pack.c",
+    "line": 83,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack -k": {
+    "file": "builtin/fetch-pack.c",
+    "line": 95,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack -q": {
+    "file": "builtin/fetch-pack.c",
+    "line": 91,
+    "entrypoint": "cmd_fetch_pack"
+  },
+  "fetch-pack -v": {
+    "file": "builtin/fetch-pack.c",
+    "line": 120,
     "entrypoint": "cmd_fetch_pack"
   },
   "filter-branch": {
@@ -11581,6 +11766,131 @@
     "line": 467,
     "entrypoint": "cmd_reflog"
   },
+  "reflog --abbrev-commit": {
+    "file": "revision.c",
+    "line": 2687,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --all": {
+    "file": "revision.c",
+    "line": 2358,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --author": {
+    "file": "revision.c",
+    "line": 2712,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --clear-decorations": {
+    "file": "builtin/log.c",
+    "line": 289,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --date": {
+    "file": "revision.c",
+    "line": 2702,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --decorate": {
+    "file": "builtin/log.c",
+    "line": 297,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --decorate-refs": {
+    "file": "builtin/log.c",
+    "line": 293,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --decorate-refs-exclude": {
+    "file": "builtin/log.c",
+    "line": 295,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --fixed-strings": {
+    "file": "revision.c",
+    "line": 2731,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --grep": {
+    "file": "revision.c",
+    "line": 2721,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --i-still-use-this": {
+    "file": "builtin/log.c",
+    "line": 285,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --mailmap": {
+    "file": "builtin/log.c",
+    "line": 288,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --max-count": {
+    "file": "builtin/reflog.c",
+    "line": 467,
+    "entrypoint": "cmd_reflog"
+  },
+  "reflog --no-abbrev-commit": {
+    "file": "revision.c",
+    "line": 2690,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --oneline": {
+    "file": "revision.c",
+    "line": 2648,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --quiet": {
+    "file": "builtin/log.c",
+    "line": 281,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --regexp-ignore-case": {
+    "file": "revision.c",
+    "line": 2728,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --relative-date": {
+    "file": "revision.c",
+    "line": 2699,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --since": {
+    "file": "revision.c",
+    "line": 2414,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --skip": {
+    "file": "revision.c",
+    "line": 2392,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --source": {
+    "file": "builtin/log.c",
+    "line": 282,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog --until": {
+    "file": "revision.c",
+    "line": 2429,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog --use-mailmap": {
+    "file": "builtin/log.c",
+    "line": 283,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog -n": {
+    "file": "revision.c",
+    "line": 2402,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog -q": {
+    "file": "builtin/log.c",
+    "line": 281,
+    "entrypoint": "cmd_log_init_finish"
+  },
   "reflog delete": {
     "file": "builtin/reflog.c",
     "line": 478,
@@ -11695,6 +12005,131 @@
     "file": "builtin/reflog.c",
     "line": 474,
     "entrypoint": "cmd_reflog"
+  },
+  "reflog show --abbrev-commit": {
+    "file": "revision.c",
+    "line": 2687,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --all": {
+    "file": "revision.c",
+    "line": 2358,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --author": {
+    "file": "revision.c",
+    "line": 2712,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --clear-decorations": {
+    "file": "builtin/log.c",
+    "line": 289,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --date": {
+    "file": "revision.c",
+    "line": 2702,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --decorate": {
+    "file": "builtin/log.c",
+    "line": 297,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --decorate-refs": {
+    "file": "builtin/log.c",
+    "line": 293,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --decorate-refs-exclude": {
+    "file": "builtin/log.c",
+    "line": 295,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --fixed-strings": {
+    "file": "revision.c",
+    "line": 2731,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --grep": {
+    "file": "revision.c",
+    "line": 2721,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --i-still-use-this": {
+    "file": "builtin/log.c",
+    "line": 285,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --mailmap": {
+    "file": "builtin/log.c",
+    "line": 288,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --max-count": {
+    "file": "builtin/reflog.c",
+    "line": 467,
+    "entrypoint": "cmd_reflog"
+  },
+  "reflog show --no-abbrev-commit": {
+    "file": "revision.c",
+    "line": 2690,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --oneline": {
+    "file": "revision.c",
+    "line": 2648,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --quiet": {
+    "file": "builtin/log.c",
+    "line": 281,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --regexp-ignore-case": {
+    "file": "revision.c",
+    "line": 2728,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --relative-date": {
+    "file": "revision.c",
+    "line": 2699,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --since": {
+    "file": "revision.c",
+    "line": 2414,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --skip": {
+    "file": "revision.c",
+    "line": 2392,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --source": {
+    "file": "builtin/log.c",
+    "line": 282,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show --until": {
+    "file": "revision.c",
+    "line": 2429,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show --use-mailmap": {
+    "file": "builtin/log.c",
+    "line": 283,
+    "entrypoint": "cmd_log_init_finish"
+  },
+  "reflog show -n": {
+    "file": "revision.c",
+    "line": 2402,
+    "entrypoint": "handle_revision_opt"
+  },
+  "reflog show -q": {
+    "file": "builtin/log.c",
+    "line": 281,
+    "entrypoint": "cmd_log_init_finish"
   },
   "reflog write": {
     "file": "builtin/reflog.c",

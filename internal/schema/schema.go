@@ -9,18 +9,37 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mkusaka/gthok/internal/config"
+	"github.com/mkusaka/gthok/internal/docsearch"
+	"github.com/mkusaka/gthok/internal/install"
+	"github.com/mkusaka/gthok/internal/logging"
 	"github.com/mkusaka/gthok/internal/protocol"
 )
 
 const baseID = "https://raw.githubusercontent.com/mkusaka/gthok/main/schema/"
 
-// Generate returns a draft 2020-12 schema for a config or hook document.
+// Files lists the canonical published contracts and generated filenames.
+func Files() map[string]string {
+	files := map[string]string{"config": "config.schema.json", "project": "project.schema.json", "local": "local.schema.json"}
+	for _, name := range []string{"hook-input", "hook-response", "transform-response", "normalize-result", "explain", "hooks-test", "doctor", "actions", "docs", "version", "log"} {
+		files[name] = name + ".schema.json"
+	}
+	return files
+}
+
+// Generate returns a draft 2020-12 schema for a public contract.
 // YAML requires only required:"true" fields; JSON requires fields without
 // omitempty. Both use enum, const and doc tags for values and descriptions.
 func Generate(name string) (map[string]any, error) {
 	var s map[string]any
+	switch name {
+	case "project":
+		name = "project-config"
+	case "local":
+		name = "local-config"
+	}
 	filename := name + ".schema.json"
 	switch name {
 	case "config", "project-config", "local-config":
@@ -57,6 +76,25 @@ func Generate(name string) (map[string]any, error) {
 			delegates := props["delegates"].(map[string]any)
 			delete(delegates["items"].(map[string]any)["properties"].(map[string]any), "files")
 		}
+	case "normalize-result":
+		s = schemaFor(reflect.TypeFor[NormalizeResult](), "", "json")
+	case "explain":
+		s = schemaFor(reflect.TypeFor[Explain](), "", "json")
+	case "hooks-test":
+		s = schemaFor(reflect.TypeFor[HooksTest](), "", "json")
+	case "doctor":
+		s = schemaFor(reflect.TypeFor[[]install.Check](), "", "json")
+	case "actions":
+		s = schemaFor(reflect.TypeFor[[]ActionFamily](), "", "json")
+	case "docs":
+		s = map[string]any{"anyOf": []any{
+			schemaFor(reflect.TypeFor[[]docsearch.Section](), "", "json"),
+			schemaFor(reflect.TypeFor[[]docsearch.Result](), "", "json"),
+		}}
+	case "version":
+		s = schemaFor(reflect.TypeFor[Version](), "", "json")
+	case "log":
+		s = schemaFor(reflect.TypeFor[logging.Record](), "", "json")
 	case "hook-input":
 		s = schemaFor(reflect.TypeFor[protocol.Input](), "", "json")
 		s["title"] = "gthok hook input"
@@ -112,6 +150,8 @@ func schemaFor(t reflect.Type, tag reflect.StructTag, names string) map[string]a
 		}
 	}
 	switch t {
+	case reflect.TypeFor[time.Time]():
+		return map[string]any{"type": "string", "format": "date-time"}
 	case reflect.TypeFor[config.StringList]():
 		item := map[string]any{"type": "string"}
 		if enum != nil {
@@ -131,7 +171,7 @@ func schemaFor(t reflect.Type, tag reflect.StructTag, names string) map[string]a
 		list := func(phase string) map[string]any {
 			return map[string]any{"type": "array", "description": "Hooks and control items of the " + phase + " phase, run in order.", "items": map[string]any{"oneOf": []any{
 				hook,
-				item("parallel", "Run these hooks concurrently as background hooks, then wait for all of them (GitHub Actions steps parallel).", map[string]any{"type": "array", "minItems": 1, "items": hook}),
+				item("parallel", "Run these hooks concurrently as background hooks, then wait for all of them.", map[string]any{"type": "array", "minItems": 1, "items": hook}),
 				item("wait", "Wait for earlier background hooks of this list by ID.", ids),
 				item("wait-all", "Wait for every earlier background hook of this list; takes no value.", map[string]any{"type": "null"}),
 			}}}
@@ -150,10 +190,18 @@ func schemaFor(t reflect.Type, tag reflect.StructTag, names string) map[string]a
 		s = map[string]any{"type": "boolean"}
 	case reflect.Int, reflect.Int64:
 		s = map[string]any{"type": "integer"}
+	case reflect.Float64:
+		s = map[string]any{"type": "number"}
+	case reflect.Interface:
+		return map[string]any{}
 	case reflect.String:
 		s = map[string]any{"type": "string"}
 	case reflect.Slice:
-		return map[string]any{"type": "array", "items": schemaFor(t.Elem(), "", names)}
+		itemTag := reflect.StructTag("")
+		if values := tag.Get("enum"); values != "" {
+			itemTag = reflect.StructTag("enum:" + strconv.Quote(values))
+		}
+		return map[string]any{"type": "array", "items": schemaFor(t.Elem(), itemTag, names)}
 	case reflect.Map:
 		return map[string]any{"type": "object", "additionalProperties": schemaFor(t.Elem(), "", names)}
 	case reflect.Struct:
@@ -162,6 +210,19 @@ func schemaFor(t reflect.Type, tag reflect.StructTag, names string) map[string]a
 		for i := range t.NumField() {
 			f := t.Field(i)
 			name, options, _ := strings.Cut(f.Tag.Get(names), ",")
+			if f.Anonymous && name == "" {
+				embedded := schemaFor(f.Type, f.Tag, names)
+				for key, value := range embedded["properties"].(map[string]any) {
+					props[key] = value
+				}
+				if fields, ok := embedded["required"].([]string); ok {
+					required = append(required, fields...)
+				}
+				continue
+			}
+			if name == "" && names == "json" && f.PkgPath == "" {
+				name = f.Name
+			}
 			if name == "" || name == "-" {
 				continue
 			}

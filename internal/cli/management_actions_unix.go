@@ -5,30 +5,24 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path"
 	"slices"
 	"strings"
 
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize/actions"
 	gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
+	"github.com/mkusaka/gthok/internal/schema"
 	"github.com/spf13/cobra"
-	"path"
 )
 
-type managementActionFamily struct {
-	Family  string                  `json:"family"`
-	Actions []managementActionEntry `json:"actions"`
-}
+type managementActionFamily = schema.ActionFamily
 
-type managementActionEntry struct {
-	Action string       `json:"action"`
-	Effect model.Effect `json:"effect"`
-	Git    []string     `json:"git"`
-}
+type managementActionEntry = schema.ActionEntry
 
 func managementActionsCommand(code *int) *cobra.Command {
 	var asJSON bool
-	cmd := managementCommand("actions [prefix]", "List curated actions and their statically mapped routes", code, func(_ *cobra.Command, args []string) int {
+	cmd := managementCommand("actions [glob]", "List Git actions, effects, example scopes and command routes", code, func(_ *cobra.Command, args []string) int {
 		prefix := ""
 		if len(args) != 0 {
 			prefix = args[0]
@@ -57,7 +51,8 @@ func managementActionsCatalogue(prefix string) []managementActionFamily {
 		}
 		byFamily[spec.Family] = append(byFamily[spec.Family], managementActionEntry{
 			Action: spec.Action, Effect: spec.Effect,
-			Git: managementActionRoutes(routes[spec.Action]),
+			Scopes: managementActionScopes(spec, routes[spec.Action]),
+			Git:    managementActionRoutes(routes[spec.Action]),
 		})
 	}
 	families := make([]string, 0, len(byFamily))
@@ -70,6 +65,25 @@ func managementActionsCatalogue(prefix string) []managementActionFamily {
 		catalogue = append(catalogue, managementActionFamily{Family: family, Actions: byFamily[family]})
 	}
 	return catalogue
+}
+
+// Scopes describe the examples, not a safety guarantee for every command mode.
+func managementActionScopes(spec actions.Spec, routes []string) []model.Scope {
+	scopes := []model.Scope{}
+	for _, route := range routes {
+		result := gitnormalize.Normalize(model.Invocation{Argv: strings.Fields(route)})
+		for _, op := range result.Operations {
+			if op.Action == spec.Action {
+				scopes = append(scopes, op.Scopes...)
+			}
+		}
+	}
+	// Transaction/symref verification is selected by stdin, not these argv.
+	if spec.Family == "ref.transaction" || spec.Action == "ref.verify" || spec.Action == "ref.symbolic.verify" {
+		scopes = append(scopes, model.ScopeLocalRef)
+	}
+	slices.Sort(scopes)
+	return slices.Compact(scopes)
 }
 
 func managementActionRoutes(routes []string) []string {
@@ -85,7 +99,7 @@ func managementActionsText(families []managementActionFamily) string {
 	for _, family := range families {
 		fmt.Fprintln(&text, family.Family)
 		for _, action := range family.Actions {
-			fmt.Fprintf(&text, "  %s (%s)\n", action.Action, action.Effect)
+			fmt.Fprintf(&text, "  %s (%s; scopes: %v)\n", action.Action, action.Effect, action.Scopes)
 			for _, route := range action.Git {
 				fmt.Fprintf(&text, "    git: %s\n", route)
 			}

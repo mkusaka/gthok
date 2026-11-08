@@ -6,6 +6,7 @@ import (
 
 	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/model"
+	"github.com/mkusaka/gthok/internal/normalize/actions"
 	"github.com/mkusaka/gthok/internal/registry"
 )
 
@@ -206,10 +207,192 @@ func aggregate(level model.Level, confidence model.Confidence, ops []model.Opera
 	return c
 }
 
+// ActionRoutes lists illustrative argv (without the leading git). Input-protocol
+// actions share a route; the input document, not argv, selects their action.
 func ActionRoutes() map[string][]string {
-	return map[string][]string{
+	routes := map[string][]string{
 		"status.show": {"status"}, "git.help.read": {"help", "--help"}, "git.version.read": {"version", "--version"},
-		"git.info.read":      {"--exec-path", "--html-path", "--man-path", "--info-path", "--list-cmds=main"},
-		"remote.push.update": {"push"},
+		"git.info.read":  {"--exec-path", "--html-path", "--man-path", "--info-path", "--list-cmds=main"},
+		"unknown":        {"custom-command"},
+		"worktree.clean": {"clean -f"}, "worktree.clean.preview": {"clean -n"},
+		"ref.update": {"update-ref refs/heads/topic HEAD"}, "ref.delete": {"update-ref -d refs/heads/topic"},
+		"ref.verify": {"update-ref --stdin"}, "ref.pack": {"pack-refs --all"}, "ref.list": {"show-ref", "for-each-ref"},
+		"remote.push.update": {"push origin HEAD:refs/heads/main", "send-pack origin HEAD:refs/heads/main"},
+		"remote.push.delete": {"push --delete origin refs/heads/topic"}, "remote.push.mirror": {"push --mirror origin"},
+		"remote.push.matching": {"push origin :"}, "remote.push.tags": {"push --tags origin"},
+		"remote.fetch": {"fetch origin", "remote update"}, "remote.pull": {"pull origin main"},
+		"remote.prune": {"remote prune origin"}, "remote.clone": {"clone ../source destination"},
+		"remote.list": {"remote"}, "remote.show": {"remote show -n origin"},
+		"remote.get-url": {"remote get-url origin", "ls-remote --get-url origin"}, "remote.ls-remote": {"ls-remote origin"},
+		"remote.pack.fetch": {"fetch-pack ../source refs/heads/main"}, "remote.pack.receive": {"receive-pack repo.git"},
+		"remote.pack.upload": {"upload-pack repo.git"}, "remote.pack.advertise": {"receive-pack --advertise-refs repo.git"},
+		"index.read-tree": {"read-tree HEAD"}, "index.read-tree.preview": {"read-tree -n HEAD"}, "index.update": {"update-index --refresh"},
+		"repository.init": {"init repository"}, "hook.list": {"hook list"}, "hook.run": {"hook run pre-commit"},
+		"archive.create": {"archive HEAD"}, "archive.list": {"archive --list"}, "archive.output": {"archive --output=out.tar HEAD"},
+		"bundle.stdout":     {"bundle create - HEAD"},
+		"objects.hash.read": {"hash-object --no-filters file"}, "objects.hash.write": {"hash-object -w file"},
+		"objects.fsck.lost-found": {"fsck --lost-found"}, "objects.pack-objects.read": {"pack-objects --stdout"},
+		"objects.fast-export.output": {"fast-export --export-marks=marks HEAD"}, "objects.index-pack.verify": {"index-pack --verify data.pack"},
+		"submodule.clone": {"submodule--helper clone ../source lib"}, "submodule.gitdir": {"submodule--helper gitdir lib"},
+		"submodule.get-default-remote": {"submodule--helper get-default-remote"},
 	}
+	for _, spec := range actions.All() {
+		if len(routes[spec.Action]) > 0 {
+			continue
+		}
+		mode := strings.TrimPrefix(spec.Action, spec.Family+".")
+		var route string
+		switch spec.Family {
+		case "git.cat-file":
+			if mode == "protocol" {
+				route = "cat-file --batch"
+			}
+			fallthrough
+		case "git.log", "git.show", "git.diff", "git.diff-tree", "git.diff-index", "git.diff-files", "git.diff-pairs", "git.rev-list", "git.rev-parse", "git.ls-files", "git.ls-tree", "git.grep", "git.blame", "git.annotate", "git.pickaxe", "git.shortlog", "git.describe", "git.name-rev", "git.format-rev", "git.merge-base", "git.show-branch", "git.whatchanged", "git.range-diff", "git.format-patch", "git.last-modified", "git.cherry", "git.check-attr", "git.check-ignore", "git.check-mailmap", "git.check-ref-format", "git.var", "git.repo", "git.column", "git.stripspace", "git.patch-id", "git.show-index", "git.get-tar-commit-id", "git.fmt-merge-msg", "git.pack-redundant", "git.url-parse", "git.verify-commit", "git.verify-tag":
+			if route == "" {
+				route = strings.TrimPrefix(spec.Family, "git.")
+				if mode == "output" {
+					route += " --output=report"
+				} else if spec.Family == "git.format-patch" {
+					route += " --stdout"
+				}
+			}
+		case "ref.transaction":
+			route = "update-ref --stdin"
+		case "ref.symbolic":
+			route = "symbolic-ref HEAD"
+			switch mode {
+			case "set":
+				route += " refs/heads/main"
+			case "delete":
+				route = "symbolic-ref -d refs/heads/alias"
+			case "verify":
+				route = "update-ref --stdin --no-deref"
+			}
+		case "ref.branch":
+			route = map[string]string{"create": "branch topic", "delete": "branch -D topic", "list": "branch --list", "rename": "branch -m old new", "copy": "branch -c old new", "upstream": "branch --set-upstream-to=origin/main topic", "description": "branch --edit-description topic"}[mode]
+		case "ref.tag":
+			route = map[string]string{"create": "tag v1", "delete": "tag -d v1", "list": "tag --list", "verify": "tag --verify v1"}[mode]
+		case "ref.reflog":
+			route = "reflog " + mode
+		case "ref.replace":
+			route = "replace --" + mode
+			if mode == "create" {
+				route = "replace HEAD HEAD~1"
+			} else if mode == "convert" {
+				route = "replace --convert-graft-file"
+			} else if mode != "list" {
+				route += " HEAD"
+			}
+		case "remote.config":
+			route = "remote " + mode + " origin"
+			switch mode {
+			case "add", "set-url":
+				route += " ../source"
+			case "rename":
+				route += " backup"
+			case "set-branches":
+				route += " main"
+			}
+		case "worktree.reset":
+			route = "reset --" + mode
+			if mode == "paths" {
+				route = "reset -- file"
+			}
+		case "worktree.restore":
+			route = "restore -- file"
+		case "worktree.checkout", "worktree.switch":
+			command := strings.TrimPrefix(spec.Family, "worktree.")
+			route = command + " " + map[string]string{"switch": "main", "create": "-b topic", "reset": "-B topic", "orphan": "--orphan topic", "detach": "--detach HEAD", "paths": "-- file"}[mode]
+			if command == "switch" {
+				route = strings.ReplaceAll(strings.ReplaceAll(route, "-b ", "-c "), "-B ", "-C ")
+			}
+		case "index.add":
+			route = map[string]string{"update": "add file", "refresh": "add --refresh file", "preview": "add -n file"}[mode]
+		case "index.rm":
+			route = "rm file"
+			if mode == "preview" {
+				route = "rm -n file"
+			}
+		case "worktree.mv":
+			route = "mv old new"
+			if mode == "preview" {
+				route = "mv -n old new"
+			}
+		case "worktree.apply":
+			route = "apply patch"
+			if mode != "patch" {
+				route = "apply --" + mode + " patch"
+			}
+		case "worktree.sparse-checkout":
+			route = "sparse-checkout " + mode
+			if mode == "preview" {
+				route = "sparse-checkout clean -n"
+			}
+		case "worktree.admin":
+			route = "worktree " + mode
+			if mode == "prune.preview" {
+				route = "worktree prune -n"
+			} else if mode != "list" && mode != "prune" {
+				route += " ../topic"
+				if mode == "move" {
+					route += " ../renamed"
+				}
+			}
+		case "history.commit":
+			route = map[string]string{"create": "commit -m message", "amend": "commit --amend -m message", "preview": "commit --dry-run"}[mode]
+		case "history.merge", "history.rebase", "history.cherry-pick", "history.revert", "history.am":
+			route = strings.TrimPrefix(spec.Family, "history.")
+			switch mode {
+			case "start":
+				route += " HEAD"
+			case "apply":
+				route += " --no-commit HEAD"
+			default:
+				route += " --" + mode
+			}
+		case "history.bisect":
+			route = "bisect " + mode
+			switch mode {
+			case "run":
+				route += " sh -c true"
+			case "mark":
+				route = "bisect custom-term HEAD"
+			}
+		case "stash", "notes", "config", "maintenance", "submodule", "bundle":
+			route = spec.Family + " " + mode
+			if spec.Action == "notes.preview" {
+				route = "notes prune -n"
+			}
+			if spec.Family == "bundle" {
+				route += " data.bundle"
+			}
+			if spec.Family == "config" {
+				switch mode {
+				case "get", "unset":
+					route += " core.editor"
+				case "set":
+					route += " core.editor vi"
+				case "add":
+					route = "config --add core.editor vi"
+				case "rename-section":
+					route += " test.old test.new"
+				case "remove-section":
+					route += " test.old"
+				}
+			}
+		case "objects":
+			route = strings.ReplaceAll(mode, ".", " ")
+			if strings.HasSuffix(mode, ".preview") {
+				route = strings.TrimSuffix(mode, ".preview") + " --dry-run"
+				if mode == "unpack-objects.preview" {
+					route = "unpack-objects -n"
+				}
+			}
+		}
+		if route != "" {
+			routes[spec.Action] = []string{route}
+		}
+	}
+	return routes
 }

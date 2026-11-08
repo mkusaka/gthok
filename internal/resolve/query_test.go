@@ -34,10 +34,15 @@ func TestClosedQueryTemplates(t *testing.T) {
 		{showRefsQuery, "", []string{"show-ref"}},
 		{remoteQuery, "origin", []string{"remote", "get-url", "--all", "origin"}},
 		{pushURLQuery, "origin", []string{"remote", "get-url", "--all", "--push", "origin"}},
-		{filesQuery, "a", []string{"ls-files", "-z", "--", "a"}},
-		{trackedFileQuery, "a", []string{"ls-files", "-z", "--error-unmatch", "--", "a"}},
+		{filesQuery, "a", []string{"ls-files", "-z", "--full-name", "--", "a"}},
+		{trackedFileQuery, "a", []string{"ls-files", "-z", "--full-name", "--error-unmatch", "--", "a"}},
 		{objectTypeQuery, strings.Repeat("a", 40), []string{"cat-file", "-t", strings.Repeat("a", 40)}},
 		{objectSizeQuery, strings.Repeat("a", 64), []string{"cat-file", "-s", strings.Repeat("a", 64)}},
+		{configBoolQuery, "clean.requireForce", []string{"config", "--null", "--type=bool", "--get", "clean.requireForce"}},
+		{allFilesQuery, "a", []string{"ls-files", "-z", "--full-name", "--cached", "--others", "--exclude-standard", "--", "a"}},
+		{untrackedFilesQuery, "a", []string{"ls-files", "-z", "--full-name", "--others", "--exclude-standard", "--", "a"}},
+		{ignoredFilesQuery, "a", []string{"ls-files", "-z", "--full-name", "--others", "--ignored", "--exclude-standard", "--", "a"}},
+		{symbolicRefQuery, "refs/heads/alias", []string{"symbolic-ref", "-q", "refs/heads/alias"}},
 	}
 	for _, tc := range cases {
 		args, err := (query{tc.kind, tc.value}).args()
@@ -52,18 +57,18 @@ func TestClosedQueryTemplates(t *testing.T) {
 			}
 		}
 	}
-	if len(cases) != int(objectSizeQuery)+1 {
+	if len(cases) != int(symbolicRefQuery)+1 {
 		t.Fatal("new query template lacks a safety assertion")
 	}
 	for kind := 0; kind <= 255; kind++ {
 		for _, operand := range []string{"--output=unsafe", "--exec=unsafe", "bad\x00operand", "bad\noperand"} {
 			if args, err := (query{queryKind(kind), operand}).args(); err == nil {
-				if (queryKind(kind) != filesQuery && queryKind(kind) != trackedFileQuery) || args[len(args)-2] != "--" || strings.ContainsRune(operand, '\x00') {
+				if args[0] != "ls-files" || args[len(args)-2] != "--" || strings.ContainsRune(operand, '\x00') {
 					t.Fatalf("unsafe operand accepted: %q", args)
 				}
 			}
 		}
-		if kind > int(objectSizeQuery) {
+		if kind > int(symbolicRefQuery) {
 			if _, err := (query{kind: queryKind(kind)}).args(); err == nil {
 				t.Fatal("unknown query kind accepted")
 			}
@@ -78,7 +83,7 @@ func TestClosedQueryTemplates(t *testing.T) {
 
 func TestSelectionGlobals(t *testing.T) {
 	got, err := selectionGlobals([]string{"-p", "-Crepo", "-cname=value", "--git-dir=dir", "--work-tree", "work", "--namespace=ns", "--bare", "--config-env", "key=ENV", "--literal-pathspecs"})
-	want := []string{"-C", "repo", "-c", "name=value", "--git-dir", "dir", "--work-tree", "work", "--namespace", "ns", "--bare", "--config-env=key=ENV"}
+	want := []string{"-C", "repo", "-c", "name=value", "--git-dir", "dir", "--work-tree", "work", "--namespace", "ns", "--bare", "--config-env=key=ENV", "--literal-pathspecs"}
 	if err != nil || !reflect.DeepEqual(got, want) {
 		t.Fatalf("globals: %q, %v; want %q", got, err, want)
 	}

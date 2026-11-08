@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/mkusaka/gthok/internal/model"
@@ -58,6 +59,33 @@ func possibleGroup(op model.Operation) bool {
 
 func (r *Resolver) expandGroup(original model.Operation) []model.Operation {
 	op := cloneOperation(original)
+	fetch := op.Action == "remote.fetch" || op.Family == "remote.fetch"
+	if r.config != nil && fetch && op.Target.Remote == "" && (flag(op, "all") || flag(op, "remoteUpdate")) {
+		var names []string
+		if flag(op, "remoteUpdate") && !flag(op, "all") {
+			for _, value := range r.config["remotes.default"] {
+				names = append(names, strings.Fields(value)...)
+			}
+		}
+		if len(names) == 0 {
+			for name := range r.local.Remotes {
+				if configTrue(r.last("remote."+name+".skipdefaultupdate")) || flag(op, "all") && configTrue(r.last("remote."+name+".skipfetchall")) {
+					continue
+				}
+				names = append(names, name)
+			}
+			sort.Strings(names)
+		}
+		var result []model.Operation
+		for _, name := range names {
+			copy := cloneOperation(op)
+			copy.Target.Remote = name
+			result = append(result, copy)
+		}
+		if len(result) > 0 {
+			return result
+		}
+	}
 	if !hasUnresolved(op, "target.remote") && !hasUnresolved(op, "target.remoteGroup") {
 		return []model.Operation{op}
 	}
@@ -77,7 +105,7 @@ func (r *Resolver) expandGroup(original model.Operation) []model.Operation {
 			copy.Target.Remote = name
 			remaining := copy.Unresolved[:0]
 			for _, u := range copy.Unresolved {
-				if u.Field != "target.remote" && u.Field != "target.remoteGroup" {
+				if (u.Field != "target.remote" && u.Field != "target.remoteGroup") || u.Reason == "recursive submodule pushes require submodule configuration" {
 					remaining = append(remaining, u)
 				}
 			}
@@ -96,7 +124,7 @@ func (r *Resolver) remoteTargets(ctx context.Context, op model.Operation) []mode
 	raw := op.Target.Remote
 	op.Target.Remote = cleanURL(raw)
 	if raw == "" {
-		if isPush(op) || op.Family == "remote.fetch" || op.Family == "remote.pull" {
+		if isPush(op) || op.Family == "remote.fetch" || op.Family == "remote.pull" || op.Action == "remote.fetch" || op.Action == "remote.pull" {
 			requireRemote(&op)
 		}
 		return []model.Operation{op}
@@ -133,7 +161,7 @@ func (r *Resolver) remoteTargets(ctx context.Context, op model.Operation) []mode
 	if named || info.URL != "" {
 		remaining := op.Unresolved[:0]
 		for _, u := range op.Unresolved {
-			if u.Field != "target.remote" || (u.Source != "git" && u.Source != "resolver") {
+			if u.Field != "target.remote" || (u.Source != "git" && u.Source != "resolver") || u.Reason == "recursive submodule pushes require submodule configuration" {
 				remaining = append(remaining, u)
 			}
 		}
