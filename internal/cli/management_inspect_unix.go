@@ -78,15 +78,25 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 	}
 	a := &managementAnalysis{config: c, notes: notes, cwd: cwd, env: env, invocation: inv, result: normalizeInvocation(c, inv), redactor: redact.New(env)}
 	a.cleanup = func() {}
+	var compatibility gitCompatibility
+	if resolveTargets {
+		a.real, err = realGit(c, env)
+		if err != nil {
+			return nil, err
+		}
+		compatibility = checkGitCompatibility(c, a.real, env)
+	}
 	if transform && len(c.Transforms) > 0 {
-		a.real, _ = realGit(c, env)
+		if a.real == "" {
+			a.real, _ = realGit(c, env)
+		}
 		helperEnv, release, err := nestedEnvironment(env)
 		if err != nil {
 			return nil, err
 		}
 		runner := &hooks.Runner{BaseDir: c.Dir, Env: append(os.Environ(), "GTHOK_NESTED_TOKEN="+helperEnv["GTHOK_NESTED_TOKEN"]), RealGit: a.real, Redact: a.redactor.String, Redactor: a.redactor, Source: "test"}
 		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-		applied := runTransforms(ctx, c, runner, inv, a.result, a.real, logging.NewInvocationID(), "shim", resolveTargets)
+		applied := runTransforms(ctx, c, runner, inv, a.result, a.real, logging.NewInvocationID(), "shim", resolveTargets, compatibility)
 		cancel()
 		release()
 		if applied.denial != nil {
@@ -100,11 +110,6 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 		a.envChanged, a.envBy, a.envEdited = applied.envChanged(), applied.envBy, applied.envEdited
 	}
 	if resolveTargets {
-		a.real, err = realGit(c, env)
-		if err != nil {
-			a.cleanup()
-			return nil, err
-		}
 		helperEnv, cleanup, err := nestedEnvironment(env)
 		if err != nil {
 			a.cleanup()
@@ -133,6 +138,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 			cancel()
 		}
 	}
+	a.result = compatibility.apply(a.result)
 	a.evaluation = evaluateConfig(c, a.subject(""))
 	return a, nil
 }

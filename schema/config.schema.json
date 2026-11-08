@@ -4132,6 +4132,14 @@
         "fileMaxBytes": {
           "type": "integer"
         },
+        "gitCompatibility": {
+          "description": "conservative (default): retain classification with reduced safety guarantees on unverified Git; verified-only: classify operations as unknown. Neither mode blocks execution by itself.",
+          "enum": [
+            "conservative",
+            "verified-only"
+          ],
+          "type": "string"
+        },
         "hookConcurrency": {
           "description": "Maximum hooks running at once within a parallel group; default 4.",
           "type": "integer"

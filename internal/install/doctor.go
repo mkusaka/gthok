@@ -134,12 +134,12 @@ func Checks(o DoctorOptions) []Check {
 	if real != "" && !owned {
 		out, err := runDiagnostic(real, env, "--version")
 		if err != nil {
-			version.Status, version.Detail = StatusWarn, "git --version failed: "+err.Error()
+			version.Status, version.Detail = StatusWarn, "git --version failed: "+err.Error()+"; compatibility=unverified"
 		} else {
 			version.Status, version.Detail = gitVersionStatus(out)
 		}
 		if version.Status == StatusWarn {
-			version.Fix = "Use Git " + gitBaseline + "; " + gitBaseline + " is the verified normalization baseline."
+			version.Fix = "Use Git " + GitBaseline + "; " + GitBaseline + " is the verified normalization baseline."
 		}
 	}
 	checks = append(checks, version)
@@ -204,31 +204,43 @@ func execEntryCheck(stateDir string, checks []Check, now time.Time) *Check {
 	return &Check{Name: "shell-entry", Status: StatusInfo, Detail: used + " (shell function or scripts); without the shim, git started by scripts, programs or agents that skip shell rc files bypasses gthok", Fix: "Run gthok shim install to cover them."}
 }
 
-var gitVersionRE = regexp.MustCompile(`(?m)^git version ([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-+][^ ]*)?(?: |$)`)
+var gitVersionRE = regexp.MustCompile(`^git version ([0-9]+\.[0-9]+\.[0-9]+(?:[-+.][^[:space:]]+)?)(?:[[:space:]]|$)`)
 
-// gitBaseline is the exact Git release used to generate the grammar.
-const (
-	gitBaseline      = "2.56.0"
-	gitBaselineMinor = 56
-)
+// GitBaseline is the exact Git release used to generate the grammar.
+const GitBaseline = "2.56.0"
 
-func gitVersionStatus(out string) (Status, string) {
+// GitVersion probes only this executable, without Git globals or stdin. Callers
+// retain the result for one invocation, never across executable replacements.
+func GitVersion(path string, env []string) (string, error) {
+	childEnv, _, err := NextDepth(env)
+	if err != nil {
+		return "", err
+	}
+	childEnv = append(childEnv, "GTHOK_VERSION_QUERY=1")
+	out, err := runDiagnostic(path, childEnv, "--version")
+	if err != nil {
+		return "", err
+	}
+	return parseGitVersion(out)
+}
+
+func parseGitVersion(out string) (string, error) {
 	m := gitVersionRE.FindStringSubmatch(out)
 	if m == nil {
-		return StatusWarn, "Unrecognized git version output: " + strings.TrimSpace(out)
+		return "", fmt.Errorf("unrecognized git version output: %s", strings.TrimSpace(out))
 	}
-	var version [3]int
-	for i := range version {
-		n, err := strconv.Atoi(m[i+1])
-		if err != nil {
-			return StatusWarn, "Unrecognized git version number"
-		}
-		version[i] = n
+	return m[1], nil
+}
+
+func gitVersionStatus(out string) (Status, string) {
+	version, err := parseGitVersion(out)
+	if err != nil {
+		return StatusWarn, "Unrecognized git version output: " + strings.TrimSpace(out) + "; compatibility=unverified"
 	}
-	if version != [3]int{2, gitBaselineMinor, 0} {
-		return StatusWarn, "git " + strings.Join(m[1:4], ".") + " differs from the verified " + gitBaseline + " baseline"
+	if version != GitBaseline {
+		return StatusWarn, "git " + version + " differs from the verified " + GitBaseline + " baseline; compatibility=unverified"
 	}
-	return StatusInfo, strings.TrimSpace(strings.SplitN(out, "\n", 2)[0]) + "; verified baseline is " + gitBaseline
+	return StatusInfo, strings.TrimSpace(strings.SplitN(out, "\n", 2)[0]) + "; verified baseline is " + GitBaseline + "; compatibility=verified"
 }
 
 // Bounded diagnostics cannot grow stdout indefinitely or wait for inherited

@@ -244,6 +244,7 @@ func (c *Config) Validate() error {
 		}
 	}
 	enum("runtime.resolveAPI", c.Runtime.ResolveAPI, "auto", "never")
+	enum("runtime.gitCompatibility", c.Runtime.GitCompatibility, "conservative", "verified-only")
 	enum("logging.level", c.Logging.Level, "info", "decision")
 	return errors.Join(errs...)
 }

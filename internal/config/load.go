@@ -80,6 +80,9 @@ func (c *Config) ApplyDefaults() {
 	if c.Runtime.ResolveAPI == "" {
 		c.Runtime.ResolveAPI = "auto"
 	}
+	if c.Runtime.GitCompatibility == "" {
+		c.Runtime.GitCompatibility = "conservative"
+	}
 	if c.Logging.Enabled == nil {
 		b := DefaultEnabled
 		c.Logging.Enabled = &b

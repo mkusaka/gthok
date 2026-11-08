@@ -36,7 +36,7 @@ type transformedRequest struct {
 
 // Transforms are transactional across the whole chain: fail-open means the
 // original request, not a partially transformed request.
-func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, inv model.Invocation, result model.Result, real, eventID, via string, resolveTargets bool) transformedRequest {
+func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, inv model.Invocation, result model.Result, real, eventID, via string, resolveTargets bool, compatibility gitCompatibility) transformedRequest {
 	out := transformedRequest{invocation: inv, result: result}
 	originalEnv := runner.Env
 	defer func() { runner.Env = originalEnv }()
@@ -48,19 +48,23 @@ func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, 
 		cleanups = nil
 	}
 	for _, t := range c.Transforms {
-		subject := policy.Subject{Result: out.result, Argv: out.result.Source.Argv, Phase: config.PhasePre, Env: out.invocation.Env}
+		subject := policy.Subject{Result: compatibility.apply(out.result), Argv: out.result.Source.Argv, Phase: config.PhasePre, Env: out.invocation.Env}
 		yes, _ := policy.Matches(t.Match, t.Unless, subject)
 		if !yes {
 			continue
 		}
-		input := hookInput(out.invocation, real, out.result, nil, policy.Evaluation{}, eventID)
+		input := hookInput(out.invocation, real, subject.Result, nil, policy.Evaluation{}, eventID)
 		input.Invocation.Via = via
 		input.Invocation.EnvChanged = out.envChanged()
 		input.Policy = nil
 		response, execution := runner.Transform(ctx, t, input)
 		out.envEdited = out.envEdited || len(response.Env) > 0
 		if execution.Outcome == protocol.OutcomeOK && (len(response.Set) > 0 || len(response.Unset) > 0 || len(response.Env) > 0) {
-			next, _, cleanup, err := transforms.Apply(out.invocation, out.result, response)
+			before := out.result
+			if compatibility.status == model.CompatibilityUnverified && compatibility.mode == "verified-only" {
+				before = subject.Result
+			}
+			next, _, cleanup, err := transforms.Apply(out.invocation, before, response)
 			if err == nil && resolveTargets && real != "" && (len(response.Set) > 0 || len(response.Unset) > 0) {
 				err = validateResolvedTransform(ctx, c, out.invocation, next, real, response)
 			}

@@ -256,12 +256,12 @@ func (s *sandbox) allRecords() []invocationRecord {
 	return records
 }
 
-// Request/delegate assertions must not count the resolver's fixed local probes.
+// Request/delegate assertions must not count fixed resolver or version probes.
 func (s *sandbox) records() []invocationRecord {
 	s.t.Helper()
 	var records []invocationRecord
 	for _, record := range s.allRecords() {
-		if record.Kind != "resolver" {
+		if record.Kind != "resolver" && record.Kind != "version" {
 			records = append(records, record)
 		}
 	}
