@@ -21,7 +21,6 @@ import (
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/logging"
 	"github.com/mkusaka/gthok/internal/model"
-	"github.com/mkusaka/gthok/internal/normalize"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/process"
 	"github.com/mkusaka/gthok/internal/protocol"
@@ -198,7 +197,7 @@ func wrapper(args []string, argv0, via string) int {
 		return execLogged()
 	}
 	inv := invocation(cfg, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured}, true)
-	result := normalize.Normalize(inv)
+	result := normalizeInvocation(cfg, inv)
 	spoolNeeded, stdinSkipped := shouldSpool(cfg, result, env)
 	if spoolNeeded {
 		spool, spoolErr := process.SpoolStdin(os.Stdin, cfg.Runtime.StdinMaxBytes, cfg.Runtime.StdinTimeout.D())
@@ -207,7 +206,7 @@ func wrapper(args []string, argv0, via string) int {
 		} // Replay could not preserve consumed bytes.
 		defer func() { _ = spool.Close() }()
 		opts.Stdin, inv.Stdin = spool, spool.Data()
-		result = normalize.Normalize(inv)
+		result = normalizeInvocation(cfg, inv)
 	}
 	fillTextSizes(&result, cwd)
 	var resolved *model.ResolvedContext
@@ -223,7 +222,7 @@ func wrapper(args []string, argv0, via string) int {
 	defer releaseNested()
 	runner := &hooks.Runner{Hooks: cfg.Hooks, BaseDir: cfg.Dir, Concurrency: cfg.Runtime.HookConcurrency, Env: hookEnv, RealGit: real, Redact: redactor.String, Redactor: redactor, Source: via}
 	ctx, stopHelpers := watchHelpers(helperSignals, len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0)
-	transformed := runTransforms(ctx, cfg, runner, inv, result, real, eventID, via)
+	transformed := runTransforms(ctx, cfg, runner, inv, result, real, eventID, via, cfg.Runtime.ResolveAPI != "never")
 	defer transformed.cleanup()
 	if transformed.denial != nil {
 		caught := stopHelpers()
@@ -400,8 +399,7 @@ func wrapper(args []string, argv0, via string) int {
 // Capture input only when a configured pre-decision can act on it.
 func shouldSpool(c *config.Config, result model.Result, env map[string]string) (spool, skipped bool) {
 	argv := result.Source.Argv
-	needed, _ := normalize.NeedsStdin(argv)
-	if !needed {
+	if !analysisNeedsStdin(argv, os.Stdin) {
 		return false, false
 	}
 	s := policy.Subject{Result: result, Argv: argv, Env: env}

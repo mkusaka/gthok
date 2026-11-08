@@ -1,6 +1,6 @@
 //go:build unix
 
-// Package delegates selects read-only execution replacements and implements the
+// Package delegates selects retry-safe execution replacements and implements the
 // not-handled protocol. Policy, hooks and transforms remain the caller's job.
 package delegates
 
@@ -33,7 +33,7 @@ type Selection struct {
 }
 
 // Select returns only the first definite match, and only when the whole
-// invocation is read-only. A per-operation match cannot hide another write.
+// invocation is retry-safe. Read effects alone do not prove safe fallback.
 func Select(c *config.Config, s policy.Subject) *Selection {
 	if s.Env["GTHOK_NO_DELEGATE"] == "1" || !safe(s.Result) {
 		return nil
@@ -50,23 +50,7 @@ func Select(c *config.Config, s policy.Subject) *Selection {
 }
 
 func safe(r model.Result) bool {
-	if !r.Classification.RetrySafe || !r.Classification.MutationFree || len(r.Errors) > 0 || len(r.Operations) == 0 {
-		return false
-	}
-	switch r.Classification.Level {
-	case model.LevelL1:
-		if r.Classification.Confidence != model.ConfidenceExact {
-			return false
-		}
-	default:
-		return false
-	}
-	for _, op := range r.Operations {
-		if op.Execution != model.ExecutionSkipped && op.Execution != model.ExecutionNotSelected && (op.Effect != model.EffectRead || op.UnknownReason != model.UnknownNone) {
-			return false
-		}
-	}
-	return true
+	return r.Classification.RetrySafe && len(r.Errors) == 0 && len(r.Operations) > 0
 }
 
 // CommandPath searches the effective delegate PATH, not the wrapper's PATH.

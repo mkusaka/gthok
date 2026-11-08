@@ -18,7 +18,6 @@ import (
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/logging"
 	"github.com/mkusaka/gthok/internal/model"
-	"github.com/mkusaka/gthok/internal/normalize"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/process"
 	"github.com/mkusaka/gthok/internal/protocol"
@@ -63,7 +62,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 		}
 	}
 	inv := invocation(c, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured}, resolveTargets)
-	if needed, _ := normalize.NeedsStdin(expandedArgv(inv)); needed {
+	if analysisNeedsStdin(expandedArgv(inv), os.Stdin) {
 		if install.IsTTY(os.Stdin) {
 			inv.Stdin.Status = model.StdinTTY
 		} else {
@@ -77,7 +76,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 			}
 		}
 	}
-	a := &managementAnalysis{config: c, notes: notes, cwd: cwd, env: env, invocation: inv, result: normalize.Normalize(inv), redactor: redact.New(env)}
+	a := &managementAnalysis{config: c, notes: notes, cwd: cwd, env: env, invocation: inv, result: normalizeInvocation(c, inv), redactor: redact.New(env)}
 	a.cleanup = func() {}
 	if transform && len(c.Transforms) > 0 {
 		a.real, _ = realGit(c, env)
@@ -87,7 +86,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 		}
 		runner := &hooks.Runner{BaseDir: c.Dir, Env: append(os.Environ(), "GTHOK_NESTED_TOKEN="+helperEnv["GTHOK_NESTED_TOKEN"]), RealGit: a.real, Redact: a.redactor.String, Redactor: a.redactor, Source: "test"}
 		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-		applied := runTransforms(ctx, c, runner, inv, a.result, a.real, logging.NewInvocationID(), "shim")
+		applied := runTransforms(ctx, c, runner, inv, a.result, a.real, logging.NewInvocationID(), "shim", resolveTargets)
 		cancel()
 		release()
 		if applied.denial != nil {

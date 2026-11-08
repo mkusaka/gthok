@@ -13,11 +13,13 @@ import (
 	"strings"
 
 	"github.com/mkusaka/gthok/internal/config"
+	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/hooks"
 	"github.com/mkusaka/gthok/internal/logging"
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/protocol"
+	"github.com/mkusaka/gthok/internal/resolve"
 	"github.com/mkusaka/gthok/internal/transforms"
 )
 
@@ -34,7 +36,7 @@ type transformedRequest struct {
 
 // Transforms are transactional across the whole chain: fail-open means the
 // original request, not a partially transformed request.
-func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, inv model.Invocation, result model.Result, real, eventID, via string) transformedRequest {
+func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, inv model.Invocation, result model.Result, real, eventID, via string, resolveTargets bool) transformedRequest {
 	out := transformedRequest{invocation: inv, result: result}
 	originalEnv := runner.Env
 	defer func() { runner.Env = originalEnv }()
@@ -58,7 +60,10 @@ func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, 
 		response, execution := runner.Transform(ctx, t, input)
 		out.envEdited = out.envEdited || len(response.Env) > 0
 		if execution.Outcome == protocol.OutcomeOK && (len(response.Set) > 0 || len(response.Unset) > 0 || len(response.Env) > 0) {
-			next, normalized, cleanup, err := transforms.Apply(out.invocation, out.result, response)
+			next, _, cleanup, err := transforms.Apply(out.invocation, out.result, response)
+			if err == nil && resolveTargets && real != "" && (len(response.Set) > 0 || len(response.Unset) > 0) {
+				err = validateResolvedTransform(ctx, c, out.invocation, next, real, response)
+			}
 			if err != nil {
 				cleanup()
 				execution.Outcome = protocol.OutcomeUnsupportedEdit
@@ -70,6 +75,7 @@ func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, 
 					execution.Error = runner.Redact(execution.Error)
 				}
 			} else {
+				normalized := normalizeInvocation(c, next)
 				cleanups = append(cleanups, cleanup)
 				envChanged := false
 				for name, value := range response.Env {
@@ -107,6 +113,23 @@ func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, 
 		out.results = append(out.results, execution)
 	}
 	return out
+}
+
+func validateResolvedTransform(ctx context.Context, c *config.Config, before, after model.Invocation, real string, response protocol.TransformResponse) error {
+	results := []model.Result{normalizeInvocation(c, before), normalizeInvocation(c, after)}
+	for i, inv := range []model.Invocation{before, after} {
+		globals, err := gitargs.Parse(expandedArgv(inv))
+		if err != nil {
+			return err
+		}
+		resolver := resolve.Resolver{Env: inv.Env, Cwd: inv.Cwd, Global: globals.Tokens, RealGit: real, Timeout: c.Runtime.ResolveTimeout.D()}
+		count := len(results[i].Operations)
+		resolver.Fill(ctx, &results[i], nil, false)
+		if len(results[i].Operations) != count {
+			return fmt.Errorf("%w: shared or expanded operation source", transforms.ErrUnsupportedEdit)
+		}
+	}
+	return transforms.Validate(results[0], results[1], response)
 }
 
 func (t *transformedRequest) envChanged() []string {

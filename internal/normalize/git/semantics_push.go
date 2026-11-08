@@ -47,6 +47,8 @@ func rrPush(c *Context, plumbing bool) []model.Operation {
 			rrUnresolved(&base, "target.remote", "recursive submodule pushes require submodule configuration", "git")
 		}
 	}
+	switchEdit(c, &base, "atomic", "atomic")
+	switchEdit(c, &base, "no-verify", "noVerify")
 	base.Parameters["pushOptions"] = rrOptionValues(p, "push-option")
 	rrExplicitExec(&base, p, "receive-pack", "exec")
 	if o, ok := p.Option("signed"); ok && !o.Negated && o.Value != "false" && o.Value != "no" {
@@ -174,6 +176,9 @@ func rrPush(c *Context, plumbing bool) []model.Operation {
 		}
 		if p.Has("dry-run") {
 			op.Effect = model.EffectRead
+		}
+		if len(args) == 1 && len(p.Positionals) == 2 && !p.Has("stdin") {
+			rrRefspecEdit(c, &op, p.Positionals[1])
 		}
 		ops = append(ops, op)
 	}

@@ -108,7 +108,7 @@ func TestAggregation(t *testing.T) {
 }
 
 func TestStdin(t *testing.T) {
-	for _, argv := range [][]string{{"update-ref", "--stdin"}, {"cat-file", "--batch"}, {"fast-import"}, {"credential", "fill"}, {"status", "--", "-F", "-"}, {"commit", "-F", "message.txt"}} {
+	for _, argv := range [][]string{{"update-ref", "--stdin"}, {"cat-file", "--batch"}, {"fast-import"}, {"credential", "fill"}, {"status", "--", "-F", "-"}, {"commit", "-F", "message.txt"}, {"merge", "--file=-", "topic"}, {"hash-object", "--stdin-paths"}} {
 		if yes, _ := NeedsStdin(argv); yes {
 			t.Fatalf("unnecessary or bidirectional protocol read ahead: %q", argv)
 		}
@@ -119,10 +119,8 @@ func TestStdin(t *testing.T) {
 	}{
 		{[]string{"commit", "-F", "-"}, "commit-message"},
 		{[]string{"tag", "-F-", "v1"}, "tag-message"},
-		{[]string{"merge", "--file=-", "topic"}, "merge-message"},
 		{[]string{"notes", "add", "--file=-"}, "notes-message"},
 		{[]string{"hash-object", "--stdin"}, "hash-object"},
-		{[]string{"hash-object", "--stdin-paths"}, "hash-object"},
 		{[]string{"commit", "--pathspec-from-file=-"}, "pathspecs"},
 		{[]string{"update-index", "--index-info"}, "index-paths"},
 		{[]string{"log", "--stdin"}, "revisions"},

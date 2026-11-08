@@ -91,7 +91,7 @@ func TestGitAliasQueryUsesGlobals(t *testing.T) {
 		t.Fatal(err)
 	}
 	aliases := loadGitAliases(real, g, root, env)
-	if aliases["p"] != "push origin" || aliases["inline"] != "status" {
+	if aliases["inline.command"] != "status" {
 		t.Fatalf("aliases: %v", aliases)
 	}
 }

@@ -69,6 +69,25 @@ func rrEditable(c *Context, op *model.Operation, pointer string, arg ParsedArgum
 	op.Editable[strings.TrimPrefix(pointer, "/")] = model.EditLocator{Kind: "positional", ValueType: "string", Spans: []model.ArgSpan{arg.Span}}
 }
 
+func rrRefEdit(c *Context, op *model.Operation, arg ParsedArgument) {
+	rrEditable(c, op, "parameters/ref", arg)
+	if loc, ok := op.Editable["parameters/ref"]; ok {
+		op.Parameters["ref"] = arg.Value
+		loc.Key = []string{"target.refs"}
+		op.Editable["parameters/ref"] = loc
+	}
+}
+
+func rrRefspecEdit(c *Context, op *model.Operation, arg ParsedArgument) {
+	rrEditable(c, op, "parameters/refspec", arg)
+	if loc, ok := op.Editable["parameters/refspec"]; ok {
+		op.Parameters["refspec"] = arg.Value
+		loc.Parameter = "refspecs"
+		loc.Key = []string{"target.refs", "target.revisions"}
+		op.Editable["parameters/refspec"] = loc
+	}
+}
+
 func rrCurrent(op *model.Operation) {
 	op.Target.Refs = model.UnknownSet()
 	rrUnresolved(op, "target.refs", "current branch requires symbolic HEAD resolution", "git")
@@ -190,6 +209,10 @@ func refsBranch(c *Context) []model.Operation {
 			op.Scopes = append(op.Scopes, model.ScopeSubmodule)
 		}
 	}
+	switchEdit(c, &op, "force", "force")
+	if len(p.Positionals) > 0 && (action == "ref.branch.create" || action == "ref.branch.delete" && len(args) == 1 && !p.Has("delete-merged")) {
+		rrRefEdit(c, &op, p.Positionals[0])
+	}
 	return []model.Operation{op}
 }
 
@@ -206,6 +229,7 @@ func refsTag(c *Context) []model.Operation {
 	}
 	op := rrOperation(action, model.ScopeLocalRef)
 	op.Parameters["force"] = p.Has("force")
+	switchEdit(c, &op, "force", "force")
 	if action == "ref.tag.list" {
 		if len(args) == 0 {
 			args = []string{"*"}
@@ -217,6 +241,9 @@ func refsTag(c *Context) []model.Operation {
 		return rrInvalid(op, "tag name required")
 	}
 	if action != "ref.tag.create" {
+		if len(args) == 1 {
+			rrRefEdit(c, &op, p.Positionals[0])
+		}
 		op.Target.Refs = rrSet(rrNames(args, "refs/tags/"), false)
 		if action == "ref.tag.verify" {
 			op.Capabilities = []model.Capability{model.CapabilityExternalExec}
@@ -226,6 +253,7 @@ func refsTag(c *Context) []model.Operation {
 		return []model.Operation{op}
 	}
 	op.Scopes = append(op.Scopes, model.ScopeReflog)
+	rrRefEdit(c, &op, p.Positionals[0])
 	if len(args) > 2 {
 		return rrInvalid(op, "tag and optional object expected")
 	}
@@ -295,7 +323,7 @@ func rrTagMessage(c *Context, op *model.Operation) {
 	}
 	text.Bytes = int64(len(text.Value))
 	op.Texts = &model.Texts{Body: text}
-	if len(spans) > 0 && len(op.Unresolved) == 0 && strings.Join(c.Argv, "\x00") == strings.Join(c.Invocation.Argv, "\x00") {
+	if len(spans) > 0 && (!p.Has("message") || !p.Has("file")) && len(op.Unresolved) == 0 && strings.Join(c.Argv, "\x00") == strings.Join(c.Invocation.Argv, "\x00") {
 		if op.Editable == nil {
 			op.Editable = map[string]model.EditLocator{}
 		}
@@ -316,6 +344,7 @@ func refsSymbolic(c *Context) []model.Operation {
 		return rrInvalid(op, "symbolic-ref expects one name, or name and target")
 	}
 	op.Target.Refs = model.Exact(args[0])
+	rrRefEdit(c, &op, p.Positionals[0])
 	if len(args) == 2 {
 		op.Parameters["newTarget"] = args[1]
 	}
@@ -466,6 +495,7 @@ func refsUpdate(c *Context) []model.Operation {
 		op.Parameters["oldOid"] = args[oldIndex]
 	}
 	rrUpdateDeref(&op, c.Parsed.Has("no-deref"))
+	rrRefEdit(c, &op, c.Parsed.Positionals[0])
 	return []model.Operation{op}
 }
 

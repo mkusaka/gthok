@@ -15,6 +15,7 @@ import (
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize"
 	"github.com/mkusaka/gthok/internal/protocol"
+	"github.com/mkusaka/gthok/internal/registry"
 )
 
 var ErrUnsupportedEdit = errors.New("unsupported edit")
@@ -135,16 +136,22 @@ func Apply(inv model.Invocation, before model.Result, response protocol.Transfor
 					next.Stdin = model.StdinData{Status: model.StdinCaptured, Data: []byte(e.value.(string))}
 					args = []string{"--" + loc.Flag, "-"}
 				default:
-					args, err = nativeArgs(loc, e.value)
+					args, err = nativeArgs(loc, e.value, before.Operations[e.op].Origin.Command)
 					if err != nil {
 						return fail(err)
 					}
 				}
 			}
-			for _, span := range loc.Spans {
-				replacements = append(replacements, replacement{span: span})
+			for i, span := range loc.Spans {
+				r := replacement{span: span}
+				if i == 0 {
+					r.args = args
+				}
+				replacements = append(replacements, r)
 			}
-			appended = append(appended, args...)
+			if len(loc.Spans) == 0 {
+				appended = append(appended, args...)
+			}
 		case "positional":
 			if len(loc.Spans) > 1 {
 				return fail(fmt.Errorf("%w: positional selector has no unique source", ErrUnsupportedEdit))
@@ -230,24 +237,40 @@ func parseEdits(before model.Result, response protocol.TransformResponse) ([]edi
 				loc.Parameter = parts[1]
 			}
 		}
-		if !exists {
-			return nil, fmt.Errorf("%w: %s has no editable source", ErrUnsupportedEdit, path)
-		}
-		e := edit{path: path, op: index, parts: parts, value: response.Set[path], unset: unset[path], loc: loc}
 		if parts[0] == "texts" {
 			if source := text(op.Texts, parts[1]); source != nil && (source.Truncated || source.Status != "") {
 				return nil, fmt.Errorf("%w: text input is incomplete", ErrUnsupportedEdit)
 			}
 		}
+		if !exists || !supportedLocator(op, loc, parts) || before.Source.Alias != "" {
+			return nil, fmt.Errorf("%w: %s has no editable source", ErrUnsupportedEdit, path)
+		}
+		for i, other := range before.Operations {
+			if i == index {
+				continue
+			}
+			for _, otherLoc := range other.Editable {
+				if locatorResource(loc) == locatorResource(otherLoc) {
+					return nil, fmt.Errorf("%w: shared input source", ErrUnsupportedEdit)
+				}
+			}
+		}
+		e := edit{path: path, op: index, parts: parts, value: response.Set[path], unset: unset[path], loc: loc}
 		if parts[0] == "texts" && !e.unset {
-			if _, ok := e.value.(string); !ok {
-				return nil, fmt.Errorf("%w: text value must be a string", ErrUnsupportedEdit)
+			if value, ok := e.value.(string); !ok || strings.ContainsRune(value, '\x00') {
+				return nil, fmt.Errorf("%w: text value must be a string without NUL", ErrUnsupportedEdit)
 			}
 		}
 		if parts[0] == "target" && !e.unset {
 			value, ok := e.value.(string)
 			if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") {
 				return nil, fmt.Errorf("%w: target must be a nonempty string", ErrUnsupportedEdit)
+			}
+		}
+		if loc.Kind == "positional" && !e.unset {
+			value, ok := e.value.(string)
+			if !ok || value == "" || strings.HasPrefix(value, "-") || strings.ContainsAny(value, "\x00\r\n") {
+				return nil, fmt.Errorf("%w: invalid positional value", ErrUnsupportedEdit)
 			}
 		}
 		resource := locatorResource(loc)
@@ -361,7 +384,24 @@ func locatorResource(loc model.EditLocator) string {
 	return loc.Kind + ":" + loc.Flag + ":" + fmt.Sprint(loc.Spans)
 }
 
-func nativeArgs(loc model.EditLocator, value any) ([]string, error) {
+func supportedLocator(op model.Operation, loc model.EditLocator, parts []string) bool {
+	if len(op.Origin.Command) == 0 {
+		return false
+	}
+	command := op.Origin.Command[0]
+	switch parts[0] {
+	case "texts":
+		return (command == "commit" || command == "tag" || command == "merge" || command == "notes") &&
+			(loc.Kind == "argv" || loc.Kind == "file" || loc.Kind == "stdin") && (loc.Flag == "message" || loc.Flag == "file")
+	case "target":
+		return parts[1] == "remote" && (command == "push" || command == "fetch" || command == "pull")
+	case "parameters":
+		return loc.Kind == "positional" && len(loc.Spans) == 1 || loc.Kind == "argv" && loc.ValueType == "bool"
+	}
+	return false
+}
+
+func nativeArgs(loc model.EditLocator, value any, command []string) ([]string, error) {
 	bad := func() ([]string, error) {
 		return nil, fmt.Errorf("%w: invalid --%s value", ErrUnsupportedEdit, loc.Flag)
 	}
@@ -371,7 +411,36 @@ func nativeArgs(loc model.EditLocator, value any) ([]string, error) {
 		if !ok {
 			return bad()
 		}
-		return []string{"--" + loc.Flag + "=" + strconv.FormatBool(v)}, nil
+		if len(command) == 0 {
+			return bad()
+		}
+		grammar := registry.Commands()[command[0]].Grammar
+		for _, sub := range command[1:] {
+			for _, candidate := range grammar.Subcommands {
+				if candidate.Name == sub {
+					grammar = candidate.Grammar
+					break
+				}
+			}
+		}
+		for _, option := range grammar.Options {
+			if option.Long != loc.Flag || option.Arity != "none" {
+				continue
+			}
+			flag := loc.Flag
+			if !v {
+				if !option.Negatable {
+					return bad()
+				}
+				if !strings.HasPrefix(flag, "no-") {
+					flag = "no-" + flag
+				} else {
+					flag = strings.TrimPrefix(flag, "no-")
+				}
+			}
+			return []string{"--" + flag}, nil
+		}
+		return bad()
 	case "stringSlice", "stringArray":
 		var values []string
 		switch v := value.(type) {
@@ -503,6 +572,14 @@ func projection(op model.Operation, editedPaths []edit) semanticProjection {
 		if e.loc.Text != "" {
 			texts[e.loc.Text] = true
 		}
+		for _, field := range e.loc.Key {
+			switch field {
+			case "target.refs":
+				targets["refs"] = true
+			case "target.revisions":
+				targets["revisions"] = true
+			}
+		}
 	}
 	p := semanticProjection{Family: op.Family, Action: op.Action, Effect: op.Effect, Execution: op.Execution, Origin: op.Origin, UnknownReason: op.UnknownReason, Scopes: op.Scopes, Capabilities: op.Capabilities, Coverage: op.Coverage, Evidence: op.Evidence, Detail: op.Detail, Unresolved: op.Unresolved, Target: op.Target, Parameters: make(map[string]any)}
 	for key, value := range op.Parameters {
@@ -518,14 +595,40 @@ func projection(op model.Operation, editedPaths []edit) semanticProjection {
 		}
 	}
 	if targets["remote"] {
-		p.Target.Remote = ""
+		p.Target.Remote, p.Target.RemoteURL, p.Target.PushURL = "", "", ""
+	}
+	if targets["refs"] {
+		p.Target.Refs = nil
+	}
+	if targets["revisions"] {
+		p.Target.Revisions = nil
+	}
+	p.Unresolved = nil
+	for _, unresolved := range op.Unresolved {
+		field, target := strings.CutPrefix(unresolved.Field, "target.")
+		if !target || !targets[field] {
+			p.Unresolved = append(p.Unresolved, unresolved)
+		}
 	}
 	return p
+}
+
+// Validate checks the same invariants after local resolution. Only locator-
+// declared alternate views and derived targets may differ.
+func Validate(before, after model.Result, response protocol.TransformResponse) error {
+	edits, err := parseEdits(before, response)
+	if err != nil {
+		return err
+	}
+	return roundTrip(before, after, edits)
 }
 
 func roundTrip(before, after model.Result, edits []edit) error {
 	bad := func() error {
 		return fmt.Errorf("%w: edited request changed an unedited semantic value", ErrUnsupportedEdit)
+	}
+	if !reflect.DeepEqual(before.Errors, after.Errors) || before.Registry != after.Registry {
+		return bad()
 	}
 	if before.Classification.Level != after.Classification.Level || before.Classification.Confidence != after.Classification.Confidence || before.Classification.MutationFree != after.Classification.MutationFree || before.Classification.RetrySafe != after.Classification.RetrySafe || before.Classification.Coverage != after.Classification.Coverage || len(before.Operations) != len(after.Operations) {
 		return bad()

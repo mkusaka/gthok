@@ -19,6 +19,7 @@ import (
 	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/model"
+	"github.com/mkusaka/gthok/internal/normalize"
 	native "github.com/mkusaka/gthok/internal/normalize/git"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/process"
@@ -109,10 +110,117 @@ func invocation(c *config.Config, args []string, env map[string]string, cwd stri
 	return inv
 }
 
+// Config queries already applied root alias overrides in record order. Do not
+// apply them a second time, especially after a dashed executable shadowed one.
+func aliasAnalysisArgv(argv []string) []string {
+	g, _ := gitargs.Parse(argv)
+	out := append([]string(nil), argv...)
+	for i := 0; i < len(g.Tokens); i++ {
+		key, value, attached := strings.Cut(g.Tokens[i], "=")
+		switch key {
+		case "-c", "--config-env":
+			if !attached {
+				i++
+				value = g.Tokens[i]
+			}
+			if strings.HasPrefix(strings.ToLower(value), "alias.") {
+				value = "gthok." + value[len("alias."):]
+				if attached {
+					value = key + "=" + value
+				}
+				out[i] = value
+			}
+		case "-C", "--git-dir", "--work-tree", "--namespace", "--attr-source", "--shallow-file":
+			if !attached {
+				i++
+			}
+		}
+	}
+	return out
+}
+
+func normalizeInvocation(c *config.Config, inv model.Invocation) model.Result {
+	analysis := inv
+	if inv.Aliases != nil {
+		analysis.Argv = aliasAnalysisArgv(inv.Argv)
+	}
+	result := normalize.Normalize(analysis)
+	globals, _ := gitargs.Parse(inv.Argv)
+	if inv.Aliases != nil && len(result.Source.Argv) >= len(globals.Tokens) && len(result.Source.Global) >= len(globals.Tokens) {
+		copy(result.Source.Argv, globals.Tokens)
+		copy(result.Source.Global, globals.Tokens)
+	}
+	if native.StdinProtocol(result.Source.Argv) && inv.Stdin.Status != model.StdinCaptured {
+		for i := range result.Operations {
+			op := &result.Operations[i]
+			op.Effect, op.Coverage, op.UnknownReason = model.EffectUnknown, model.CoverageOpaque, model.UnknownInputUnavailable
+		}
+		result.Classification.MutationFree, result.Classification.RetrySafe = false, false
+		result.Classification.Coverage, result.Classification.Resolution = model.CoverageOpaque, model.ResolutionUnresolved
+	}
+	if inv.Aliases == nil {
+		return result
+	}
+	candidates := [][]string{inv.Argv, result.Source.Argv}
+	introducedAlias := false
+	if result.Source.Alias != "" && len(result.Source.Global) > len(globals.Tokens) {
+		introduced := result.Source.Global[len(globals.Tokens):]
+		g, _ := gitargs.Parse(introduced)
+		for _, value := range g.ConfigParams {
+			key, _, _ := strings.Cut(value, "=")
+			if !strings.HasPrefix(strings.ToLower(key), "alias.") {
+				continue
+			}
+			introducedAlias = true
+			name := key[len("alias."):]
+			if strings.HasSuffix(name, ".command") {
+				name = strings.TrimSuffix(name, ".command")
+			} else {
+				name = strings.ToLower(name)
+			}
+			if name == "" {
+				name = "command"
+			}
+			candidates = append(candidates, append(append([]string(nil), result.Source.Global...), name))
+		}
+	}
+	for _, argv := range candidates {
+		g, err := gitargs.Parse(argv)
+		if err != nil || g.Command == "" || native.IsBuiltinCommand(g.Command) {
+			continue
+		}
+		real, err := realGit(c, inv.Env)
+		if err != nil || !dashedExecutable(g.Command, gitExecPath(real, g.Tokens, inv.Cwd, inv.Env), g.Dir(inv.Cwd), inv.Env["PATH"]) {
+			continue
+		}
+		unknown := model.NewUnknown(model.LevelL1, model.UnknownExternal, "external Git executable")
+		unknown.Registry, unknown.Source = result.Registry, model.Source{Kind: "command", Argv: argv, Global: g.Tokens}
+		unknown.Operations[0].Origin.Command = []string{g.Command}
+		return unknown
+	}
+	if introducedAlias {
+		// shortcut: alias-provided overrides are conservative until the normalizer supports per-hop executable lookup.
+		unknown := model.NewUnknown(model.LevelL1, model.UnknownParseError, "alias-provided alias overrides require per-hop executable lookup")
+		unknown.Registry, unknown.Source = result.Registry, result.Source
+		unknown.Classification.Coverage, unknown.Operations[0].Coverage = model.CoverageConservative, model.CoverageConservative
+		unknown.Operations[0].Origin.Command = []string{globals.Command}
+		return unknown
+	}
+	return result
+}
+
 func expandedArgv(inv model.Invocation) []string {
-	args, _, reason := native.ExpandAlias(inv.Argv, inv.Aliases)
+	analysis := inv.Argv
+	if inv.Aliases != nil {
+		analysis = aliasAnalysisArgv(analysis)
+	}
+	args, _, reason := native.ExpandAlias(analysis, inv.Aliases)
 	if reason != model.UnknownNone {
 		return inv.Argv
+	}
+	g, _ := gitargs.Parse(inv.Argv)
+	if len(args) >= len(g.Tokens) {
+		copy(args, g.Tokens)
 	}
 	return args
 }

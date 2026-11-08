@@ -26,7 +26,7 @@ func whSingleRevisionEdit(c *Context, op *model.Operation) {
 		op.Editable = map[string]model.EditLocator{}
 	}
 	op.Parameters["revision"] = c.Parsed.Positionals[0].Value
-	op.Editable["parameters/revision"] = model.EditLocator{Kind: "positional", Parameter: "revision", ValueType: "string", Spans: []model.ArgSpan{c.Parsed.Positionals[0].Span}}
+	op.Editable["parameters/revision"] = model.EditLocator{Kind: "positional", Parameter: "revision", ValueType: "string", Key: []string{"target.revisions"}, Spans: []model.ArgSpan{c.Parsed.Positionals[0].Span}}
 }
 
 // Messages retain their source, not a fabricated final editor/reused message.
@@ -208,6 +208,9 @@ func whCommit(c *Context) []model.Operation {
 	if p.Has("interactive") || p.Has("patch") {
 		whInteractive(&op)
 	}
+	if op.Coverage == model.CoverageSemantic {
+		messageSwitchEdits(c, &op)
+	}
 	return []model.Operation{op}
 }
 
@@ -270,6 +273,9 @@ func whMerge(c *Context) []model.Operation {
 	}
 	if mode != "quit" {
 		whFilters(&op)
+	}
+	if op.Coverage == model.CoverageSemantic {
+		messageSwitchEdits(c, &op)
 	}
 	return []model.Operation{op}
 }

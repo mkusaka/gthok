@@ -92,6 +92,9 @@ func remoteFetch(c *Context) []model.Operation {
 			base.Parameters["tags"] = false
 		}
 	}
+	for _, flag := range []string{"atomic", "append", "force"} {
+		switchEdit(c, &base, flag, flag)
+	}
 	base.Parameters["refmap"], base.Parameters["serverOptions"] = rrOptionValues(p, "refmap"), rrOptionValues(p, "server-option")
 	base.Parameters["shallowExclude"] = rrOptionValues(p, "shallow-exclude")
 	rrExplicitExec(&base, p, "upload-pack")
@@ -158,6 +161,9 @@ func remoteFetch(c *Context) []model.Operation {
 		rrUnresolved(&op, "target.refs", "fetch refmaps, tags and pruning require configuration and advertised remote refs", "git")
 		if len(remotes) == 1 && len(p.Positionals) > 0 {
 			rrEditable(c, &op, "/target/remote", p.Positionals[0])
+			if len(refspecs) == 1 && len(p.Positionals) == 2 && !p.Has("stdin") {
+				rrRefspecEdit(c, &op, p.Positionals[1])
+			}
 		}
 		ops = append(ops, op)
 	}

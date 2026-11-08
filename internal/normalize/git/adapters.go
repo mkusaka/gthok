@@ -5,8 +5,35 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/registry"
 )
+
+// Only switches with a one-to-one semantic parameter get write-back locators.
+func messageSwitchEdits(c *Context, op *model.Operation) {
+	for _, pair := range [][2]string{{"signoff", "signoff"}, {"no-verify", "noVerify"}} {
+		switchEdit(c, op, pair[0], pair[1])
+	}
+}
+
+func switchEdit(c *Context, op *model.Operation, flag, parameter string) {
+	if strings.Join(c.Argv, "\x00") != strings.Join(c.Invocation.Argv, "\x00") {
+		return
+	}
+	var spans []model.ArgSpan
+	for _, o := range c.Parsed.Options {
+		if o.Name == flag {
+			spans = append(spans, o.Span)
+		}
+	}
+	if _, exists := op.Parameters[parameter]; !exists {
+		op.Parameters[parameter] = c.Parsed.Has(flag)
+	}
+	if op.Editable == nil {
+		op.Editable = map[string]model.EditLocator{}
+	}
+	op.Editable["parameters/"+parameter] = model.EditLocator{Kind: "argv", Flag: flag, Parameter: parameter, ValueType: "bool", Spans: spans}
+}
 
 func combinedCacheinfo(value string) bool {
 	parts := strings.SplitN(value, ",", 3)
