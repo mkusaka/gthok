@@ -161,30 +161,9 @@ func normalizeInvocation(c *config.Config, inv model.Invocation) model.Result {
 	if inv.Aliases == nil {
 		return result
 	}
-	candidates := [][]string{inv.Argv, result.Source.Argv}
-	introducedAlias := false
-	if result.Source.Alias != "" && len(result.Source.Global) > len(globals.Tokens) {
-		introduced := result.Source.Global[len(globals.Tokens):]
-		g, _ := gitargs.Parse(introduced)
-		for _, value := range g.ConfigParams {
-			key, _, _ := strings.Cut(value, "=")
-			if !strings.HasPrefix(strings.ToLower(key), "alias.") {
-				continue
-			}
-			introducedAlias = true
-			name := key[len("alias."):]
-			if strings.HasSuffix(name, ".command") {
-				name = strings.TrimSuffix(name, ".command")
-			} else {
-				name = strings.ToLower(name)
-			}
-			if name == "" {
-				name = "command"
-			}
-			candidates = append(candidates, append(append([]string(nil), result.Source.Global...), name))
-		}
-	}
-	for _, argv := range candidates {
+	hops, _, _ := native.ExpandAliasHops(analysis.Argv, inv.Aliases, inv.Env)
+	for _, argv := range hops {
+		copy(argv, globals.Tokens)
 		g, err := gitargs.Parse(argv)
 		if err != nil || g.Command == "" || native.IsBuiltinCommand(g.Command) {
 			continue
@@ -196,14 +175,6 @@ func normalizeInvocation(c *config.Config, inv model.Invocation) model.Result {
 		unknown := model.NewUnknown(model.LevelL1, model.UnknownExternal, "external Git executable")
 		unknown.Registry, unknown.Source = result.Registry, model.Source{Kind: "command", Argv: argv, Global: g.Tokens}
 		unknown.Operations[0].Origin.Command = []string{g.Command}
-		return unknown
-	}
-	if introducedAlias {
-		// shortcut: alias-provided overrides are conservative until the normalizer supports per-hop executable lookup.
-		unknown := model.NewUnknown(model.LevelL1, model.UnknownParseError, "alias-provided alias overrides require per-hop executable lookup")
-		unknown.Registry, unknown.Source = result.Registry, result.Source
-		unknown.Classification.Coverage, unknown.Operations[0].Coverage = model.CoverageConservative, model.CoverageConservative
-		unknown.Operations[0].Origin.Command = []string{globals.Command}
 		return unknown
 	}
 	return result

@@ -53,16 +53,16 @@ func TestBareContextReplaysRootOptions(t *testing.T) {
 	}
 }
 
-func TestAliasProvidedOverrideRemainsConservative(t *testing.T) {
+func TestAliasProvidedOverrideWithoutExecutable(t *testing.T) {
 	real, root, env := gitContextFixture(t)
 	contextGit(t, real, root, env, "init", "-q")
-	contextGit(t, real, root, env, "config", "alias.start", "-c alias.inline=rev-parse inline HEAD")
+	contextGit(t, real, root, env, "config", "alias.lg2", "-c alias.x=status x")
 	c := &config.Config{Runtime: config.Runtime{RealGit: real}}
 	c.ApplyDefaults()
-	inv := invocation(c, []string{"start"}, env, root, model.StdinData{}, true)
+	inv := invocation(c, []string{"lg2"}, env, root, model.StdinData{}, true)
 	r := normalizeInvocation(c, inv)
-	if r.Classification.RetrySafe || r.Classification.Coverage != model.CoverageConservative || r.Operations[0].UnknownReason != model.UnknownParseError {
-		t.Fatalf("unverified inner alias became retry-safe: %+v", r)
+	if r.Operations[0].Action != "status.show" || r.Classification.Coverage != model.CoverageSemantic || r.Operations[0].UnknownReason != model.UnknownNone || r.Source.Alias != "lg2" {
+		t.Fatalf("inner alias was not expanded: %+v", r)
 	}
 }
 

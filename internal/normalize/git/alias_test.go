@@ -106,6 +106,95 @@ func TestAliasGlobalsAndSource(t *testing.T) {
 	}
 }
 
+func TestExpandAliasHops(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		argv    []string
+		aliases map[string]string
+		env     map[string]string
+		want    [][]string
+		alias   string
+		reason  model.UnknownReason
+	}{
+		{
+			name: "no command", want: [][]string{nil},
+		},
+		{
+			name: "builtin precedes alias", argv: []string{"status"}, aliases: map[string]string{"status": "push"},
+			want: [][]string{{"status"}},
+		},
+		{
+			name: "ordinary intermediate aliases", argv: []string{"a", "--short"},
+			aliases: map[string]string{"a": "b", "b": "c", "c": "status"}, alias: "a",
+			want: [][]string{{"a", "--short"}, {"b", "--short"}, {"c", "--short"}, {"status", "--short"}},
+		},
+		{
+			name: "alias defines alias", argv: []string{"lg2"},
+			aliases: map[string]string{"lg2": "-c alias.x=status x", "x": "push"}, alias: "lg2",
+			want: [][]string{{"lg2"}, {"-c", "alias.x=status", "x"}, {"-c", "alias.x=status", "status"}},
+		},
+		{
+			name: "per-hop globals", argv: []string{"-C", "repo", "a", "--short"},
+			aliases: map[string]string{"a": "--exec-path=one b", "b": "-C '' --exec-path=two status"}, alias: "a",
+			want: [][]string{
+				{"-C", "repo", "a", "--short"},
+				{"-C", "repo", "--exec-path=one", "b", "--short"},
+				{"-C", "repo", "--exec-path=one", "-C", "", "--exec-path=two", "status", "--short"},
+			},
+		},
+		{
+			name: "config-env", argv: []string{"a"},
+			aliases: map[string]string{"a": "--config-env=alias.x=ALIAS x"}, env: map[string]string{"ALIAS": "status"}, alias: "a",
+			want: [][]string{{"a"}, {"--config-env=alias.x=ALIAS", "x"}, {"--config-env=alias.x=ALIAS", "status"}},
+		},
+		{
+			name: "shell alias", argv: []string{"a"}, aliases: map[string]string{"a": "b", "b": "!echo hi"},
+			want: [][]string{{"a"}, {"b"}}, alias: "a", reason: model.UnknownShellAlias,
+		},
+		{
+			name: "loop", argv: []string{"a"}, aliases: map[string]string{"a": "b", "b": "a"},
+			want: [][]string{{"a"}, {"b"}, {"a"}}, alias: "a", reason: model.UnknownAliasLoop,
+		},
+		{
+			name: "ambiguity", argv: []string{"a"}, aliases: map[string]string{"a": "b", "b": "status", "b.command": "push"},
+			want: [][]string{{"a"}, {"b"}}, alias: "a", reason: model.UnknownParseError,
+		},
+		{
+			name: "invalid expansion", argv: []string{"a"}, aliases: map[string]string{"a": "b", "b": "-C other status"},
+			want: [][]string{{"a"}, {"b"}}, alias: "a", reason: model.UnknownParseError,
+		},
+		{
+			name: "early option", argv: []string{"a"}, aliases: map[string]string{"a": "--exec-path"},
+			want: [][]string{{"a"}, {"--exec-path"}}, alias: "a",
+		},
+		{
+			name: "alias help is not rewritten", argv: []string{"a"}, aliases: map[string]string{"a": "--help"},
+			want: [][]string{{"a"}, {"--help"}}, alias: "a", reason: model.UnknownCommand,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			original := append([]string(nil), tt.argv...)
+			hops, alias, reason := ExpandAliasHops(tt.argv, tt.aliases, tt.env)
+			if !reflect.DeepEqual(hops, tt.want) || alias != tt.alias || reason != tt.reason {
+				t.Fatalf("hops=%q alias=%q reason=%s, want %q %q %s", hops, alias, reason, tt.want, tt.alias, tt.reason)
+			}
+			expanded, oldAlias, oldReason := expandAlias(tt.argv, tt.aliases, tt.env)
+			if !reflect.DeepEqual(expanded, hops[len(hops)-1]) || oldAlias != alias || oldReason != reason {
+				t.Fatalf("expansion changed: %q %q %s", expanded, oldAlias, oldReason)
+			}
+			if len(hops) > 1 {
+				hops[len(hops)-1][0] = "changed"
+				if !reflect.DeepEqual(hops[:len(hops)-1], tt.want[:len(tt.want)-1]) {
+					t.Fatalf("hops share mutable argv: %q", hops)
+				}
+			}
+			if !reflect.DeepEqual(tt.argv, original) {
+				t.Fatalf("input changed: %q, want %q", tt.argv, original)
+			}
+		})
+	}
+}
+
 func TestAliasesAgainstGit(t *testing.T) {
 	git, err := exec.LookPath("git")
 	if err != nil {
