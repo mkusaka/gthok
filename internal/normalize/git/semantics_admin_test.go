@@ -29,7 +29,15 @@ func TestT7cWorktreeAdmin(t *testing.T) {
 		{"repair ../topic", "repair", model.EffectWrite, []model.Scope{model.ScopeWorktreeAdmin}},
 	} {
 		t.Run(tt.args, func(t *testing.T) {
-			r, op := adminTestOperation(t, append([]string{"worktree"}, strings.Fields(tt.args)...)...)
+			r := Normalize(model.Invocation{Argv: append([]string{"worktree"}, strings.Fields(tt.args)...)})
+			count := 1
+			if tt.args == "add -b topic ../topic HEAD" {
+				count = 2
+			}
+			if len(r.Errors) != 0 || len(r.Operations) != count {
+				t.Fatal(r)
+			}
+			op := r.Operations[0]
 			if op.Family != "worktree.admin" || op.Action != "worktree.admin."+tt.action || op.Effect != tt.effect || !reflect.DeepEqual(op.Scopes, tt.scopes) || op.Coverage != model.CoverageSemantic || !strings.HasPrefix(op.Origin.Source, "builtin/worktree.c:") {
 				t.Fatal(op)
 			}
@@ -44,7 +52,11 @@ func TestT7cWorktreeAdmin(t *testing.T) {
 			}
 		})
 	}
-	_, op := adminTestOperation(t, "worktree", "add", "--no-checkout", "-Btopic", "--", "-directory", "HEAD")
+	r := Normalize(model.Invocation{Argv: []string{"worktree", "add", "--no-checkout", "-Btopic", "--", "-directory", "HEAD"}})
+	if len(r.Operations) != 2 {
+		t.Fatal(r)
+	}
+	op := r.Operations[0]
 	if op.Parameters["checkout"] != false || op.Parameters["resetBranch"] != true || slices.Contains(op.Capabilities, model.CapabilityExternalExec) || !reflect.DeepEqual(op.Target.Paths, model.Exact("-directory")) {
 		t.Fatal(op)
 	}

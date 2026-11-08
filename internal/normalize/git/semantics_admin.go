@@ -211,6 +211,20 @@ func worktreeAdmin(c *Context) []model.Operation {
 		if !adminDisabled(p, "checkout") {
 			adminExternal(&op, "parameters.filters", "worktree checkout may run configured content filters")
 		}
+		if branch != "" {
+			action := "ref.create"
+			if op.Parameters["resetBranch"] == true {
+				action = "ref.update"
+			}
+			ref := rrOperation(action, model.ScopeLocalRef, model.ScopeReflog, model.ScopeConfig)
+			ref.Origin.Mode = "add"
+			ref.Target.Refs, ref.Target.Revisions = op.Target.Refs, op.Target.Revisions
+			ref.Parameters["refKind"], ref.Parameters["force"] = "branch", op.Parameters["resetBranch"]
+			if action == "ref.update" {
+				rrMaybeCreate(&ref)
+			}
+			return []model.Operation{op, ref}
+		}
 	case "move", "remove":
 		op.Scopes = append(op.Scopes, model.ScopeWorktree)
 	}

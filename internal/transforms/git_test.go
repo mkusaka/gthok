@@ -83,7 +83,7 @@ func TestGitPositionalAdapters(t *testing.T) {
 		{[]string{"branch", "-D", "topic"}, "parameters/ref", "other"},
 		{[]string{"tag", "topic"}, "parameters/ref", "other"},
 		{[]string{"update-ref", "--no-deref", "-d", "refs/heads/topic"}, "parameters/ref", "refs/heads/other"},
-		{[]string{"symbolic-ref", "HEAD", "refs/heads/topic"}, "parameters/ref", "refs/heads/other"},
+		{[]string{"symbolic-ref", "refs/heads/alias", "refs/heads/topic"}, "parameters/ref", "refs/heads/other"},
 		{[]string{"push", "origin", "HEAD:refs/heads/main"}, "parameters/refspec", "HEAD:refs/heads/other"},
 		{[]string{"fetch", "origin", "refs/heads/main:refs/remotes/origin/main"}, "parameters/refspec", "refs/heads/other:refs/remotes/origin/other"},
 		{[]string{"merge", "--no-edit", "topic"}, "parameters/revision", "other"},
@@ -113,8 +113,8 @@ func TestGitBooleanSwitchAdapters(t *testing.T) {
 		{[]string{"commit", "-sm", "message"}, "signoff", false, "--no-signoff"},
 		{[]string{"commit", "-m", "message"}, "noVerify", true, "--no-verify"},
 		{[]string{"commit", "-nm", "message"}, "noVerify", false, "--verify"},
-		{[]string{"tag", "topic"}, "force", true, "--force"},
-		{[]string{"branch", "--force", "topic"}, "force", false, "--no-force"},
+		{[]string{"tag", "-d", "topic"}, "force", true, "--force"},
+		{[]string{"branch", "--force", "-d", "topic"}, "force", false, "--no-force"},
 		{[]string{"push", "origin", "HEAD:refs/heads/main"}, "atomic", true, "--atomic"},
 		{[]string{"push", "--no-verify", "origin", "HEAD:refs/heads/main"}, "noVerify", false, "--verify"},
 		{[]string{"fetch", "origin", "main"}, "append", true, "--append"},
@@ -129,6 +129,24 @@ func TestGitBooleanSwitchAdapters(t *testing.T) {
 	}
 	if _, err := nativeArgs(model.EditLocator{Flag: "verify", ValueType: "bool"}, false, []string{"tag"}); !errors.Is(err, ErrUnsupportedEdit) {
 		t.Fatal("negated a non-negatable registry switch", err)
+	}
+}
+
+func TestGitRefForceCannotChangeCanonicalAction(t *testing.T) {
+	for _, tc := range []struct {
+		argv  []string
+		force bool
+	}{
+		{[]string{"tag", "topic"}, true},
+		{[]string{"branch", "--force", "topic"}, false},
+	} {
+		inv := model.Invocation{Argv: tc.argv}
+		before := normalize.Normalize(inv)
+		next, after, cleanup, err := Apply(inv, before, protocol.TransformResponse{SchemaVersion: 1, Set: map[string]any{"/operations/0/parameters/force": tc.force}})
+		cleanup()
+		if !errors.Is(err, ErrUnsupportedEdit) || !reflect.DeepEqual(next.Argv, inv.Argv) || !reflect.DeepEqual(after, before) {
+			t.Fatalf("accepted action-changing force edit %q: %v", tc.argv, err)
+		}
 	}
 }
 
@@ -149,6 +167,7 @@ func TestGitUnsafeAdaptersRejected(t *testing.T) {
 		{[]string{"push", "origin", "HEAD:refs/heads/main"}, "target/remote", "--mirror"},
 		{[]string{"branch", "topic"}, "parameters/ref", "--delete"},
 		{[]string{"remote", "remove", "origin"}, "target/remote", "other"},
+		{[]string{"symbolic-ref", "HEAD", "refs/heads/topic"}, "parameters/ref", "refs/heads/other"},
 	} {
 		inv := model.Invocation{Argv: tc.argv, ReadFile: func(string) ([]byte, error) { return []byte("old"), nil }}
 		before := normalize.Normalize(inv)

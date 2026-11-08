@@ -18,7 +18,7 @@ type Spec struct {
 
 var curated = func() map[string]Spec {
 	out := make(map[string]Spec)
-	for _, action := range []string{"remote.push.update", "remote.push.delete", "remote.push.mirror", "ref.branch.create", "ref.branch.delete", "ref.branch.list", "ref.update", "ref.delete", "worktree.reset.hard", "worktree.clean", "history.commit.create", "history.commit.amend", "config.set", "config.get", "status.show", "git.help.read", "git.version.read", "git.info.read", "unknown"} {
+	for _, action := range []string{"remote.push.update", "remote.push.delete", "remote.push.mirror", "ref.branch.list", "ref.create", "ref.update", "ref.delete", "ref.rename", "worktree.reset.hard", "worktree.clean", "history.commit.create", "history.commit.amend", "config.set", "config.get", "status.show", "git.help.read", "git.version.read", "git.info.read", "unknown"} {
 		family := action
 		if i := strings.LastIndex(action, "."); i >= 0 {
 			family = action[:i]

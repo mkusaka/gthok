@@ -253,6 +253,12 @@
               "complete": true
             }
           }
+        },
+        {
+          "family": "ref",
+          "action": "ref.create",
+          "effect": "write",
+          "parameters": {"refKind": "branch", "force": false}
         }
       ]
     }

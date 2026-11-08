@@ -1,5 +1,18 @@
 [
   {
+    "name": "branch-delete-shares-ref-delete-action",
+    "argv": ["branch", "-D", "x"],
+    "want": {
+      "operations": [{
+        "family": "ref",
+        "action": "ref.delete",
+        "effect": "write",
+        "parameters": {"refKind": "branch", "force": true},
+        "target": {"refs": {"kind": "exact", "values": ["refs/heads/x"], "complete": true}}
+      }]
+    }
+  },
+  {
     "name": "list",
     "argv": [
       "branch"
@@ -58,10 +71,12 @@
     "want": {
       "operations": [
         {
-          "action": "ref.branch.create",
+          "family": "ref",
+          "action": "ref.create",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
+            "refKind": "branch",
             "force": false
           },
           "target": {
@@ -87,10 +102,12 @@
     "want": {
       "operations": [
         {
-          "action": "ref.branch.create",
+          "family": "ref",
+          "action": "ref.update",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
+            "refKind": "branch",
             "force": true
           }
         }
@@ -108,7 +125,7 @@
     "want": {
       "operations": [
         {
-          "action": "ref.branch.rename",
+          "action": "ref.rename",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
@@ -131,7 +148,7 @@
     "want": {
       "operations": [
         {
-          "action": "ref.branch.copy",
+          "action": "ref.create",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
@@ -207,10 +224,11 @@
     "want": {
       "operations": [
         {
-          "action": "ref.tag.create",
+          "action": "ref.create",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
+            "refKind": "tag",
             "annotated": false
           },
           "target": {
@@ -236,10 +254,11 @@
     "want": {
       "operations": [
         {
-          "action": "ref.tag.create",
+          "action": "ref.create",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
+            "refKind": "tag",
             "annotated": true
           }
         }
@@ -274,10 +293,11 @@
     "want": {
       "operations": [
         {
-          "action": "ref.tag.create",
+          "action": "ref.create",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
+            "refKind": "tag",
             "force": false
           }
         }
@@ -388,7 +408,7 @@
     "want": {
       "operations": [
         {
-          "action": "ref.symbolic.set",
+          "action": "ref.update",
           "effect": "write",
           "coverage": "semantic",
           "parameters": {
@@ -408,7 +428,7 @@
     "want": {
       "operations": [
         {
-          "action": "ref.symbolic.delete",
+          "action": "ref.delete",
           "effect": "write",
           "coverage": "semantic"
         }
@@ -450,7 +470,7 @@
           "coverage": "semantic"
         },
         {
-          "action": "ref.update",
+          "action": "ref.create",
           "coverage": "semantic"
         },
         {

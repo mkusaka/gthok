@@ -24,7 +24,11 @@ type whCase struct {
 func whCheckCase(t *testing.T, tc whCase) model.Operation {
 	t.Helper()
 	r := Normalize(model.Invocation{Argv: tc.args})
-	if len(r.Operations) != 1 {
+	count := 1
+	if tc.action == "worktree.checkout.create" || tc.action == "worktree.checkout.reset" || tc.action == "worktree.switch.create" || tc.action == "worktree.switch.reset" {
+		count = 2
+	}
+	if len(r.Operations) != count {
 		t.Fatalf("%q operations: %+v", tc.args, r)
 	}
 	op := r.Operations[0]

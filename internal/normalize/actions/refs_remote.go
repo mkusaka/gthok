@@ -4,10 +4,8 @@ import "github.com/mkusaka/gthok/internal/model"
 
 func init() {
 	for family, modes := range map[string][]string{
-		"ref.branch":      {"create", "delete", "rename", "copy", "upstream", "description"},
-		"ref.tag":         {"create", "delete"},
-		"ref":             {"update", "delete", "pack"},
-		"ref.symbolic":    {"set", "delete"},
+		"ref.branch":      {"upstream", "description"},
+		"ref":             {"create", "update", "delete", "rename", "pack"},
 		"ref.reflog":      {"expire", "delete", "drop", "write"},
 		"ref.replace":     {"create", "delete", "edit", "graft", "convert"},
 		"ref.transaction": {"prepare", "commit"},

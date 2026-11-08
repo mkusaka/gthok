@@ -88,6 +88,21 @@ func rrRefspecEdit(c *Context, op *model.Operation, arg ParsedArgument) {
 	}
 }
 
+func rrRefKind(ref string) string {
+	switch {
+	case strings.HasPrefix(ref, "refs/heads/"):
+		return "branch"
+	case strings.HasPrefix(ref, "refs/tags/"):
+		return "tag"
+	default:
+		return "other"
+	}
+}
+
+func rrMaybeCreate(op *model.Operation) {
+	rrUnresolved(op, "action", "reference existence determines whether this creates or updates a ref", "git")
+}
+
 func rrCurrent(op *model.Operation) {
 	op.Target.Refs = model.UnknownSet()
 	rrUnresolved(op, "target.refs", "current branch requires symbolic HEAD resolution", "git")
@@ -107,23 +122,31 @@ func rrFilters(p ParsedCommand) bool {
 
 func refsBranch(c *Context) []model.Operation {
 	p, args := c.Parsed, c.Parsed.Values()
-	action := "ref.branch.create"
+	mode, action := "create", "ref.create"
+	force := p.Has("force") || p.Has("D") || p.Has("M") || p.Has("C")
 	switch {
 	case p.Has("delete") || p.Has("D") || p.Has("delete-merged"):
-		action = "ref.branch.delete"
+		mode, action = "delete", "ref.delete"
 	case p.Has("move") || p.Has("M"):
-		action = "ref.branch.rename"
+		mode, action = "rename", "ref.rename"
 	case p.Has("copy") || p.Has("C"):
-		action = "ref.branch.copy"
+		mode = "copy"
 	case p.Has("set-upstream-to") || p.Has("unset-upstream"):
-		action = "ref.branch.upstream"
+		mode, action = "upstream", "ref.branch.upstream"
 	case p.Has("edit-description"):
-		action = "ref.branch.description"
+		mode, action = "description", "ref.branch.description"
 	case p.Has("list") || p.Has("show-current") || rrFilters(p) || len(args) == 0:
-		action = "ref.branch.list"
+		mode, action = "list", "ref.branch.list"
+	}
+	if force && action == "ref.create" {
+		action = "ref.update"
 	}
 	op := rrOperation(action, model.ScopeLocalRef)
-	op.Parameters["force"] = p.Has("force") || p.Has("D") || p.Has("M") || p.Has("C")
+	op.Origin.Mode = mode
+	op.Parameters["force"], op.Parameters["refKind"] = force, "branch"
+	if action == "ref.update" {
+		rrMaybeCreate(&op)
+	}
 	prefix, allBranches := "refs/heads/", false
 	for _, o := range p.Options {
 		switch o.Name {
@@ -133,8 +156,11 @@ func refsBranch(c *Context) []model.Operation {
 			prefix, allBranches = "refs/heads/", true
 		}
 	}
-	switch action {
-	case "ref.branch.list":
+	if prefix == "refs/remotes/" {
+		op.Parameters["refKind"] = "other"
+	}
+	switch mode {
+	case "list":
 		if p.Has("show-current") {
 			rrCurrent(&op)
 		} else if len(args) > 0 {
@@ -147,7 +173,7 @@ func refsBranch(c *Context) []model.Operation {
 		} else {
 			op.Target.Refs = rrSet([]string{prefix + "*"}, true)
 		}
-	case "ref.branch.upstream", "ref.branch.description":
+	case "upstream", "description":
 		op.Scopes = []model.Scope{model.ScopeConfig}
 		if len(args) > 1 {
 			return rrInvalid(op, "one branch name expected")
@@ -166,20 +192,27 @@ func refsBranch(c *Context) []model.Operation {
 			op.Capabilities = []model.Capability{model.CapabilityEditor}
 			rrUnresolved(&op, "texts.body", "branch description will be edited", "editor")
 		}
-	case "ref.branch.rename", "ref.branch.copy":
+	case "rename", "copy":
 		op.Scopes = append(op.Scopes, model.ScopeConfig, model.ScopeReflog)
 		if len(args) < 1 || len(args) > 2 {
 			return rrInvalid(op, "one or two branch names expected")
 		}
 		op.Parameters["destination"] = args[len(args)-1]
+		op.Target.Refs = model.Exact("refs/heads/" + args[len(args)-1])
 		if len(args) == 1 {
-			rrCurrent(&op)
-			op.Target.Refs.Values = []string{"refs/heads/" + args[0]}
+			if mode == "rename" {
+				rrCurrent(&op)
+				op.Target.Refs.Values = []string{"refs/heads/" + args[0]}
+			} else {
+				rrUnresolved(&op, "parameters.source", "copy source requires symbolic HEAD resolution", "git")
+			}
 		} else {
 			op.Parameters["source"] = args[0]
-			op.Target.Refs = rrSet(rrNames(args, "refs/heads/"), false)
+			if mode == "rename" {
+				op.Target.Refs = rrSet(rrNames(args, "refs/heads/"), false)
+			}
 		}
-	case "ref.branch.delete":
+	case "delete":
 		op.Scopes = append(op.Scopes, model.ScopeConfig, model.ScopeReflog)
 		if p.Has("delete-merged") {
 			op.Target.Refs = model.UnknownSet()
@@ -210,7 +243,7 @@ func refsBranch(c *Context) []model.Operation {
 		}
 	}
 	switchEdit(c, &op, "force", "force")
-	if len(p.Positionals) > 0 && (action == "ref.branch.create" || action == "ref.branch.delete" && len(args) == 1 && !p.Has("delete-merged")) {
+	if len(p.Positionals) > 0 && (mode == "create" || mode == "delete" && len(args) == 1 && !p.Has("delete-merged")) {
 		rrRefEdit(c, &op, p.Positionals[0])
 	}
 	return []model.Operation{op}
@@ -218,17 +251,20 @@ func refsBranch(c *Context) []model.Operation {
 
 func refsTag(c *Context) []model.Operation {
 	p, args := c.Parsed, c.Parsed.Values()
-	action := "ref.tag.create"
+	mode, action := "create", "ref.create"
 	switch {
 	case p.Has("delete"):
-		action = "ref.tag.delete"
+		mode, action = "delete", "ref.delete"
 	case p.Has("verify"):
-		action = "ref.tag.verify"
+		mode, action = "verify", "ref.tag.verify"
 	case p.Has("list") || len(args) == 0 || rrFilters(p) || p.Has("n"):
-		action = "ref.tag.list"
+		mode, action = "list", "ref.tag.list"
+	case p.Has("force"):
+		action = "ref.update"
 	}
 	op := rrOperation(action, model.ScopeLocalRef)
-	op.Parameters["force"] = p.Has("force")
+	op.Origin.Mode = mode
+	op.Parameters["force"], op.Parameters["refKind"] = p.Has("force"), "tag"
 	switchEdit(c, &op, "force", "force")
 	if action == "ref.tag.list" {
 		if len(args) == 0 {
@@ -240,7 +276,7 @@ func refsTag(c *Context) []model.Operation {
 	if len(args) == 0 {
 		return rrInvalid(op, "tag name required")
 	}
-	if action != "ref.tag.create" {
+	if mode != "create" {
 		if len(args) == 1 {
 			rrRefEdit(c, &op, p.Positionals[0])
 		}
@@ -270,6 +306,9 @@ func refsTag(c *Context) []model.Operation {
 	}
 	if p.Has("sign") || p.Has("local-user") {
 		op.Capabilities = append(op.Capabilities, model.CapabilityExternalExec)
+	}
+	if action == "ref.update" {
+		rrMaybeCreate(&op)
 	}
 	if _, explicit := p.Option("sign"); !explicit && !p.Has("local-user") {
 		rrUnresolved(&op, "parameters.signed", "tag.gpgSign and tag.forceSignAnnotated require configuration", "git")
@@ -333,23 +372,28 @@ func rrTagMessage(c *Context, op *model.Operation) {
 
 func refsSymbolic(c *Context) []model.Operation {
 	p, args := c.Parsed, c.Parsed.Values()
-	action := "ref.symbolic.read"
+	mode, action := "read", "ref.symbolic.read"
 	if p.Has("delete") {
-		action = "ref.symbolic.delete"
+		mode, action = "delete", "ref.delete"
 	} else if len(args) == 2 {
-		action = "ref.symbolic.set"
+		mode, action = "set", "ref.update"
 	}
 	op := rrOperation(action, model.ScopeLocalRef)
-	if len(args) < 1 || len(args) > 2 || (action != "ref.symbolic.set" && len(args) != 1) {
+	op.Origin.Mode = mode
+	if len(args) < 1 || len(args) > 2 || (mode != "set" && len(args) != 1) {
 		return rrInvalid(op, "symbolic-ref expects one name, or name and target")
 	}
 	op.Target.Refs = model.Exact(args[0])
+	op.Parameters["refKind"] = rrRefKind(args[0])
 	rrRefEdit(c, &op, p.Positionals[0])
 	if len(args) == 2 {
 		op.Parameters["newTarget"] = args[1]
 	}
 	if op.Effect == model.EffectWrite {
 		op.Scopes = append(op.Scopes, model.ScopeReflog)
+		if action == "ref.update" {
+			rrMaybeCreate(&op)
+		}
 	}
 	return []model.Operation{op}
 }
@@ -493,7 +537,15 @@ func refsUpdate(c *Context) []model.Operation {
 	}
 	if len(args) > oldIndex {
 		op.Parameters["oldOid"] = args[oldIndex]
+		if op.Action == "ref.update" && rrZeroOID(args[oldIndex]) {
+			actions.Apply(&op, "ref.create")
+		}
 	}
+	if op.Action == "ref.update" && len(args) <= oldIndex {
+		rrMaybeCreate(&op)
+	}
+	op.Origin.Mode = strings.TrimPrefix(op.Action, "ref.")
+	op.Parameters["refKind"] = rrRefKind(args[0])
 	rrUpdateDeref(&op, c.Parsed.Has("no-deref"))
 	rrRefEdit(c, &op, c.Parsed.Positionals[0])
 	return []model.Operation{op}
@@ -573,25 +625,30 @@ func refsUpdateStdin(c *Context) []model.Operation {
 		}
 		action := "ref.update"
 		switch cmd {
-		case "delete":
+		case "create", "symref-create":
+			action = "ref.create"
+		case "delete", "symref-delete":
 			action = "ref.delete"
 		case "verify":
 			action = "ref.verify"
-		case "symref-update", "symref-create":
-			action = "ref.symbolic.set"
-		case "symref-delete":
-			action = "ref.symbolic.delete"
 		case "symref-verify":
 			action = "ref.symbolic.verify"
 		case "update":
 			if fields[2] == "" || rrZeroOID(fields[2]) {
 				action = "ref.delete"
+			} else if len(fields) > 3 && rrZeroOID(fields[3]) {
+				action = "ref.create"
 			}
 		}
 		op := rrOperation(action, model.ScopeLocalRef)
+		op.Origin.Mode = cmd
 		op.Target.Refs = model.Exact(fields[1])
+		op.Parameters["refKind"] = rrRefKind(fields[1])
 		op.Parameters["command"] = cmd
 		op.Parameters["arguments"] = fields[2:]
+		if action == "ref.update" && (len(fields) == 3 || fields[3] == "") {
+			rrMaybeCreate(&op)
+		}
 		if (cmd == "symref-delete" || cmd == "symref-verify") && !noDeref && !nextNoDeref {
 			return fail(fmt.Errorf("%s requires no-deref mode", cmd))
 		}

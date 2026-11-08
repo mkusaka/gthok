@@ -215,7 +215,10 @@ func ActionRoutes() map[string][]string {
 		"git.info.read":  {"--exec-path", "--html-path", "--man-path", "--info-path", "--list-cmds=main"},
 		"unknown":        {"custom-command"},
 		"worktree.clean": {"clean -f"}, "worktree.clean.preview": {"clean -n"},
-		"ref.update": {"update-ref refs/heads/topic HEAD"}, "ref.delete": {"update-ref -d refs/heads/topic"},
+		"ref.create": {"branch topic", "branch -c old new", "tag v1", "checkout -b topic", "switch -c topic", "worktree add -b topic ../topic"},
+		"ref.update": {"update-ref refs/heads/topic HEAD", "branch -f topic", "tag -f v1", "symbolic-ref HEAD refs/heads/main", "checkout -B topic", "switch -C topic", "worktree add -B topic ../topic"},
+		"ref.delete": {"update-ref -d refs/heads/topic", "branch -D topic", "tag -d v1", "symbolic-ref -d refs/heads/alias"},
+		"ref.rename": {"branch -m old new"},
 		"ref.verify": {"update-ref --stdin"}, "ref.pack": {"pack-refs --all"}, "ref.list": {"show-ref", "for-each-ref"},
 		"remote.push.update": {"push origin HEAD:refs/heads/main", "send-pack origin HEAD:refs/heads/main"},
 		"remote.push.delete": {"push --delete origin refs/heads/topic"}, "remote.push.mirror": {"push --mirror origin"},
@@ -262,17 +265,13 @@ func ActionRoutes() map[string][]string {
 		case "ref.symbolic":
 			route = "symbolic-ref HEAD"
 			switch mode {
-			case "set":
-				route += " refs/heads/main"
-			case "delete":
-				route = "symbolic-ref -d refs/heads/alias"
 			case "verify":
 				route = "update-ref --stdin --no-deref"
 			}
 		case "ref.branch":
-			route = map[string]string{"create": "branch topic", "delete": "branch -D topic", "list": "branch --list", "rename": "branch -m old new", "copy": "branch -c old new", "upstream": "branch --set-upstream-to=origin/main topic", "description": "branch --edit-description topic"}[mode]
+			route = map[string]string{"list": "branch --list", "upstream": "branch --set-upstream-to=origin/main topic", "description": "branch --edit-description topic"}[mode]
 		case "ref.tag":
-			route = map[string]string{"create": "tag v1", "delete": "tag -d v1", "list": "tag --list", "verify": "tag --verify v1"}[mode]
+			route = map[string]string{"list": "tag --list", "verify": "tag --verify v1"}[mode]
 		case "ref.reflog":
 			route = "reflog " + mode
 		case "ref.replace":

@@ -121,7 +121,7 @@ The following inventory follows the semantic adapters and focused tests.
 | --- | --- |
 | `worktree.reset.*` | `mode`: soft/mixed/hard/merge/keep/paths/patch; `intentToAdd`, `refresh`, `recurseSubmodules`. Soft changes refs; mixed adds index; hard/merge/keep add worktree; paths/patch are index-only. An ambiguous bare operand stays conservative. |
 | `worktree.restore.paths` | `staged`, `worktree`, `source` (index, HEAD or explicit tree); shared checkout flags below. Index and worktree selection are separate. |
-| `worktree.checkout.*`, `worktree.switch.*` | create/reset/orphan/detach/switch and checkout-only paths; `newBranch`, `source`, `revision` when a single editable operand exists; shared `force`, `stage` (normal/ours/theirs), `merge`, optional `overlay`, `recurseSubmodules`. DWIM and checkout.guess may leave branch creation unresolved. |
+| `worktree.checkout.*`, `worktree.switch.*` | create/reset/orphan/detach/switch and checkout-only paths; `newBranch`, `source`, `revision` when a single editable operand exists; shared `force`, `stage` (normal/ours/theirs), `merge`, optional `overlay`, `recurseSubmodules`. Explicit -b/-c adds a separate `ref.create`; -B/-C adds `ref.update` with unresolved ref existence. DWIM and checkout.guess may leave branch creation unresolved. |
 | `worktree.clean`, `worktree.clean.preview` | `dryRun`, `forceCount`, `nestedRepositories` (more than one force), `ignored` (exclude/include/only for default/-x/-X), `directories`, repeated `exclude`. Interactive selection is opaque; `requireForce` may be unresolved. |
 | `index.add.*` | `all`, `update` (also renormalize), `dryRun`, `intentToAdd`, optional `chmod`; update/refresh/preview modes. Refresh is not a mutation-free read. |
 | `index.rm.*` | `cached`, `recursive`, `force`, `dryRun`; noncached removal includes worktree/submodule effects. Some dry runs remain conservative due to submodule gitdir absorption. |
@@ -154,10 +154,10 @@ submodules remain capabilities/scopes even when paths are not enumerable.
 
 | Family/actions | Parameters and targets |
 | --- | --- |
-| `ref.branch.*` | list/create/delete/rename/copy/upstream/description; `force`, `source`, `destination`, `upstream`, `unset`, `deleteMerged`, `dryRun`. -D is a delete, not a separate safety class. Remote-tracking branches are local refs. |
-| `ref.tag.*` | list/create/delete/verify; `force`, `annotated`, `signed`; annotation body in `texts.body`. Signing/verification may execute a program. |
-| `ref.update`, `ref.delete`, `ref.verify` | `newOid`, `oldOid`, `noDeref`; finite protocol records also include `command`, `arguments`. Dereferencing symbolic refs can leave the target incomplete. A zero new OID is a deletion. |
-| `ref.symbolic.*` | read/set/delete/verify; `newTarget`, protocol `command`, `arguments`, `noDeref`; also used for remote set-head. |
+| `ref.create`, `ref.update`, `ref.delete`, `ref.rename` | Shared local-ref write actions across branch, tag, update-ref, symbolic-ref and explicit checkout/switch/worktree branch creation. `refKind`: branch (`refs/heads/`), tag (`refs/tags/`), other (including HEAD and remote-tracking refs); `force`, `source`, `destination`, `deleteMerged`, `dryRun`, `annotated`, `signed`, `newOid`, `oldOid`, `newTarget`, `noDeref` as applicable. Annotation body is `texts.body`; signing may execute a program. |
+| `ref.branch.*` | Read-only list and config-only upstream/description modes retain their identities; `force`, `upstream`, `unset`. Remote-tracking branches are local refs. |
+| `ref.tag.*` | Read-only list/verify modes; verification may execute a program. |
+| `ref.verify`, `ref.symbolic.read`, `ref.symbolic.verify` | Read/verify refs without changing them; finite protocol records include `command`, `arguments`, `noDeref`. Symbolic writes, including remote set-head, use the shared write actions above. |
 | `ref.transaction.*` | start/prepare/commit/abort/option; `command`. Record mutations separately; abort/unfinished explicit transactions mark pending mutations skipped. |
 | `ref.pack` | `all`, `auto`, `prune`, repeated `include`, `exclude`. |
 | `ref.reflog.*` | show/list/exists/write/delete/drop/expire; `dryRun`, `rewrite`, `updateref`, `all`, `singleWorktree`, `expire`, `expireUnreachable`, `staleFix`. --updateref adds local-ref scope. Safe display log options are recognized; patch/output/custom-format/signature options stay unknown pending side-effect modeling. |
@@ -170,6 +170,20 @@ submodules remain capabilities/scopes even when paths are not enumerable.
 | `remote.list`, `remote.show`, `remote.get-url`, `remote.prune`, `remote.ls-remote` | Optional `push`, `all`, `dryRun`, `exec`; remote show -n and URL inspection are local; prune writes local refs and requires unresolved advertised state. |
 | `remote.clone` | `bare`, `checkout`, `mirror`, optional `depth`, `unshallow`, `singleBranch`, `branch`, `revision`, `origin`, `separateGitDir`, `recurseSubmodules`, `local`, `shared`, `exec`. Destination path is explicit or derived. |
 | `remote.pack.*` | fetch/receive/upload/advertise. No dedicated parameters currently; repository and revision operands become targets. Live receive-pack is opaque input-unavailable. Fetch-pack grammar includes its hand-parsed options; it does not decode the transport protocol. |
+
+A rule on `ref.delete` covers `branch -d/-D`, `tag -d`, `update-ref -d` and
+`symbolic-ref -d`, including finite transaction deletions. Branch rename uses
+`ref.rename`; copying creates the destination ref and retains the source in
+parameters. `origin.command` and `origin.mode` preserve the entry point rather
+than splitting the policy action by command. Remote pushes keep `remote.push.*`.
+
+A zero new OID deletes a ref; a nonzero new OID with a zero old OID creates it.
+Finite `create`/`symref-create` records use `ref.create`. Forced branch/tag writes,
+-B/-C and writes without an existence precondition use `ref.update` with an
+`unresolved` action until local metadata proves whether the ref exists.
+Dereferencing symbolic refs can leave targets incomplete. Transforms cannot
+toggle force when doing so would change the canonical action, or change a ref's
+kind as an undeclared side effect of a ref-name edit.
 
 Push targets distinguish remote groups and multiple push URLs during local
 resolution. Remote advertisements are never fetched to make a target complete.
@@ -187,7 +201,7 @@ A lease is a conditional force request, not proof the destination is safe.
 | `objects.fsck*`, `objects.count-objects`, `objects.verify-pack`, `objects.commit-graph.*`, `objects.multi-pack-index.*` | Read/verify vs write/repack/compact/expire; fsck lost-found has optional output. Other modes have no dedicated parameters. |
 | `maintenance.*` | run/is-needed/start/stop/register/unregister; repeated `tasks`, optional `scheduler` (configured or explicit). Default tasks may prefetch; scheduler changes execute programs/write files. |
 | `archive.*`, `bundle.*` | Archive create/list/output; bundle create/stdout/unbundle/verify/list-heads. Optional `output`; remote archive has network, custom formats may execute archivers. Bundle '-' means stdout, unbundle stores objects. |
-| `worktree.admin.*` | add/list/lock/unlock/move/prune/remove/repair/prune.preview; `forceLevel`, `dryRun`, `checkout`, `detach`, `orphan`, `resetBranch`. Targets identify administrative worktrees/paths; add can create/reset a branch. |
+| `worktree.admin.*` | add/list/lock/unlock/move/prune/remove/repair/prune.preview; `forceLevel`, `dryRun`, `checkout`, `detach`, `orphan`, `resetBranch`. Targets identify administrative worktrees/paths; add -b/-B emits a separate canonical `ref.create`/`ref.update` for its branch. |
 | `repository.init` | init/init-db; `bare`, optional `template`, `separateGitDir`, `initialBranch`, `objectFormat`, `refFormat`. |
 | `submodule.*` | status/summary/gitdir/get-default-remote vs add/clone/init/deinit/update/sync/set-url/set-branch/absorbgitdirs/foreach; `recursive`, `remote`, `force`, `init`, `branch`, `defaultBranch`, `strategy` (configured/checkout/merge/rebase), `noFetch`, or foreach `command`. --no-fetch does not rule out cloning missing submodules. Foreach executes arbitrary shell code. |
 | `hook.list`, `hook.run` | Native hook inventory vs arbitrary explicit execution; run retains `arguments` and is opaque external-command. |

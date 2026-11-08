@@ -381,6 +381,20 @@ func whCheckout(c *Context) []model.Operation {
 	if p.Has("patch") {
 		whInteractive(&op)
 	}
+	if !pathMode && newBranch != "" && (mode == "create" || mode == "reset") {
+		action := "ref.create"
+		if mode == "reset" {
+			action = "ref.update"
+		}
+		ref := rrOperation(action, model.ScopeLocalRef, model.ScopeReflog, model.ScopeConfig)
+		ref.Origin.Mode = mode
+		ref.Target.Refs, ref.Target.Revisions = op.Target.Refs, op.Target.Revisions
+		ref.Parameters["refKind"], ref.Parameters["force"] = "branch", mode == "reset"
+		if mode == "reset" {
+			rrMaybeCreate(&ref)
+		}
+		return []model.Operation{op, ref}
+	}
 	return []model.Operation{op}
 }
 

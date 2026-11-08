@@ -3,7 +3,7 @@
     "name": "tag-delete",
     "argv": ["tag", "-d", "v1"],
     "want": {
-      "operations": [{"action": "ref.tag.delete", "effect": "write", "coverage": "semantic", "target": {"refs": {"kind": "exact", "values": ["refs/tags/v1"], "complete": true}}}],
+      "operations": [{"action": "ref.delete", "effect": "write", "coverage": "semantic", "target": {"refs": {"kind": "exact", "values": ["refs/tags/v1"], "complete": true}}}],
       "classification": {"mutationFree": false, "retrySafe": false}
     }
   },

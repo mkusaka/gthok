@@ -109,7 +109,7 @@ policy:
       reason: Unconditional force pushes to protected branches are disabled.
     - id: protect-local-refs
       match:
-        operation: [ref.delete, ref.branch.delete]
+        operation: [ref.delete]
         refs: refs/heads/main
       decision: deny
 ```

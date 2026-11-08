@@ -63,11 +63,30 @@ func TestGitPolicyUnconditionalForceVersusLease(t *testing.T) {
 	}
 }
 
+func TestGitPolicySemanticRefRename(t *testing.T) {
+	for _, flag := range []string{"-m", "-M"} {
+		t.Run(flag, func(t *testing.T) {
+			s, real := gitFixture(t)
+			s.run(real, nil, "branch", "a").code(t, 0)
+			s.configure(func(c *config.Config) {
+				c.Policy.Mode = config.ModeEnforce
+				c.Policy.Rules = []config.Rule{gitPolicyRule("no-ref-rename", "ref.rename", "ref renaming prohibited")}
+			})
+			before := gitState(t, s, real)
+			checkGitPolicyDeny(t, s.git(nil, "branch", flag, "a", "b"), "ref renaming prohibited")
+			if after := gitState(t, s, real); !reflect.DeepEqual(before, after) {
+				t.Fatal("denied ref rename changed repository state")
+			}
+		})
+	}
+}
+
 func TestGitPolicySemanticRefDelete(t *testing.T) {
-	for _, args := range [][]string{{"update-ref", "-d", "refs/heads/x"}, {"update-ref", "--no-deref", "-d", "refs/heads/x"}} {
+	for _, args := range [][]string{{"update-ref", "-d", "refs/heads/x"}, {"update-ref", "--no-deref", "-d", "refs/heads/x"}, {"branch", "-D", "x"}, {"tag", "-d", "v1"}} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
 			s, real := gitFixture(t)
 			s.run(real, nil, "branch", "x").code(t, 0)
+			s.run(real, nil, "tag", "--no-sign", "v1").code(t, 0)
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = config.ModeEnforce
 				c.Policy.Rules = []config.Rule{gitPolicyRule("no-ref-delete", "ref.delete", "ref deletion prohibited")}

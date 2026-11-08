@@ -239,12 +239,19 @@ func remoteCommand(c *Context) []model.Operation {
 		}
 		return ops
 	case "set-head":
-		action = "ref.symbolic.set"
+		action = "ref.update"
 		if p.Has("delete") {
-			action = "ref.symbolic.delete"
+			action = "ref.delete"
 		}
 	}
 	op := rrOperation(action, model.ScopeRemoteConfig)
+	if action == "ref.update" || action == "ref.delete" {
+		op.Origin.Mode = map[string]string{"ref.update": "set", "ref.delete": "delete"}[action]
+		op.Parameters["refKind"] = "other"
+		if action == "ref.update" {
+			rrMaybeCreate(&op)
+		}
+	}
 	if len(args) > 0 {
 		op.Target.Remote = args[0]
 		rrEditable(c, &op, "/target/remote", p.Positionals[0])

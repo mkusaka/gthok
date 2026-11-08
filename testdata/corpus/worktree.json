@@ -508,6 +508,12 @@
             "worktree",
             "config"
           ]
+        },
+        {
+          "family": "ref",
+          "action": "ref.create",
+          "effect": "write",
+          "parameters": {"refKind": "branch", "force": false}
         }
       ]
     }
@@ -530,6 +536,12 @@
             "worktree",
             "config"
           ]
+        },
+        {
+          "family": "ref",
+          "action": "ref.update",
+          "effect": "write",
+          "parameters": {"refKind": "branch", "force": true}
         }
       ]
     }
@@ -620,6 +632,12 @@
             "worktree",
             "config"
           ]
+        },
+        {
+          "family": "ref",
+          "action": "ref.create",
+          "effect": "write",
+          "parameters": {"refKind": "branch", "force": false}
         }
       ]
     }
@@ -643,6 +661,12 @@
             "worktree",
             "config"
           ]
+        },
+        {
+          "family": "ref",
+          "action": "ref.update",
+          "effect": "write",
+          "parameters": {"refKind": "branch", "force": true}
         }
       ]
     }

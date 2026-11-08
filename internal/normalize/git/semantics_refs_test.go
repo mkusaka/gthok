@@ -30,38 +30,38 @@ func TestRefsModes(t *testing.T) {
 		{[]string{"branch", "--merged"}, "ref.branch.list", model.EffectRead, nil, nil},
 		{[]string{"branch", "--no-merged", "HEAD"}, "ref.branch.list", model.EffectRead, nil, nil},
 		{[]string{"branch", "--show-current"}, "ref.branch.list", model.EffectRead, model.UnknownSet(), nil},
-		{[]string{"branch", "topic", "HEAD~1"}, "ref.branch.create", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"force": false}},
-		{[]string{"branch", "-f", "topic"}, "ref.branch.create", model.EffectWrite, nil, map[string]any{"force": true}},
-		{[]string{"branch", "-D", "topic"}, "ref.branch.delete", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"force": true}},
-		{[]string{"branch", "-rd", "origin/topic"}, "ref.branch.delete", model.EffectWrite, model.Exact("refs/remotes/origin/topic"), map[string]any{"force": false}},
-		{[]string{"branch", "-df", "topic", "other"}, "ref.branch.delete", model.EffectWrite, rrSet([]string{"refs/heads/topic", "refs/heads/other"}, false), map[string]any{"force": true}},
-		{[]string{"branch", "-M", "old", "new"}, "ref.branch.rename", model.EffectWrite, rrSet([]string{"refs/heads/old", "refs/heads/new"}, false), map[string]any{"force": true, "source": "old", "destination": "new"}},
-		{[]string{"branch", "-c", "old", "new"}, "ref.branch.copy", model.EffectWrite, nil, map[string]any{"force": false}},
-		{[]string{"branch", "-C", "new"}, "ref.branch.copy", model.EffectWrite, nil, map[string]any{"force": true}},
-		{[]string{"branch", "-m", "new"}, "ref.branch.rename", model.EffectWrite, nil, map[string]any{"force": false}},
+		{[]string{"branch", "topic", "HEAD~1"}, "ref.create", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"force": false, "refKind": "branch"}},
+		{[]string{"branch", "-f", "topic"}, "ref.update", model.EffectWrite, nil, map[string]any{"force": true}},
+		{[]string{"branch", "-D", "topic"}, "ref.delete", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"force": true}},
+		{[]string{"branch", "-rd", "origin/topic"}, "ref.delete", model.EffectWrite, model.Exact("refs/remotes/origin/topic"), map[string]any{"force": false, "refKind": "other"}},
+		{[]string{"branch", "-df", "topic", "other"}, "ref.delete", model.EffectWrite, rrSet([]string{"refs/heads/topic", "refs/heads/other"}, false), map[string]any{"force": true}},
+		{[]string{"branch", "-M", "old", "new"}, "ref.rename", model.EffectWrite, rrSet([]string{"refs/heads/old", "refs/heads/new"}, false), map[string]any{"force": true, "source": "old", "destination": "new"}},
+		{[]string{"branch", "-c", "old", "new"}, "ref.create", model.EffectWrite, model.Exact("refs/heads/new"), map[string]any{"force": false}},
+		{[]string{"branch", "-C", "new"}, "ref.update", model.EffectWrite, model.Exact("refs/heads/new"), map[string]any{"force": true}},
+		{[]string{"branch", "-m", "new"}, "ref.rename", model.EffectWrite, nil, map[string]any{"force": false}},
 		{[]string{"branch", "--set-upstream-to=origin/main", "topic"}, "ref.branch.upstream", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"upstream": "origin/main", "unset": false}},
 		{[]string{"branch", "--unset-upstream"}, "ref.branch.upstream", model.EffectWrite, model.UnknownSet(), map[string]any{"unset": true}},
 		{[]string{"branch", "--edit-description", "topic"}, "ref.branch.description", model.EffectWrite, nil, nil},
-		{[]string{"branch", "--delete-merged=origin/*", "--dry-run"}, "ref.branch.delete", model.EffectRead, model.UnknownSet(), map[string]any{"dryRun": true}},
+		{[]string{"branch", "--delete-merged=origin/*", "--dry-run"}, "ref.delete", model.EffectRead, model.UnknownSet(), map[string]any{"dryRun": true}},
 		{[]string{"tag"}, "ref.tag.list", model.EffectRead, rrSet([]string{"refs/tags/*"}, true), nil},
 		{[]string{"tag", "-l", "v*"}, "ref.tag.list", model.EffectRead, rrSet([]string{"refs/tags/v*"}, true), nil},
 		{[]string{"tag", "-n2", "v*"}, "ref.tag.list", model.EffectRead, nil, nil},
 		{[]string{"tag", "--points-at", "HEAD"}, "ref.tag.list", model.EffectRead, nil, nil},
 		{[]string{"tag", "--ver", "v1"}, "ref.tag.verify", model.EffectRead, model.Exact("refs/tags/v1"), nil},
-		{[]string{"tag", "v1"}, "ref.tag.create", model.EffectWrite, model.Exact("refs/tags/v1"), map[string]any{"annotated": false, "force": false}},
-		{[]string{"tag", "-af", "v1", "HEAD"}, "ref.tag.create", model.EffectWrite, nil, map[string]any{"annotated": true, "force": true}},
-		{[]string{"tag", "-s", "-m", "release", "v1"}, "ref.tag.create", model.EffectWrite, nil, map[string]any{"signed": true, "annotated": true}},
-		{[]string{"tag", "-mrelease", "v1"}, "ref.tag.create", model.EffectWrite, nil, map[string]any{"annotated": true}},
-		{[]string{"tag", "-d", "v1", "v2"}, "ref.tag.delete", model.EffectWrite, rrSet([]string{"refs/tags/v1", "refs/tags/v2"}, false), nil},
-		{[]string{"tag", "-f", "--no-force", "v1"}, "ref.tag.create", model.EffectWrite, nil, map[string]any{"force": false}},
-		{[]string{"tag", "--", "-v"}, "ref.tag.create", model.EffectWrite, model.Exact("refs/tags/-v"), nil},
+		{[]string{"tag", "v1"}, "ref.create", model.EffectWrite, model.Exact("refs/tags/v1"), map[string]any{"annotated": false, "force": false, "refKind": "tag"}},
+		{[]string{"tag", "-af", "v1", "HEAD"}, "ref.update", model.EffectWrite, nil, map[string]any{"annotated": true, "force": true}},
+		{[]string{"tag", "-s", "-m", "release", "v1"}, "ref.create", model.EffectWrite, nil, map[string]any{"signed": true, "annotated": true}},
+		{[]string{"tag", "-mrelease", "v1"}, "ref.create", model.EffectWrite, nil, map[string]any{"annotated": true}},
+		{[]string{"tag", "-d", "v1", "v2"}, "ref.delete", model.EffectWrite, rrSet([]string{"refs/tags/v1", "refs/tags/v2"}, false), nil},
+		{[]string{"tag", "-f", "--no-force", "v1"}, "ref.create", model.EffectWrite, nil, map[string]any{"force": false}},
+		{[]string{"tag", "--", "-v"}, "ref.create", model.EffectWrite, model.Exact("refs/tags/-v"), nil},
 		{[]string{"update-ref", "--no-deref", "refs/heads/topic", "HEAD"}, "ref.update", model.EffectWrite, model.Exact("refs/heads/topic"), map[string]any{"noDeref": true, "newOid": "HEAD"}},
 		{[]string{"update-ref", "-d", "refs/heads/topic"}, "ref.delete", model.EffectWrite, nil, map[string]any{"noDeref": false}},
 		{[]string{"update-ref", "--no-deref", "refs/heads/topic", strings.Repeat("0", 40)}, "ref.delete", model.EffectWrite, nil, nil},
 		{[]string{"symbolic-ref", "HEAD"}, "ref.symbolic.read", model.EffectRead, model.Exact("HEAD"), nil},
 		{[]string{"symbolic-ref", "--no-recurse", "HEAD"}, "ref.symbolic.read", model.EffectRead, nil, nil},
-		{[]string{"symbolic-ref", "HEAD", "refs/heads/topic"}, "ref.symbolic.set", model.EffectWrite, model.Exact("HEAD"), map[string]any{"newTarget": "refs/heads/topic"}},
-		{[]string{"symbolic-ref", "-d", "refs/remotes/origin/HEAD"}, "ref.symbolic.delete", model.EffectWrite, nil, nil},
+		{[]string{"symbolic-ref", "HEAD", "refs/heads/topic"}, "ref.update", model.EffectWrite, model.Exact("HEAD"), map[string]any{"newTarget": "refs/heads/topic", "refKind": "other"}},
+		{[]string{"symbolic-ref", "-d", "refs/remotes/origin/HEAD"}, "ref.delete", model.EffectWrite, nil, nil},
 		{[]string{"pack-refs", "--all", "--no-prune", "--include=refs/heads/*", "--exclude=refs/heads/main"}, "ref.pack", model.EffectWrite, model.UnknownSet(), map[string]any{"all": true, "prune": false}},
 		{[]string{"reflog"}, "ref.reflog.show", model.EffectRead, model.Exact("HEAD"), nil},
 		{[]string{"reflog", "list"}, "ref.reflog.list", model.EffectRead, nil, nil},
@@ -167,15 +167,17 @@ func TestUpdateRefCapturedTransactions(t *testing.T) {
 		actions     []string
 		skipped     []int
 	}{
-		{"implicit", "update refs/heads/a HEAD\ncreate refs/heads/b HEAD\ndelete refs/heads/c\nverify refs/heads/d\n", false, []string{"ref.update", "ref.update", "ref.delete", "ref.verify"}, nil},
+		{"implicit", "update refs/heads/a HEAD\ncreate refs/heads/b HEAD\ndelete refs/heads/c\nverify refs/heads/d\n", false, []string{"ref.update", "ref.create", "ref.delete", "ref.verify"}, nil},
 		{"committed", "start\noption no-deref\nupdate \"refs/heads/a\" HEAD\nprepare\ncommit\n", false, []string{"ref.transaction.start", "ref.transaction.option", "ref.update", "ref.transaction.prepare", "ref.transaction.commit"}, nil},
 		{"abort", "start\ndelete refs/heads/a\nabort\nstart\nupdate refs/heads/b HEAD\ncommit\n", false, []string{"ref.transaction.start", "ref.delete", "ref.transaction.abort", "ref.transaction.start", "ref.update", "ref.transaction.commit"}, []int{1}},
 		{"eof-aborts", "start\ndelete refs/heads/a\n", false, []string{"ref.transaction.start", "ref.delete"}, []int{1}},
-		{"symrefs", "symref-create refs/heads/alias refs/heads/main\nsymref-update HEAD refs/heads/main ref refs/heads/old\nsymref-delete refs/heads/alias refs/heads/main\nsymref-verify HEAD\n", false, []string{"ref.symbolic.set", "ref.symbolic.set", "ref.symbolic.delete", "ref.symbolic.verify"}, nil},
+		{"symrefs", "symref-create refs/heads/alias refs/heads/main\nsymref-update HEAD refs/heads/main ref refs/heads/old\nsymref-delete refs/heads/alias refs/heads/main\nsymref-verify HEAD\n", false, []string{"ref.create", "ref.update", "ref.delete", "ref.symbolic.verify"}, nil},
 		{"nul", "start\x00update refs/heads/a\x00HEAD\x00\x00delete refs/heads/b\x00\x00verify refs/heads/c\x00\x00prepare\x00commit\x00", true, []string{"ref.transaction.start", "ref.update", "ref.delete", "ref.verify", "ref.transaction.prepare", "ref.transaction.commit"}, nil},
-		{"nul-symrefs", "symref-update HEAD\x00refs/heads/main\x00ref\x00refs/heads/old\x00symref-create refs/heads/alias\x00refs/heads/main\x00symref-delete refs/heads/alias\x00\x00symref-verify HEAD\x00\x00", true, []string{"ref.symbolic.set", "ref.symbolic.set", "ref.symbolic.delete", "ref.symbolic.verify"}, nil},
+		{"nul-symrefs", "symref-update HEAD\x00refs/heads/main\x00ref\x00refs/heads/old\x00symref-create refs/heads/alias\x00refs/heads/main\x00symref-delete refs/heads/alias\x00\x00symref-verify HEAD\x00\x00", true, []string{"ref.update", "ref.create", "ref.delete", "ref.symbolic.verify"}, nil},
 		{"empty-new-deletes", "update refs/heads/a \"\"\n", false, []string{"ref.delete"}, nil},
-		{"nul-optional-at-eof", "symref-update refs/heads/alias\x00refs/heads/main\x00", true, []string{"ref.symbolic.set"}, nil},
+		{"zero-old-creates", "update refs/heads/a HEAD " + strings.Repeat("0", 40) + "\nupdate refs/tags/a HEAD " + strings.Repeat("0", 64) + "\ncreate refs/notes/a HEAD\n", false, []string{"ref.create", "ref.create", "ref.create"}, nil},
+		{"nul-zero-old-creates", "update refs/heads/a\x00HEAD\x00" + strings.Repeat("0", 40) + "\x00create refs/tags/a\x00HEAD\x00", true, []string{"ref.create", "ref.create"}, nil},
+		{"nul-optional-at-eof", "symref-update refs/heads/alias\x00refs/heads/main\x00", true, []string{"ref.update"}, nil},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			argv := []string{"update-ref", "--stdin", "--no-deref"}
@@ -188,6 +190,11 @@ func TestUpdateRefCapturedTransactions(t *testing.T) {
 				got = append(got, op.Action)
 				if op.Coverage != model.CoverageSemantic || op.UnknownReason != model.UnknownNone {
 					t.Fatalf("unexpected unknown: %+v", op)
+				}
+				if op.Action == "ref.create" || op.Action == "ref.update" || op.Action == "ref.delete" {
+					if op.Family != "ref" || op.Parameters["refKind"] != rrRefKind(op.Target.Refs.Values[0]) || op.Origin.Mode != op.Parameters["command"] {
+						t.Fatalf("noncanonical transaction write: %+v", op)
+					}
 				}
 				if (op.Execution == model.ExecutionSkipped) != slices.Contains(tt.skipped, i) {
 					t.Errorf("operation %d execution = %s", i, op.Execution)

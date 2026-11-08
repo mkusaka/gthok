@@ -195,17 +195,15 @@ Routes omit the leading Git executable; stdin-selected operations share routes.
 | `objects` | `objects.unpack-objects.preview` | `read` | `objects` | `unpack-objects -n` |
 | `objects` | `objects.verify-pack` | `read` | `objects` | `verify-pack` |
 | `objects` | `objects.write-tree` | `write` | `index, objects` | `write-tree` |
-| `ref` | `ref.delete` | `write` | `local-ref, reflog` | `update-ref -d refs/heads/topic` |
+| `ref` | `ref.create` | `write` | `config, local-ref, reflog` | `branch topic; branch -c old new; tag v1; checkout -b topic; switch -c topic; worktree add -b topic ../topic` |
+| `ref` | `ref.delete` | `write` | `config, local-ref, reflog` | `update-ref -d refs/heads/topic; branch -D topic; tag -d v1; symbolic-ref -d refs/heads/alias` |
 | `ref` | `ref.list` | `read` | `local-ref` | `for-each-ref; show-ref` |
 | `ref` | `ref.pack` | `write` | `local-ref` | `pack-refs --all` |
-| `ref` | `ref.update` | `write` | `local-ref, reflog` | `update-ref refs/heads/topic HEAD` |
+| `ref` | `ref.rename` | `write` | `config, local-ref, reflog` | `branch -m old new` |
+| `ref` | `ref.update` | `write` | `config, local-ref, reflog` | `update-ref refs/heads/topic HEAD; branch -f topic; tag -f v1; symbolic-ref HEAD refs/heads/main; checkout -B topic; switch -C topic; worktree add -B topic ../topic` |
 | `ref` | `ref.verify` | `read` | `local-ref` | `update-ref --stdin` |
-| `ref.branch` | `ref.branch.copy` | `write` | `config, local-ref, reflog` | `branch -c old new` |
-| `ref.branch` | `ref.branch.create` | `write` | `config, local-ref, reflog` | `branch topic` |
-| `ref.branch` | `ref.branch.delete` | `write` | `config, local-ref, reflog` | `branch -D topic` |
 | `ref.branch` | `ref.branch.description` | `write` | `config` | `branch --edit-description topic` |
 | `ref.branch` | `ref.branch.list` | `read` | `local-ref` | `branch --list` |
-| `ref.branch` | `ref.branch.rename` | `write` | `config, local-ref, reflog` | `branch -m old new` |
 | `ref.branch` | `ref.branch.upstream` | `write` | `config` | `branch --set-upstream-to=origin/main topic` |
 | `ref.reflog` | `ref.reflog.delete` | `write` | `reflog` | `reflog delete` |
 | `ref.reflog` | `ref.reflog.drop` | `write` | `reflog` | `reflog drop` |
@@ -220,12 +218,8 @@ Routes omit the leading Git executable; stdin-selected operations share routes.
 | `ref.replace` | `ref.replace.edit` | `write` | `local-ref, objects` | `replace --edit HEAD` |
 | `ref.replace` | `ref.replace.graft` | `write` | `local-ref, objects` | `replace --graft HEAD` |
 | `ref.replace` | `ref.replace.list` | `read` | `local-ref` | `replace --list` |
-| `ref.symbolic` | `ref.symbolic.delete` | `write` | `local-ref, reflog` | `symbolic-ref -d refs/heads/alias` |
 | `ref.symbolic` | `ref.symbolic.read` | `read` | `local-ref` | `symbolic-ref HEAD` |
-| `ref.symbolic` | `ref.symbolic.set` | `write` | `local-ref, reflog` | `symbolic-ref HEAD refs/heads/main` |
 | `ref.symbolic` | `ref.symbolic.verify` | `read` | `local-ref` | `update-ref --stdin --no-deref` |
-| `ref.tag` | `ref.tag.create` | `write` | `local-ref, reflog` | `tag v1` |
-| `ref.tag` | `ref.tag.delete` | `write` | `local-ref, reflog` | `tag -d v1` |
 | `ref.tag` | `ref.tag.list` | `read` | `local-ref` | `tag --list` |
 | `ref.tag` | `ref.tag.verify` | `read` | `local-ref` | `tag --verify v1` |
 | `ref.transaction` | `ref.transaction.abort` | `read` | `local-ref` | `update-ref --stdin` |
