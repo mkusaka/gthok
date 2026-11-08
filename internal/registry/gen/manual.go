@@ -112,7 +112,7 @@ func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 }
 
 // These entrypoints consume argv outside parse-options tables.
-func (e *extractor) manualGrammars(revisions []registry.Option) error {
+func (e *extractor) manualGrammars() error {
 	fetch := e.grammars["fetch-pack"]
 	options, err := manualOptions(e.files["builtin/fetch-pack.c"], "cmd_fetch_pack")
 	if err != nil {
@@ -124,24 +124,13 @@ func (e *extractor) manualGrammars(revisions []registry.Option) error {
 
 	// Both 'reflog' and 'reflog show' delegate their arguments to cmd_log_reflog.
 	reflog := e.grammars["reflog"]
+	reflog.Parser = "revision"
 	var logOptions []registry.Option
 	for _, option := range e.grammars["log"].Options {
-		if option.Short != "L" { // Line-range logging can produce patches.
+		if option.Short != "L" { // Line-range logging is incompatible with reflog walks.
 			logOptions = append(logOptions, option)
 		}
 	}
-	// Reflog's semantic adapter does not yet model patch/output/signature
-	// side effects, including signature placeholders in --format/--pretty.
-	for _, option := range revisions {
-		if option.Short == "n" {
-			logOptions = append(logOptions, option)
-		}
-		switch option.Long {
-		case "oneline", "date", "max-count", "skip", "abbrev-commit", "no-abbrev-commit", "relative-date", "all", "since", "until", "author", "grep", "fixed-strings", "regexp-ignore-case":
-			logOptions = append(logOptions, option)
-		}
-	}
-	logOptions = append(logOptions, registry.Option{Long: "max-count", Arity: "required", Type: "OPTION_NUMBER", Source: e.commands["reflog"].Source})
 	// The top-level completion helper does not advertise delegated log flags.
 	for i := range logOptions {
 		logOptions[i].Flags = append(append([]string(nil), logOptions[i].Flags...), "PARSE_OPT_NOCOMPLETE")
@@ -150,7 +139,7 @@ func (e *extractor) manualGrammars(revisions []registry.Option) error {
 	for i := range reflog.Subcommands {
 		if reflog.Subcommands[i].Name == "show" {
 			reflog.Subcommands[i].Options = append(reflog.Subcommands[i].Options, logOptions...)
-			reflog.Subcommands[i].Parser = "manual:log-reflog"
+			reflog.Subcommands[i].Parser = "revision"
 		}
 	}
 	e.grammars["reflog"] = reflog

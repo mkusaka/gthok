@@ -398,7 +398,6 @@ func submoduleAdmin(c *Context) []model.Operation {
 // Explicit inventory: adding a pinned command must add semantics or a reviewed reason.
 // Other workers' adapters override these conservative registrations at init time.
 var adminConservativeCommands = map[string]string{
-	"stage":                  "index staging alias modes are provided by the worktree adapter",
 	"checkout--worker":       "internal checkout worker consumes an unmodeled worker protocol",
 	"checkout-index":         "index checkout modes are provided by the worktree adapter",
 	"history":                "history rewrite subcommands are not modeled",

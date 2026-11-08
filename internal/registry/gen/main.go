@@ -160,14 +160,20 @@ func generate(src, out string, verify bool) error {
 	if err != nil {
 		return err
 	}
-	diff := registry.Grammar{Parser: "diff"}
+	// revision.c:handle_revision_opt delegates merge-diff flags to this parser.
+	mergeDiff, err := manualOptions(e.files["diff-merges.c"], "diff_merges_parse_opts")
+	if err != nil {
+		return err
+	}
+	revisions = append(revisions, mergeDiff...)
+	diff := registry.Grammar{Parser: "diff", Options: mergeDiff}
 	for _, t := range e.files["diff.c"].tables {
 		mergeGrammar(&diff, t.grammar)
 	}
 	e.grammars["$global"] = registry.Grammar{Parser: "global", Options: globals}
 	e.grammars["$revision"] = registry.Grammar{Parser: "revision", Options: revisions, Adapters: []string{"diff", "revision-number", "revision-pseudo-options"}}
 	e.grammars["$diff"] = diff
-	if err := e.manualGrammars(revisions); err != nil {
+	if err := e.manualGrammars(); err != nil {
 		return err
 	}
 	e.manifest.Coverage.Commands = len(e.commands)

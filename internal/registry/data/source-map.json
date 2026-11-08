@@ -19,6 +19,11 @@
     "line": 6142,
     "entrypoint": "add_diff_options"
   },
+  "$diff --cc": {
+    "file": "diff-merges.c",
+    "line": 131,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$diff --check": {
     "file": "diff.c",
     "line": 6064,
@@ -44,6 +49,11 @@
     "line": 6216,
     "entrypoint": "add_diff_options"
   },
+  "$diff --combined-all-paths": {
+    "file": "diff-merges.c",
+    "line": 142,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$diff --compact-summary": {
     "file": "diff.c",
     "line": 6091,
@@ -53,6 +63,11 @@
     "file": "diff.c",
     "line": 6056,
     "entrypoint": "add_diff_options"
+  },
+  "$diff --dd": {
+    "file": "diff-merges.c",
+    "line": 134,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$diff --default-prefix": {
     "file": "diff.c",
@@ -68,6 +83,11 @@
     "file": "diff.c",
     "line": 6281,
     "entrypoint": "add_diff_options"
+  },
+  "$diff --diff-merges": {
+    "file": "diff-merges.c",
+    "line": 144,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$diff --dirstat": {
     "file": "diff.c",
@@ -219,6 +239,11 @@
     "line": 6073,
     "entrypoint": "add_diff_options"
   },
+  "$diff --no-diff-merges": {
+    "file": "diff-merges.c",
+    "line": 140,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$diff --no-patch": {
     "file": "diff.c",
     "line": 6025,
@@ -303,6 +328,11 @@
     "file": "diff.c",
     "line": 6227,
     "entrypoint": "add_diff_options"
+  },
+  "$diff --remerge-diff": {
+    "file": "diff-merges.c",
+    "line": 137,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$diff --rename-empty": {
     "file": "diff.c",
@@ -464,10 +494,20 @@
     "line": 6178,
     "entrypoint": "add_diff_options"
   },
+  "$diff -c": {
+    "file": "diff-merges.c",
+    "line": 128,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$diff -l": {
     "file": "diff.c",
     "line": 6167,
     "entrypoint": "add_diff_options"
+  },
+  "$diff -m": {
+    "file": "diff-merges.c",
+    "line": 125,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$diff -p": {
     "file": "diff.c",
@@ -724,6 +764,11 @@
     "line": 2358,
     "entrypoint": "handle_revision_opt"
   },
+  "$revision --cc": {
+    "file": "diff-merges.c",
+    "line": 131,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$revision --cherry": {
     "file": "revision.c",
     "line": 2529,
@@ -743,6 +788,11 @@
     "file": "revision.c",
     "line": 2748,
     "entrypoint": "handle_revision_opt"
+  },
+  "$revision --combined-all-paths": {
+    "file": "diff-merges.c",
+    "line": 142,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$revision --committer": {
     "file": "revision.c",
@@ -764,6 +814,11 @@
     "line": 2485,
     "entrypoint": "handle_revision_opt"
   },
+  "$revision --dd": {
+    "file": "diff-merges.c",
+    "line": 134,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$revision --default": {
     "file": "revision.c",
     "line": 2461,
@@ -773,6 +828,11 @@
     "file": "revision.c",
     "line": 2494,
     "entrypoint": "handle_revision_opt"
+  },
+  "$revision --diff-merges": {
+    "file": "diff-merges.c",
+    "line": 144,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$revision --do-walk": {
     "file": "revision.c",
@@ -974,6 +1034,11 @@
     "line": 2673,
     "entrypoint": "handle_revision_opt"
   },
+  "$revision --no-diff-merges": {
+    "file": "diff-merges.c",
+    "line": 140,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$revision --no-encode-email-headers": {
     "file": "revision.c",
     "line": 2669,
@@ -1098,6 +1163,11 @@
     "file": "revision.c",
     "line": 2699,
     "entrypoint": "handle_revision_opt"
+  },
+  "$revision --remerge-diff": {
+    "file": "diff-merges.c",
+    "line": 137,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$revision --remotes": {
     "file": "revision.c",
@@ -1234,6 +1304,11 @@
     "line": 2733,
     "entrypoint": "handle_revision_opt"
   },
+  "$revision -c": {
+    "file": "diff-merges.c",
+    "line": 128,
+    "entrypoint": "diff_merges_parse_opts"
+  },
   "$revision -g": {
     "file": "revision.c",
     "line": 2459,
@@ -1243,6 +1318,11 @@
     "file": "revision.c",
     "line": 2728,
     "entrypoint": "handle_revision_opt"
+  },
+  "$revision -m": {
+    "file": "diff-merges.c",
+    "line": 125,
+    "entrypoint": "diff_merges_parse_opts"
   },
   "$revision -n": {
     "file": "revision.c",
@@ -11766,30 +11846,10 @@
     "line": 467,
     "entrypoint": "cmd_reflog"
   },
-  "reflog --abbrev-commit": {
-    "file": "revision.c",
-    "line": 2687,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --all": {
-    "file": "revision.c",
-    "line": 2358,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --author": {
-    "file": "revision.c",
-    "line": 2712,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog --clear-decorations": {
     "file": "builtin/log.c",
     "line": 289,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog --date": {
-    "file": "revision.c",
-    "line": 2702,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog --decorate": {
     "file": "builtin/log.c",
@@ -11806,16 +11866,6 @@
     "line": 295,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog --fixed-strings": {
-    "file": "revision.c",
-    "line": 2731,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --grep": {
-    "file": "revision.c",
-    "line": 2721,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog --i-still-use-this": {
     "file": "builtin/log.c",
     "line": 285,
@@ -11826,65 +11876,20 @@
     "line": 288,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog --max-count": {
-    "file": "builtin/reflog.c",
-    "line": 467,
-    "entrypoint": "cmd_reflog"
-  },
-  "reflog --no-abbrev-commit": {
-    "file": "revision.c",
-    "line": 2690,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --oneline": {
-    "file": "revision.c",
-    "line": 2648,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog --quiet": {
     "file": "builtin/log.c",
     "line": 281,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog --regexp-ignore-case": {
-    "file": "revision.c",
-    "line": 2728,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --relative-date": {
-    "file": "revision.c",
-    "line": 2699,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --since": {
-    "file": "revision.c",
-    "line": 2414,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog --skip": {
-    "file": "revision.c",
-    "line": 2392,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog --source": {
     "file": "builtin/log.c",
     "line": 282,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog --until": {
-    "file": "revision.c",
-    "line": 2429,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog --use-mailmap": {
     "file": "builtin/log.c",
     "line": 283,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog -n": {
-    "file": "revision.c",
-    "line": 2402,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog -q": {
     "file": "builtin/log.c",
@@ -12006,30 +12011,10 @@
     "line": 474,
     "entrypoint": "cmd_reflog"
   },
-  "reflog show --abbrev-commit": {
-    "file": "revision.c",
-    "line": 2687,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --all": {
-    "file": "revision.c",
-    "line": 2358,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --author": {
-    "file": "revision.c",
-    "line": 2712,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog show --clear-decorations": {
     "file": "builtin/log.c",
     "line": 289,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog show --date": {
-    "file": "revision.c",
-    "line": 2702,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog show --decorate": {
     "file": "builtin/log.c",
@@ -12046,16 +12031,6 @@
     "line": 295,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog show --fixed-strings": {
-    "file": "revision.c",
-    "line": 2731,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --grep": {
-    "file": "revision.c",
-    "line": 2721,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog show --i-still-use-this": {
     "file": "builtin/log.c",
     "line": 285,
@@ -12066,65 +12041,20 @@
     "line": 288,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog show --max-count": {
-    "file": "builtin/reflog.c",
-    "line": 467,
-    "entrypoint": "cmd_reflog"
-  },
-  "reflog show --no-abbrev-commit": {
-    "file": "revision.c",
-    "line": 2690,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --oneline": {
-    "file": "revision.c",
-    "line": 2648,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog show --quiet": {
     "file": "builtin/log.c",
     "line": 281,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog show --regexp-ignore-case": {
-    "file": "revision.c",
-    "line": 2728,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --relative-date": {
-    "file": "revision.c",
-    "line": 2699,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --since": {
-    "file": "revision.c",
-    "line": 2414,
-    "entrypoint": "handle_revision_opt"
-  },
-  "reflog show --skip": {
-    "file": "revision.c",
-    "line": 2392,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog show --source": {
     "file": "builtin/log.c",
     "line": 282,
     "entrypoint": "cmd_log_init_finish"
   },
-  "reflog show --until": {
-    "file": "revision.c",
-    "line": 2429,
-    "entrypoint": "handle_revision_opt"
-  },
   "reflog show --use-mailmap": {
     "file": "builtin/log.c",
     "line": 283,
     "entrypoint": "cmd_log_init_finish"
-  },
-  "reflog show -n": {
-    "file": "revision.c",
-    "line": 2402,
-    "entrypoint": "handle_revision_opt"
   },
   "reflog show -q": {
     "file": "builtin/log.c",

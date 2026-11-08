@@ -194,6 +194,38 @@ int handle_options(const char **argv) {
 	}
 }
 
+func TestManualMergeDiffOptions(t *testing.T) {
+	f, err := fixture(t, `
+int diff_merges_parse_opts(struct rev_info *revs, const char **argv) {
+ const char *arg = argv[0];
+ if (!suppress_m_parsing && !strcmp(arg, "-m")) { set_default(revs); }
+ else if (!strcmp(arg, "-c")) { set_combined(revs); }
+ else if (!strcmp(arg, "--cc")) { set_dense_combined(revs); }
+ else if (!strcmp(arg, "--dd")) { set_first_parent(revs); }
+ else if (!strcmp(arg, "--remerge-diff")) { set_remerge(revs); }
+ else if (!strcmp(arg, "--no-diff-merges")) { set_none(revs); }
+ else if (!strcmp(arg, "--combined-all-paths")) { revs->combined_all_paths = 1; }
+ else if ((argcount = parse_long_opt("diff-merges", argv, &optarg))) { set_diff_merges(revs, optarg); }
+ return argcount;
+}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options, err := manualOptions(f, "diff_merges_parse_opts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"-m": "none", "-c": "none", "--cc": "none", "--dd": "none", "--remerge-diff": "none", "--no-diff-merges": "none", "--combined-all-paths": "none", "--diff-merges": "required"}
+	if len(options) != len(want) {
+		t.Fatalf("options: %+v", options)
+	}
+	for _, o := range options {
+		if o.Arity != want[spelling(o)] || o.Negatable || len(o.Flags) != 0 || o.Source.Entrypoint != "diff_merges_parse_opts" {
+			t.Errorf("merge-diff option: %+v", o)
+		}
+	}
+}
+
 func TestLexerRejectsMalformedC(t *testing.T) {
 	for _, s := range []string{`/* incomplete`, `"incomplete`} {
 		if _, err := lex(s); err == nil {

@@ -15,6 +15,7 @@ func init() {
 	register("switch", whCheckout)
 	register("clean", whClean)
 	register("add", whAdd)
+	register("stage", whAdd)
 	register("rm", whRemove)
 	register("mv", whMove)
 	register("stash", whStash)

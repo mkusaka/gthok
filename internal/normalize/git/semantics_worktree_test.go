@@ -176,6 +176,25 @@ func TestWorktreeCleanAndIndexModes(t *testing.T) {
 	}
 }
 
+func TestStageMatchesAdd(t *testing.T) {
+	for _, args := range [][]string{{"file"}, {"-A"}, {"-p"}, {"-n", "file"}, {"--refresh", "file"}} {
+		add := Normalize(model.Invocation{Argv: append([]string{"add"}, args...)})
+		stage := Normalize(model.Invocation{Argv: append([]string{"stage"}, args...)})
+		if !reflect.DeepEqual(stage.Classification, add.Classification) || len(stage.Operations) != len(add.Operations) {
+			t.Fatalf("stage differs from add: %+v; add: %+v", stage, add)
+		}
+		for i, op := range stage.Operations {
+			if !reflect.DeepEqual(op.Origin.Command, []string{"stage"}) {
+				t.Fatal(op.Origin)
+			}
+			op.Origin.Command = add.Operations[i].Origin.Command
+			if !reflect.DeepEqual(op, add.Operations[i]) {
+				t.Fatalf("stage %q: %+v; add: %+v", args, op, add.Operations[i])
+			}
+		}
+	}
+}
+
 func TestWorktreeStashModes(t *testing.T) {
 	for _, mode := range []string{"push", "save", "pop", "apply", "drop", "clear", "branch", "store", "create", "list", "show", "export", "import"} {
 		t.Run(mode, func(t *testing.T) {

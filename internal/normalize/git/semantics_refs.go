@@ -450,6 +450,16 @@ func refsReflog(c *Context) []model.Operation {
 	for _, name := range []string{"rewrite", "updateref", "all", "single-worktree", "expire", "expire-unreachable", "stale-fix"} {
 		rrParameter(&op, c.Parsed, name)
 	}
+	if mode == "show" {
+		for _, o := range c.Parsed.Options {
+			if o.Name == "output" && !o.Negated {
+				adminFileOutput(&op, o.Value)
+				// Reflog display delegates to log; reuse its catalogued output action.
+				actions.Apply(&op, "git.log.output")
+			}
+		}
+		readExternalCapabilities(&op, c)
+	}
 	return []model.Operation{op}
 }
 

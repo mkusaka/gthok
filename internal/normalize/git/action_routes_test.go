@@ -57,7 +57,7 @@ func TestManualCommandAdapters(t *testing.T) {
 	if !reflect.DeepEqual(r.Operations[0].Parameters["command"], child) {
 		t.Fatal(r)
 	}
-	for _, argv := range [][]string{{"fetch-pack", "--depth", "1", "repo"}, {"bisect", "start", "--unknown"}, {"reflog", "show", "--unknown"}, {"reflog", "show", "--output=report"}, {"reflog", "show", "--format=%G?"}, {"reflog", "show", "-L", "1,2:file"}} {
+	for _, argv := range [][]string{{"fetch-pack", "--depth", "1", "repo"}, {"bisect", "start", "--unknown"}, {"reflog", "show", "--unknown"}, {"reflog", "expire", "--output=report"}, {"reflog", "show", "-L", "1,2:file"}} {
 		r := Normalize(model.Invocation{Argv: argv})
 		if r.Operations[0].UnknownReason == model.UnknownNone {
 			t.Fatalf("accepted invalid options: %q: %+v", argv, r)

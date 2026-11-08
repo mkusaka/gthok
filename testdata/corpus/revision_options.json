@@ -1,0 +1,66 @@
+[
+  {
+    "name": "log-combined-diff-revision-not-config",
+    "argv": ["log", "-1", "-c", "core.pager=cat"],
+    "want": {
+      "operations": [{"action": "git.log.read", "effect": "read", "coverage": "semantic", "capabilities": ["external-exec"], "target": {"revisions": {"kind": "exact", "values": ["core.pager=cat"], "complete": true}}}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "show-dense-combined",
+    "argv": ["show", "--cc", "HEAD"],
+    "want": {
+      "operations": [{"action": "git.show.read", "effect": "read", "coverage": "semantic", "capabilities": ["external-exec"]}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "diff-dense-combined",
+    "argv": ["--no-optional-locks", "diff", "--cc", "--no-ext-diff", "--no-textconv", "HEAD"],
+    "want": {
+      "operations": [{"action": "git.diff.read", "effect": "read", "coverage": "semantic"}],
+      "classification": {"mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
+    "name": "reflog-log-patch",
+    "argv": ["reflog", "show", "-p"],
+    "want": {
+      "operations": [{"action": "ref.reflog.show", "effect": "read", "coverage": "semantic", "capabilities": ["external-exec"]}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "reflog-implicit-show-format",
+    "argv": ["reflog", "--format=%H"],
+    "want": {
+      "operations": [{"action": "ref.reflog.show", "effect": "read", "coverage": "semantic"}],
+      "classification": {"mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
+    "name": "reflog-log-file-output",
+    "argv": ["reflog", "show", "--output=report"],
+    "want": {
+      "operations": [{"action": "git.log.output", "effect": "write", "coverage": "semantic", "capabilities": ["file-write"], "target": {"paths": {"kind": "exact", "values": ["report"], "complete": true}}}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "stage-add-synonym",
+    "argv": ["stage", "file"],
+    "want": {
+      "operations": [{"action": "index.add.update", "effect": "write", "coverage": "semantic", "origin": {"command": ["stage"]}}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "stage-interactive-add-synonym",
+    "argv": ["stage", "-p"],
+    "want": {
+      "operations": [{"action": "index.add.update", "effect": "write", "coverage": "opaque", "unknownReason": "interactive"}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  }
+]

@@ -3,6 +3,102 @@
     "parser": "diff",
     "options": [
       {
+        "long": "cc",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 131,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "combined-all-paths",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 142,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "dd",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 134,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "diff-merges",
+        "kind": "manual:parse_long_opt",
+        "type": "manual",
+        "arity": "required",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 144,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "no-diff-merges",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 140,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "remerge-diff",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 137,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "short": "c",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 128,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "short": "m",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 125,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
         "long": "patch",
         "short": "p",
         "kind": "OPT_BITOP",
@@ -3410,6 +3506,102 @@
           "file": "revision.c",
           "line": 2592,
           "entrypoint": "handle_revision_opt"
+        }
+      },
+      {
+        "long": "cc",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 131,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "combined-all-paths",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 142,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "dd",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 134,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "diff-merges",
+        "kind": "manual:parse_long_opt",
+        "type": "manual",
+        "arity": "required",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 144,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "no-diff-merges",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 140,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "long": "remerge-diff",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 137,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "short": "c",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 128,
+          "entrypoint": "diff_merges_parse_opts"
+        }
+      },
+      {
+        "short": "m",
+        "kind": "manual:strcmp",
+        "type": "manual",
+        "arity": "none",
+        "negatable": false,
+        "source": {
+          "file": "diff-merges.c",
+          "line": 125,
+          "entrypoint": "diff_merges_parse_opts"
         }
       }
     ],
@@ -30738,7 +30930,7 @@
     ]
   },
   "reflog": {
-    "parser": "parse-options",
+    "parser": "revision",
     "options": [
       {
         "long": "quiet",
@@ -30899,247 +31091,6 @@
           "line": 297,
           "entrypoint": "cmd_log_init_finish"
         }
-      },
-      {
-        "long": "abbrev-commit",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2687,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "all",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2358,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "author",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2712,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "date",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2702,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "fixed-strings",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2731,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "grep",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2721,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "max-count",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2373,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "no-abbrev-commit",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2690,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "oneline",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2648,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "regexp-ignore-case",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2728,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "relative-date",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "none",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2699,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "since",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2414,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "skip",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2392,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "until",
-        "kind": "manual:parse_long_opt",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2429,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "short": "n",
-        "kind": "manual:strcmp",
-        "type": "manual",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "ATTACHED_VALUE",
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "revision.c",
-          "line": 2402,
-          "entrypoint": "handle_revision_opt"
-        }
-      },
-      {
-        "long": "max-count",
-        "kind": "",
-        "type": "OPTION_NUMBER",
-        "arity": "required",
-        "negatable": false,
-        "flags": [
-          "PARSE_OPT_NOCOMPLETE"
-        ],
-        "source": {
-          "file": "builtin/reflog.c",
-          "line": 467,
-          "entrypoint": "cmd_reflog"
-        }
       }
     ],
     "subcommands": [
@@ -31151,7 +31102,7 @@
           "line": 474,
           "entrypoint": "cmd_reflog"
         },
-        "parser": "manual:log-reflog",
+        "parser": "revision",
         "options": [
           {
             "long": "quiet",
@@ -31311,247 +31262,6 @@
               "file": "builtin/log.c",
               "line": 297,
               "entrypoint": "cmd_log_init_finish"
-            }
-          },
-          {
-            "long": "abbrev-commit",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2687,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "all",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2358,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "author",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2712,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "date",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2702,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "fixed-strings",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2731,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "grep",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2721,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "max-count",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2373,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "no-abbrev-commit",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2690,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "oneline",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2648,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "regexp-ignore-case",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2728,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "relative-date",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "none",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2699,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "since",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2414,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "skip",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2392,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "until",
-            "kind": "manual:parse_long_opt",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2429,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "short": "n",
-            "kind": "manual:strcmp",
-            "type": "manual",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "ATTACHED_VALUE",
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "revision.c",
-              "line": 2402,
-              "entrypoint": "handle_revision_opt"
-            }
-          },
-          {
-            "long": "max-count",
-            "kind": "",
-            "type": "OPTION_NUMBER",
-            "arity": "required",
-            "negatable": false,
-            "flags": [
-              "PARSE_OPT_NOCOMPLETE"
-            ],
-            "source": {
-              "file": "builtin/reflog.c",
-              "line": 467,
-              "entrypoint": "cmd_reflog"
             }
           }
         ],

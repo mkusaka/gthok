@@ -26,7 +26,7 @@ func init() {
 		for _, flag := range []string{"cached", "staged", "merge-base", "base", "ours", "theirs", "stdin"} {
 			entry.Options = append(entry.Options, objectOption(flag, "", "none"))
 		}
-		for _, short := range []string{"1", "2", "3", "0", "c"} {
+		for _, short := range []string{"1", "2", "3", "0"} {
 			entry.Options = append(entry.Options, objectOption("", short, "none"))
 		}
 		commands[name] = entry
@@ -215,13 +215,15 @@ func readExternalCapabilities(op *model.Operation, c *Context) {
 	patch := command == "show" || command == "whatchanged"
 	for _, o := range p.Options {
 		switch o.Name {
-		case "patch", "u":
+		case "patch", "u", "c", "cc", "dd", "remerge-diff":
 			patch = !o.Negated
+		case "diff-merges":
+			patch = patch || o.Value != "off" && o.Value != "none"
 		case "no-patch":
 			patch = o.Negated
 		}
 	}
-	if (command == "show" || command == "whatchanged" || command == "log") && patch && !adminDisabled(p, "textconv") {
+	if (command == "show" || command == "whatchanged" || command == "log" || command == "reflog") && patch && !adminDisabled(p, "textconv") {
 		textconv = true
 	}
 	if command == "range-diff" {
@@ -230,16 +232,18 @@ func readExternalCapabilities(op *model.Operation, c *Context) {
 	if textconv || p.Has("filters") {
 		adminExternal(op, "parameters.filters", "attributes and configured textconv/content filters require local resolution")
 	}
-	signature := false
+	signature, formatSignature := false, false
 	for _, o := range p.Options {
 		switch o.Name {
 		case "show-signature":
 			signature = !o.Negated
 		case "no-show-signature":
 			signature = o.Negated
+		case "format", "pretty":
+			formatSignature = !o.Negated && strings.Contains(strings.ReplaceAll(o.Value, "%%", ""), "%G")
 		}
 	}
-	if p.Has("open-files-in-pager") || signature || command == "verify-commit" || command == "verify-tag" {
+	if p.Has("open-files-in-pager") || signature || formatSignature || command == "verify-commit" || command == "verify-tag" {
 		adminExternal(op, "", "")
 	}
 }

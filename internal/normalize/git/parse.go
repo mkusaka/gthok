@@ -418,6 +418,8 @@ func (p *ParsedCommand) defaultGrammar(g registry.Grammar) (registry.Grammar, bo
 		name = "push"
 	case "notes":
 		name = "list"
+	case "reflog":
+		name = "show"
 	default:
 		return registry.Grammar{}, false
 	}
