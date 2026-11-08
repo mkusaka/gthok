@@ -1,4 +1,4 @@
-// Package policy evaluates normalized operations without I/O.
+// Package policy evaluates normalized operations without subprocesses or network I/O.
 package policy
 
 import (
@@ -149,12 +149,52 @@ func opMatch(m config.Match, s Subject, op model.Operation) (yes, maybe bool) {
 	if !considered(op) || !anyMatch(m.Operations, op.Action, MatchAction) || !anyMatch(m.Effects, string(op.Effect), exact) || !parametersMatch(m, op) {
 		return false, false
 	}
+	for _, result := range [][2]bool{
+		matchPair(labelsMatch(m.Scopes, op.Scopes, op.Effect)),
+		matchPair(labelsMatch(m.Capabilities, op.Capabilities, op.Effect)),
+		matchPair(setTargetMatch(m.Refs, op.Target.Refs, false)),
+		matchPair(setTargetMatch(m.Paths, op.Target.Paths, true)),
+	} {
+		if !result[0] {
+			return false, false
+		}
+		maybe = maybe || result[1]
+	}
+	remoteURL := op.Target.PushURL
+	if remoteURL == "" {
+		remoteURL = op.Target.RemoteURL
+	}
+	if len(m.RemoteURLs) > 0 {
+		if _, valid := normalizeRemoteURL(remoteURL, false); !valid {
+			remoteURL = ""
+		}
+	}
+	for _, criterion := range []struct {
+		patterns []string
+		value    string
+		match    func(string, string) bool
+	}{
+		{m.RepoRoots, op.Target.RepoRoot, matchFilesystem},
+		{m.Worktrees, op.Target.Worktree, matchFilesystem},
+		{m.CommonDirs, op.Target.CommonDir, matchFilesystem},
+		{m.Remotes, op.Target.Remote, exact},
+		{m.RemoteURLs, remoteURL, matchRemoteURL},
+	} {
+		yes, uncertain := scalarTargetMatch(criterion.patterns, criterion.value, criterion.match)
+		if !yes {
+			return false, false
+		}
+		maybe = maybe || uncertain
+	}
 	return true, maybe
 }
 
+func matchPair(yes, maybe bool) [2]bool { return [2]bool{yes, maybe} }
+
 // invocationOnly reports whether m has no per-operation criteria.
 func invocationOnly(m config.Match) bool {
-	return len(m.Operations)+len(m.Effects)+len(m.Parameters) == 0
+	return len(m.Operations)+len(m.Effects)+len(m.Parameters)+len(m.Scopes)+len(m.Capabilities)+
+		len(m.RepoRoots)+len(m.Worktrees)+len(m.CommonDirs)+len(m.Remotes)+len(m.RemoteURLs)+len(m.Refs)+len(m.Paths) == 0
 }
 
 // excluded reports whether an unless entry definitely matches op (nil: an

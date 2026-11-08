@@ -66,13 +66,23 @@ type Rule struct {
 }
 
 // Match selects operations/invocations. All non-empty criteria must match
-// (AND); entries within one list are OR. Globs use path.Match semantics with
-// '.'-separated action names matched by MatchAction (see policy package).
+// (AND) on the same operation; entries within one list are OR. Globs use
+// path.Match semantics, with ** as a whole path component matching zero or more
+// components for Git target globs. Filesystem globs use filepath.Match semantics.
 type Match struct {
-	Operations StringList `yaml:"operation" json:"operation,omitempty" doc:"Action globs such as remote.push.* (see docs/normalization.md)."` // action globs, e.g. "remote.push.*"
-	Commands   StringList `yaml:"command" json:"command,omitempty" doc:"Git command path prefixes such as push or config."`                   // command path prefixes, e.g. "push", "config"
-	Effects    StringList `yaml:"effect" json:"effect,omitempty" enum:"read,write,unknown"`                                                   // read|write|unknown
-	Levels     StringList `yaml:"level" json:"level,omitempty" enum:"L1,none" doc:"Native Git command or unclassified invocation."`
+	Operations   StringList `yaml:"operation" json:"operation,omitempty" doc:"Action globs such as remote.push.* (see docs/normalization.md)."` // action globs, e.g. "remote.push.*"
+	Commands     StringList `yaml:"command" json:"command,omitempty" doc:"Git command path prefixes such as push or config."`                   // command path prefixes, e.g. "push", "config"
+	Effects      StringList `yaml:"effect" json:"effect,omitempty" enum:"read,write,unknown"`                                                   // read|write|unknown
+	Levels       StringList `yaml:"level" json:"level,omitempty" enum:"L1,none" doc:"Native Git command or unclassified invocation."`
+	Scopes       StringList `yaml:"scopes" json:"scopes,omitempty" enum:"local-ref,remote-ref,index,worktree,config,objects,stash,reflog,remote-config,submodule,worktree-admin,hooks,file-output" doc:"Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match."`
+	Capabilities StringList `yaml:"capabilities" json:"capabilities,omitempty" enum:"external-exec,editor,network,file-write,index-refresh,interactive,pager" doc:"Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match."`
+	RepoRoots    StringList `yaml:"repoRoots" json:"repoRoots,omitempty" doc:"Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match."`
+	Worktrees    StringList `yaml:"worktrees" json:"worktrees,omitempty" doc:"Worktree filesystem globs; same normalization and ** semantics as repoRoots."`
+	CommonDirs   StringList `yaml:"commonDirs" json:"commonDirs,omitempty" doc:"Common Git directory filesystem globs; same normalization and ** semantics as repoRoots."`
+	Remotes      StringList `yaml:"remotes" json:"remotes,omitempty" doc:"Exact, case-sensitive remote names on the same operation; unknown targets maybe-match."`
+	RemoteURLs   StringList `yaml:"remoteURLs" json:"remoteURLs,omitempty" doc:"Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match."`
+	Refs         StringList `yaml:"refs" json:"refs,omitempty" doc:"Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match."`
+	Paths        StringList `yaml:"paths" json:"paths,omitempty" doc:"Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match."`
 	// Results and ExitCodes filter on how the real git finished, so they are
 	// valid only for post hooks.
 	Results   StringList        `yaml:"result" json:"result,omitempty" enum:"success,failure" doc:"Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started."`

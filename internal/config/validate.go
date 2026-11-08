@@ -39,6 +39,7 @@ func (c *Config) Validate() error {
 		}
 	}
 	match := func(p string, m Match) {
+		validateGitMatch(p, m, add)
 		globs(p+".operation", m.Operations, false)
 		globs(p+".command", m.Commands, false)
 		for name, pattern := range m.Env {

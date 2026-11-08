@@ -28,8 +28,54 @@
             "additionalProperties": false,
             "description": "Must explicitly select effect: read and level: L1; runtime also requires retrySafe.",
             "properties": {
+              "capabilities": {
+                "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                "oneOf": [
+                  {
+                    "enum": [
+                      "external-exec",
+                      "editor",
+                      "network",
+                      "file-write",
+                      "index-refresh",
+                      "interactive",
+                      "pager"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "enum": [
+                        "external-exec",
+                        "editor",
+                        "network",
+                        "file-write",
+                        "index-refresh",
+                        "interactive",
+                        "pager"
+                      ],
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
               "command": {
                 "description": "Git command path prefixes such as push or config.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "commonDirs": {
+                "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                 "oneOf": [
                   {
                     "type": "string"
@@ -122,6 +168,76 @@
                 "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                 "type": "object"
               },
+              "paths": {
+                "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "refs": {
+                "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "remoteURLs": {
+                "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "remotes": {
+                "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "repoRoots": {
+                "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
               "result": {
                 "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                 "oneOf": [
@@ -138,6 +254,64 @@
                         "success",
                         "failure"
                       ],
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "scopes": {
+                "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                "oneOf": [
+                  {
+                    "enum": [
+                      "local-ref",
+                      "remote-ref",
+                      "index",
+                      "worktree",
+                      "config",
+                      "objects",
+                      "stash",
+                      "reflog",
+                      "remote-config",
+                      "submodule",
+                      "worktree-admin",
+                      "hooks",
+                      "file-output"
+                    ],
+                    "type": "string"
+                  },
+                  {
+                    "items": {
+                      "enum": [
+                        "local-ref",
+                        "remote-ref",
+                        "index",
+                        "worktree",
+                        "config",
+                        "objects",
+                        "stash",
+                        "reflog",
+                        "remote-config",
+                        "submodule",
+                        "worktree-admin",
+                        "hooks",
+                        "file-output"
+                      ],
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              "worktrees": {
+                "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "items": {
                       "type": "string"
                     },
                     "type": "array"
@@ -164,8 +338,54 @@
             "items": {
               "additionalProperties": false,
               "properties": {
+                "capabilities": {
+                  "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "external-exec",
+                        "editor",
+                        "network",
+                        "file-write",
+                        "index-refresh",
+                        "interactive",
+                        "pager"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "enum": [
+                          "external-exec",
+                          "editor",
+                          "network",
+                          "file-write",
+                          "index-refresh",
+                          "interactive",
+                          "pager"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
                 "command": {
                   "description": "Git command path prefixes such as push or config.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "commonDirs": {
+                  "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                   "oneOf": [
                     {
                       "type": "string"
@@ -258,6 +478,76 @@
                   "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                   "type": "object"
                 },
+                "paths": {
+                  "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "refs": {
+                  "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "remoteURLs": {
+                  "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "remotes": {
+                  "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "repoRoots": {
+                  "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
                 "result": {
                   "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                   "oneOf": [
@@ -274,6 +564,64 @@
                           "success",
                           "failure"
                         ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "scopes": {
+                  "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                  "oneOf": [
+                    {
+                      "enum": [
+                        "local-ref",
+                        "remote-ref",
+                        "index",
+                        "worktree",
+                        "config",
+                        "objects",
+                        "stash",
+                        "reflog",
+                        "remote-config",
+                        "submodule",
+                        "worktree-admin",
+                        "hooks",
+                        "file-output"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "items": {
+                        "enum": [
+                          "local-ref",
+                          "remote-ref",
+                          "index",
+                          "worktree",
+                          "config",
+                          "objects",
+                          "stash",
+                          "reflog",
+                          "remote-config",
+                          "submodule",
+                          "worktree-admin",
+                          "hooks",
+                          "file-output"
+                        ],
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  ]
+                },
+                "worktrees": {
+                  "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "items": {
                         "type": "string"
                       },
                       "type": "array"
@@ -346,8 +694,54 @@
                   "match": {
                     "additionalProperties": false,
                     "properties": {
+                      "capabilities": {
+                        "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                        "oneOf": [
+                          {
+                            "enum": [
+                              "external-exec",
+                              "editor",
+                              "network",
+                              "file-write",
+                              "index-refresh",
+                              "interactive",
+                              "pager"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "enum": [
+                                "external-exec",
+                                "editor",
+                                "network",
+                                "file-write",
+                                "index-refresh",
+                                "interactive",
+                                "pager"
+                              ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
                       "command": {
                         "description": "Git command path prefixes such as push or config.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "commonDirs": {
+                        "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                         "oneOf": [
                           {
                             "type": "string"
@@ -440,6 +834,76 @@
                         "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                         "type": "object"
                       },
+                      "paths": {
+                        "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "refs": {
+                        "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "remoteURLs": {
+                        "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "remotes": {
+                        "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "repoRoots": {
+                        "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
                       "result": {
                         "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                         "oneOf": [
@@ -456,6 +920,64 @@
                                 "success",
                                 "failure"
                               ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "scopes": {
+                        "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                        "oneOf": [
+                          {
+                            "enum": [
+                              "local-ref",
+                              "remote-ref",
+                              "index",
+                              "worktree",
+                              "config",
+                              "objects",
+                              "stash",
+                              "reflog",
+                              "remote-config",
+                              "submodule",
+                              "worktree-admin",
+                              "hooks",
+                              "file-output"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "enum": [
+                                "local-ref",
+                                "remote-ref",
+                                "index",
+                                "worktree",
+                                "config",
+                                "objects",
+                                "stash",
+                                "reflog",
+                                "remote-config",
+                                "submodule",
+                                "worktree-admin",
+                                "hooks",
+                                "file-output"
+                              ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "worktrees": {
+                        "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
                               "type": "string"
                             },
                             "type": "array"
@@ -494,8 +1016,54 @@
                     "items": {
                       "additionalProperties": false,
                       "properties": {
+                        "capabilities": {
+                          "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                          "oneOf": [
+                            {
+                              "enum": [
+                                "external-exec",
+                                "editor",
+                                "network",
+                                "file-write",
+                                "index-refresh",
+                                "interactive",
+                                "pager"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "enum": [
+                                  "external-exec",
+                                  "editor",
+                                  "network",
+                                  "file-write",
+                                  "index-refresh",
+                                  "interactive",
+                                  "pager"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
                         "command": {
                           "description": "Git command path prefixes such as push or config.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "commonDirs": {
+                          "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                           "oneOf": [
                             {
                               "type": "string"
@@ -588,6 +1156,76 @@
                           "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                           "type": "object"
                         },
+                        "paths": {
+                          "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "refs": {
+                          "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "remoteURLs": {
+                          "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "remotes": {
+                          "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "repoRoots": {
+                          "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
                         "result": {
                           "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                           "oneOf": [
@@ -604,6 +1242,64 @@
                                   "success",
                                   "failure"
                                 ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                          "oneOf": [
+                            {
+                              "enum": [
+                                "local-ref",
+                                "remote-ref",
+                                "index",
+                                "worktree",
+                                "config",
+                                "objects",
+                                "stash",
+                                "reflog",
+                                "remote-config",
+                                "submodule",
+                                "worktree-admin",
+                                "hooks",
+                                "file-output"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "enum": [
+                                  "local-ref",
+                                  "remote-ref",
+                                  "index",
+                                  "worktree",
+                                  "config",
+                                  "objects",
+                                  "stash",
+                                  "reflog",
+                                  "remote-config",
+                                  "submodule",
+                                  "worktree-admin",
+                                  "hooks",
+                                  "file-output"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "worktrees": {
+                          "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
                                 "type": "string"
                               },
                               "type": "array"
@@ -671,8 +1367,54 @@
                         "match": {
                           "additionalProperties": false,
                           "properties": {
+                            "capabilities": {
+                              "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                              "oneOf": [
+                                {
+                                  "enum": [
+                                    "external-exec",
+                                    "editor",
+                                    "network",
+                                    "file-write",
+                                    "index-refresh",
+                                    "interactive",
+                                    "pager"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "enum": [
+                                      "external-exec",
+                                      "editor",
+                                      "network",
+                                      "file-write",
+                                      "index-refresh",
+                                      "interactive",
+                                      "pager"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
                             "command": {
                               "description": "Git command path prefixes such as push or config.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "commonDirs": {
+                              "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -765,6 +1507,76 @@
                               "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                               "type": "object"
                             },
+                            "paths": {
+                              "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "refs": {
+                              "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "remoteURLs": {
+                              "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "remotes": {
+                              "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "repoRoots": {
+                              "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
                             "result": {
                               "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                               "oneOf": [
@@ -781,6 +1593,64 @@
                                       "success",
                                       "failure"
                                     ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "scopes": {
+                              "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                              "oneOf": [
+                                {
+                                  "enum": [
+                                    "local-ref",
+                                    "remote-ref",
+                                    "index",
+                                    "worktree",
+                                    "config",
+                                    "objects",
+                                    "stash",
+                                    "reflog",
+                                    "remote-config",
+                                    "submodule",
+                                    "worktree-admin",
+                                    "hooks",
+                                    "file-output"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "enum": [
+                                      "local-ref",
+                                      "remote-ref",
+                                      "index",
+                                      "worktree",
+                                      "config",
+                                      "objects",
+                                      "stash",
+                                      "reflog",
+                                      "remote-config",
+                                      "submodule",
+                                      "worktree-admin",
+                                      "hooks",
+                                      "file-output"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "worktrees": {
+                              "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
                                     "type": "string"
                                   },
                                   "type": "array"
@@ -819,8 +1689,54 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
+                              "capabilities": {
+                                "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "enum": [
+                                      "external-exec",
+                                      "editor",
+                                      "network",
+                                      "file-write",
+                                      "index-refresh",
+                                      "interactive",
+                                      "pager"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "enum": [
+                                        "external-exec",
+                                        "editor",
+                                        "network",
+                                        "file-write",
+                                        "index-refresh",
+                                        "interactive",
+                                        "pager"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
                               "command": {
                                 "description": "Git command path prefixes such as push or config.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "commonDirs": {
+                                "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -913,6 +1829,76 @@
                                 "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                                 "type": "object"
                               },
+                              "paths": {
+                                "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "refs": {
+                                "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "remoteURLs": {
+                                "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "remotes": {
+                                "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "repoRoots": {
+                                "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
                               "result": {
                                 "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                                 "oneOf": [
@@ -929,6 +1915,64 @@
                                         "success",
                                         "failure"
                                       ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "scopes": {
+                                "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "enum": [
+                                      "local-ref",
+                                      "remote-ref",
+                                      "index",
+                                      "worktree",
+                                      "config",
+                                      "objects",
+                                      "stash",
+                                      "reflog",
+                                      "remote-config",
+                                      "submodule",
+                                      "worktree-admin",
+                                      "hooks",
+                                      "file-output"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "enum": [
+                                        "local-ref",
+                                        "remote-ref",
+                                        "index",
+                                        "worktree",
+                                        "config",
+                                        "objects",
+                                        "stash",
+                                        "reflog",
+                                        "remote-config",
+                                        "submodule",
+                                        "worktree-admin",
+                                        "hooks",
+                                        "file-output"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "worktrees": {
+                                "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
                                       "type": "string"
                                     },
                                     "type": "array"
@@ -1044,8 +2088,54 @@
                   "match": {
                     "additionalProperties": false,
                     "properties": {
+                      "capabilities": {
+                        "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                        "oneOf": [
+                          {
+                            "enum": [
+                              "external-exec",
+                              "editor",
+                              "network",
+                              "file-write",
+                              "index-refresh",
+                              "interactive",
+                              "pager"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "enum": [
+                                "external-exec",
+                                "editor",
+                                "network",
+                                "file-write",
+                                "index-refresh",
+                                "interactive",
+                                "pager"
+                              ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
                       "command": {
                         "description": "Git command path prefixes such as push or config.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "commonDirs": {
+                        "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                         "oneOf": [
                           {
                             "type": "string"
@@ -1138,6 +2228,76 @@
                         "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                         "type": "object"
                       },
+                      "paths": {
+                        "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "refs": {
+                        "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "remoteURLs": {
+                        "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "remotes": {
+                        "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "repoRoots": {
+                        "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
                       "result": {
                         "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                         "oneOf": [
@@ -1154,6 +2314,64 @@
                                 "success",
                                 "failure"
                               ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "scopes": {
+                        "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                        "oneOf": [
+                          {
+                            "enum": [
+                              "local-ref",
+                              "remote-ref",
+                              "index",
+                              "worktree",
+                              "config",
+                              "objects",
+                              "stash",
+                              "reflog",
+                              "remote-config",
+                              "submodule",
+                              "worktree-admin",
+                              "hooks",
+                              "file-output"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "items": {
+                              "enum": [
+                                "local-ref",
+                                "remote-ref",
+                                "index",
+                                "worktree",
+                                "config",
+                                "objects",
+                                "stash",
+                                "reflog",
+                                "remote-config",
+                                "submodule",
+                                "worktree-admin",
+                                "hooks",
+                                "file-output"
+                              ],
+                              "type": "string"
+                            },
+                            "type": "array"
+                          }
+                        ]
+                      },
+                      "worktrees": {
+                        "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                        "oneOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "items": {
                               "type": "string"
                             },
                             "type": "array"
@@ -1192,8 +2410,54 @@
                     "items": {
                       "additionalProperties": false,
                       "properties": {
+                        "capabilities": {
+                          "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                          "oneOf": [
+                            {
+                              "enum": [
+                                "external-exec",
+                                "editor",
+                                "network",
+                                "file-write",
+                                "index-refresh",
+                                "interactive",
+                                "pager"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "enum": [
+                                  "external-exec",
+                                  "editor",
+                                  "network",
+                                  "file-write",
+                                  "index-refresh",
+                                  "interactive",
+                                  "pager"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
                         "command": {
                           "description": "Git command path prefixes such as push or config.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "commonDirs": {
+                          "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                           "oneOf": [
                             {
                               "type": "string"
@@ -1286,6 +2550,76 @@
                           "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                           "type": "object"
                         },
+                        "paths": {
+                          "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "refs": {
+                          "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "remoteURLs": {
+                          "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "remotes": {
+                          "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "repoRoots": {
+                          "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
                         "result": {
                           "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                           "oneOf": [
@@ -1302,6 +2636,64 @@
                                   "success",
                                   "failure"
                                 ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                          "oneOf": [
+                            {
+                              "enum": [
+                                "local-ref",
+                                "remote-ref",
+                                "index",
+                                "worktree",
+                                "config",
+                                "objects",
+                                "stash",
+                                "reflog",
+                                "remote-config",
+                                "submodule",
+                                "worktree-admin",
+                                "hooks",
+                                "file-output"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "items": {
+                                "enum": [
+                                  "local-ref",
+                                  "remote-ref",
+                                  "index",
+                                  "worktree",
+                                  "config",
+                                  "objects",
+                                  "stash",
+                                  "reflog",
+                                  "remote-config",
+                                  "submodule",
+                                  "worktree-admin",
+                                  "hooks",
+                                  "file-output"
+                                ],
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          ]
+                        },
+                        "worktrees": {
+                          "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "items": {
                                 "type": "string"
                               },
                               "type": "array"
@@ -1369,8 +2761,54 @@
                         "match": {
                           "additionalProperties": false,
                           "properties": {
+                            "capabilities": {
+                              "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                              "oneOf": [
+                                {
+                                  "enum": [
+                                    "external-exec",
+                                    "editor",
+                                    "network",
+                                    "file-write",
+                                    "index-refresh",
+                                    "interactive",
+                                    "pager"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "enum": [
+                                      "external-exec",
+                                      "editor",
+                                      "network",
+                                      "file-write",
+                                      "index-refresh",
+                                      "interactive",
+                                      "pager"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
                             "command": {
                               "description": "Git command path prefixes such as push or config.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "commonDirs": {
+                              "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -1463,6 +2901,76 @@
                               "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                               "type": "object"
                             },
+                            "paths": {
+                              "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "refs": {
+                              "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "remoteURLs": {
+                              "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "remotes": {
+                              "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "repoRoots": {
+                              "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
                             "result": {
                               "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                               "oneOf": [
@@ -1479,6 +2987,64 @@
                                       "success",
                                       "failure"
                                     ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "scopes": {
+                              "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                              "oneOf": [
+                                {
+                                  "enum": [
+                                    "local-ref",
+                                    "remote-ref",
+                                    "index",
+                                    "worktree",
+                                    "config",
+                                    "objects",
+                                    "stash",
+                                    "reflog",
+                                    "remote-config",
+                                    "submodule",
+                                    "worktree-admin",
+                                    "hooks",
+                                    "file-output"
+                                  ],
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
+                                    "enum": [
+                                      "local-ref",
+                                      "remote-ref",
+                                      "index",
+                                      "worktree",
+                                      "config",
+                                      "objects",
+                                      "stash",
+                                      "reflog",
+                                      "remote-config",
+                                      "submodule",
+                                      "worktree-admin",
+                                      "hooks",
+                                      "file-output"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                }
+                              ]
+                            },
+                            "worktrees": {
+                              "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                              "oneOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "items": {
                                     "type": "string"
                                   },
                                   "type": "array"
@@ -1517,8 +3083,54 @@
                           "items": {
                             "additionalProperties": false,
                             "properties": {
+                              "capabilities": {
+                                "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "enum": [
+                                      "external-exec",
+                                      "editor",
+                                      "network",
+                                      "file-write",
+                                      "index-refresh",
+                                      "interactive",
+                                      "pager"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "enum": [
+                                        "external-exec",
+                                        "editor",
+                                        "network",
+                                        "file-write",
+                                        "index-refresh",
+                                        "interactive",
+                                        "pager"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
                               "command": {
                                 "description": "Git command path prefixes such as push or config.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "commonDirs": {
+                                "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -1611,6 +3223,76 @@
                                 "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                                 "type": "object"
                               },
+                              "paths": {
+                                "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "refs": {
+                                "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "remoteURLs": {
+                                "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "remotes": {
+                                "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "repoRoots": {
+                                "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
                               "result": {
                                 "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                                 "oneOf": [
@@ -1627,6 +3309,64 @@
                                         "success",
                                         "failure"
                                       ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "scopes": {
+                                "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                                "oneOf": [
+                                  {
+                                    "enum": [
+                                      "local-ref",
+                                      "remote-ref",
+                                      "index",
+                                      "worktree",
+                                      "config",
+                                      "objects",
+                                      "stash",
+                                      "reflog",
+                                      "remote-config",
+                                      "submodule",
+                                      "worktree-admin",
+                                      "hooks",
+                                      "file-output"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
+                                      "enum": [
+                                        "local-ref",
+                                        "remote-ref",
+                                        "index",
+                                        "worktree",
+                                        "config",
+                                        "objects",
+                                        "stash",
+                                        "reflog",
+                                        "remote-config",
+                                        "submodule",
+                                        "worktree-admin",
+                                        "hooks",
+                                        "file-output"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  }
+                                ]
+                              },
+                              "worktrees": {
+                                "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                                "oneOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "items": {
                                       "type": "string"
                                     },
                                     "type": "array"
@@ -1726,8 +3466,54 @@
               "match": {
                 "additionalProperties": false,
                 "properties": {
+                  "capabilities": {
+                    "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "external-exec",
+                          "editor",
+                          "network",
+                          "file-write",
+                          "index-refresh",
+                          "interactive",
+                          "pager"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "enum": [
+                            "external-exec",
+                            "editor",
+                            "network",
+                            "file-write",
+                            "index-refresh",
+                            "interactive",
+                            "pager"
+                          ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
                   "command": {
                     "description": "Git command path prefixes such as push or config.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "commonDirs": {
+                    "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                     "oneOf": [
                       {
                         "type": "string"
@@ -1820,6 +3606,76 @@
                     "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                     "type": "object"
                   },
+                  "paths": {
+                    "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "refs": {
+                    "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "remoteURLs": {
+                    "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "remotes": {
+                    "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "repoRoots": {
+                    "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
                   "result": {
                     "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                     "oneOf": [
@@ -1836,6 +3692,64 @@
                             "success",
                             "failure"
                           ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "scopes": {
+                    "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "local-ref",
+                          "remote-ref",
+                          "index",
+                          "worktree",
+                          "config",
+                          "objects",
+                          "stash",
+                          "reflog",
+                          "remote-config",
+                          "submodule",
+                          "worktree-admin",
+                          "hooks",
+                          "file-output"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "enum": [
+                            "local-ref",
+                            "remote-ref",
+                            "index",
+                            "worktree",
+                            "config",
+                            "objects",
+                            "stash",
+                            "reflog",
+                            "remote-config",
+                            "submodule",
+                            "worktree-admin",
+                            "hooks",
+                            "file-output"
+                          ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "worktrees": {
+                    "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
                           "type": "string"
                         },
                         "type": "array"
@@ -1861,8 +3775,54 @@
                 "items": {
                   "additionalProperties": false,
                   "properties": {
+                    "capabilities": {
+                      "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "external-exec",
+                            "editor",
+                            "network",
+                            "file-write",
+                            "index-refresh",
+                            "interactive",
+                            "pager"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "enum": [
+                              "external-exec",
+                              "editor",
+                              "network",
+                              "file-write",
+                              "index-refresh",
+                              "interactive",
+                              "pager"
+                            ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
                     "command": {
                       "description": "Git command path prefixes such as push or config.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "commonDirs": {
+                      "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                       "oneOf": [
                         {
                           "type": "string"
@@ -1955,6 +3915,76 @@
                       "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                       "type": "object"
                     },
+                    "paths": {
+                      "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "refs": {
+                      "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "remoteURLs": {
+                      "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "remotes": {
+                      "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "repoRoots": {
+                      "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
                     "result": {
                       "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                       "oneOf": [
@@ -1971,6 +4001,64 @@
                               "success",
                               "failure"
                             ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "scopes": {
+                      "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "local-ref",
+                            "remote-ref",
+                            "index",
+                            "worktree",
+                            "config",
+                            "objects",
+                            "stash",
+                            "reflog",
+                            "remote-config",
+                            "submodule",
+                            "worktree-admin",
+                            "hooks",
+                            "file-output"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "enum": [
+                              "local-ref",
+                              "remote-ref",
+                              "index",
+                              "worktree",
+                              "config",
+                              "objects",
+                              "stash",
+                              "reflog",
+                              "remote-config",
+                              "submodule",
+                              "worktree-admin",
+                              "hooks",
+                              "file-output"
+                            ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "worktrees": {
+                      "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
                             "type": "string"
                           },
                           "type": "array"
@@ -2037,8 +4125,54 @@
               "match": {
                 "additionalProperties": false,
                 "properties": {
+                  "capabilities": {
+                    "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "external-exec",
+                          "editor",
+                          "network",
+                          "file-write",
+                          "index-refresh",
+                          "interactive",
+                          "pager"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "enum": [
+                            "external-exec",
+                            "editor",
+                            "network",
+                            "file-write",
+                            "index-refresh",
+                            "interactive",
+                            "pager"
+                          ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
                   "command": {
                     "description": "Git command path prefixes such as push or config.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "commonDirs": {
+                    "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                     "oneOf": [
                       {
                         "type": "string"
@@ -2131,6 +4265,76 @@
                     "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                     "type": "object"
                   },
+                  "paths": {
+                    "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "refs": {
+                    "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "remoteURLs": {
+                    "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "remotes": {
+                    "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "repoRoots": {
+                    "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
                   "result": {
                     "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                     "oneOf": [
@@ -2147,6 +4351,64 @@
                             "success",
                             "failure"
                           ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "scopes": {
+                    "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                    "oneOf": [
+                      {
+                        "enum": [
+                          "local-ref",
+                          "remote-ref",
+                          "index",
+                          "worktree",
+                          "config",
+                          "objects",
+                          "stash",
+                          "reflog",
+                          "remote-config",
+                          "submodule",
+                          "worktree-admin",
+                          "hooks",
+                          "file-output"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "items": {
+                          "enum": [
+                            "local-ref",
+                            "remote-ref",
+                            "index",
+                            "worktree",
+                            "config",
+                            "objects",
+                            "stash",
+                            "reflog",
+                            "remote-config",
+                            "submodule",
+                            "worktree-admin",
+                            "hooks",
+                            "file-output"
+                          ],
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "worktrees": {
+                    "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "items": {
                           "type": "string"
                         },
                         "type": "array"
@@ -2175,8 +4437,54 @@
                 "items": {
                   "additionalProperties": false,
                   "properties": {
+                    "capabilities": {
+                      "description": "Side channels; at least one must occur on the same operation. Unknown effects without capabilities maybe-match.",
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "external-exec",
+                            "editor",
+                            "network",
+                            "file-write",
+                            "index-refresh",
+                            "interactive",
+                            "pager"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "enum": [
+                              "external-exec",
+                              "editor",
+                              "network",
+                              "file-write",
+                              "index-refresh",
+                              "interactive",
+                              "pager"
+                            ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
                     "command": {
                       "description": "Git command path prefixes such as push or config.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "commonDirs": {
+                      "description": "Common Git directory filesystem globs; same normalization and ** semantics as repoRoots.",
                       "oneOf": [
                         {
                           "type": "string"
@@ -2269,6 +4577,76 @@
                       "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                       "type": "object"
                     },
+                    "paths": {
+                      "description": "Repository-relative path globs, not Git pathspecs; * stays within a path component and ** spans zero or more components. Unknown, pattern, pathspec-magic or incomplete targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "refs": {
+                      "description": "Full ref-name globs, e.g. refs/heads/main or refs/heads/release/*; ** spans path components. Short names and refspecs are not allowed. Unknown, pattern or incomplete targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "remoteURLs": {
+                      "description": "Remote URL globs; schemes and hosts are case-insensitive, paths are cleaned and case-sensitive, credentials are ignored, and scp-like URLs use ssh. A whole ** path component spans directories; * does not. Uses pushUrl when supplied, otherwise remoteUrl. Unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "remotes": {
+                      "description": "Exact, case-sensitive remote names on the same operation; unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "repoRoots": {
+                      "description": "Repository-root filesystem globs, cleaned and made absolute; symlinks are resolved where possible. filepath.Match syntax; a whole ** component matches zero or more directory components. Unknown targets maybe-match.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
                     "result": {
                       "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                       "oneOf": [
@@ -2285,6 +4663,64 @@
                               "success",
                               "failure"
                             ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "scopes": {
+                      "description": "Git data areas; at least one must occur on the same operation. Unknown effects without scopes maybe-match.",
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "local-ref",
+                            "remote-ref",
+                            "index",
+                            "worktree",
+                            "config",
+                            "objects",
+                            "stash",
+                            "reflog",
+                            "remote-config",
+                            "submodule",
+                            "worktree-admin",
+                            "hooks",
+                            "file-output"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "items": {
+                            "enum": [
+                              "local-ref",
+                              "remote-ref",
+                              "index",
+                              "worktree",
+                              "config",
+                              "objects",
+                              "stash",
+                              "reflog",
+                              "remote-config",
+                              "submodule",
+                              "worktree-admin",
+                              "hooks",
+                              "file-output"
+                            ],
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      ]
+                    },
+                    "worktrees": {
+                      "description": "Worktree filesystem globs; same normalization and ** semantics as repoRoots.",
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "items": {
                             "type": "string"
                           },
                           "type": "array"

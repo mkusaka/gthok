@@ -5,13 +5,17 @@ package normalize
 import (
 	"github.com/mkusaka/gthok/internal/model"
 	gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
+	"github.com/mkusaka/gthok/internal/registry"
 )
 
 func Normalize(inv model.Invocation) (res model.Result) {
 	defer func() {
 		if recover() != nil {
 			res = model.NewUnknown(model.LevelNone, model.UnknownParseError, "internal normalizer panic")
-			res.Registry = model.Registry{Git: "v2.56.0", Commit: "a018953688f1b10bddf91bff8747068f5f4746a4"}
+			manifest := registry.Manifest()
+			res.Registry = model.Registry{Git: manifest.Tag, Commit: manifest.Commit}
+			res.Classification.Coverage = model.CoverageConservative
+			res.Operations[0].Coverage = model.CoverageConservative
 			res.Source = model.Source{Kind: "unknown", Argv: inv.Argv}
 		}
 	}()
