@@ -1,31 +1,15 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/mkusaka/gthok/main/schema/config.schema.json
-# User config example; opt in explicitly. No Bun/ghro installation is bundled.
-# Invocation cwd must be the mall-cloud root for scripts/ghro.ts to resolve.
-# For other cwd values, use an absolute script path or a cwd-aware executable.
-# Project config: command[0] must be ./relative or absolute (not bare bun).
-# Trust the script/imports with delegate files or shared trust.include there.
+# User config fragment; install and review your own cache executable first.
+# The executable must decline with 125 and no stdout when its cache is stale.
 version: 1
 delegates:
-  - id: ghro-native
+  - id: cached-log
     match:
       level: L1
       effect: read
-      operation: [pr.view, pr.checks, pr.list, pr.diff, run.view, run.list]
-      repositories: [medley-inc/mall-cloud]
-    unless:
-      - operation: pr.checks
-        parameters: {watch: "true"}
-    command: ["bun", "scripts/ghro.ts", "gh"]
-    env: {}
-    timeout: 10s
+      operation: git.log.read
+      repoRoots: ["/srv/checkouts/**"]
+    command: ["/opt/local/bin/git-log-cache"]
+    timeout: 2s
     onError: fallback
-  - id: ghro-api
-    match:
-      command: api
-      level: L2
-      effect: read
-      method: GET
-      repositories: [medley-inc/mall-cloud]
-    command: ["bun", "scripts/ghro.ts", "gh"]
-    timeout: 10s
-    onError: fallback
+# Git argv are appended unchanged. Only classification.retrySafe requests route;
+# log --output, log -p with possible textconv, and unknown flags do not qualify.

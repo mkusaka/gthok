@@ -1,0 +1,29 @@
+{
+  "$id": "https://raw.githubusercontent.com/mkusaka/gthok/main/schema/doctor.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "items": {
+    "additionalProperties": false,
+    "properties": {
+      "Detail": {
+        "type": "string"
+      },
+      "Fix": {
+        "type": "string"
+      },
+      "Name": {
+        "type": "string"
+      },
+      "Status": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "Name",
+      "Status",
+      "Detail",
+      "Fix"
+    ],
+    "type": "object"
+  },
+  "type": "array"
+}

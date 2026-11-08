@@ -14,11 +14,7 @@ import (
 func main() {
 	dir := flag.String("dir", "schema", "output directory")
 	flag.Parse()
-	for name, filename := range map[string]string{
-		"config": "config.schema.json", "project-config": "project.schema.json", "local-config": "local.schema.json",
-		"hook-input": "hook-input.schema.json", "hook-response": "hook-response.schema.json",
-		"transform-response": "transform-response.schema.json",
-	} {
+	for name, filename := range schema.Files() {
 		body, err := schema.JSON(name)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "genschema:", err)

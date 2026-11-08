@@ -218,6 +218,15 @@
           "capabilities": {
             "description": "Side channels the request may use.",
             "items": {
+              "enum": [
+                "external-exec",
+                "editor",
+                "network",
+                "file-write",
+                "index-refresh",
+                "interactive",
+                "pager"
+              ],
               "type": "string"
             },
             "type": "array"
@@ -285,6 +294,21 @@
           "scopes": {
             "description": "Git data areas touched.",
             "items": {
+              "enum": [
+                "local-ref",
+                "remote-ref",
+                "index",
+                "worktree",
+                "config",
+                "objects",
+                "stash",
+                "reflog",
+                "remote-config",
+                "submodule",
+                "worktree-admin",
+                "hooks",
+                "file-output"
+              ],
               "type": "string"
             },
             "type": "array"

@@ -45,6 +45,9 @@ func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 				idx = 0
 			}
 			s := literal(args[idx])
+			if kind == "strcmp" && s == "" {
+				s = literal(args[0])
+			}
 			if kind == "parse_long_opt" {
 				s = "--" + s
 			}
@@ -106,4 +109,78 @@ func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 		out = append(out, v.option)
 	}
 	return out, nil
+}
+
+// These entrypoints consume argv outside parse-options tables.
+func (e *extractor) manualGrammars(revisions []registry.Option) error {
+	fetch := e.grammars["fetch-pack"]
+	options, err := manualOptions(e.files["builtin/fetch-pack.c"], "cmd_fetch_pack")
+	if err != nil {
+		return err
+	}
+	fetch.Options = options
+	fetch.ParseFlags = []string{"PARSE_OPT_STOP_AT_NON_OPTION"}
+	e.grammars["fetch-pack"] = fetch
+
+	// Both 'reflog' and 'reflog show' delegate their arguments to cmd_log_reflog.
+	reflog := e.grammars["reflog"]
+	var logOptions []registry.Option
+	for _, option := range e.grammars["log"].Options {
+		if option.Short != "L" { // Line-range logging can produce patches.
+			logOptions = append(logOptions, option)
+		}
+	}
+	// Reflog's semantic adapter does not yet model patch/output/signature
+	// side effects, including signature placeholders in --format/--pretty.
+	for _, option := range revisions {
+		if option.Short == "n" {
+			logOptions = append(logOptions, option)
+		}
+		switch option.Long {
+		case "oneline", "date", "max-count", "skip", "abbrev-commit", "no-abbrev-commit", "relative-date", "all", "since", "until", "author", "grep", "fixed-strings", "regexp-ignore-case":
+			logOptions = append(logOptions, option)
+		}
+	}
+	logOptions = append(logOptions, registry.Option{Long: "max-count", Arity: "required", Type: "OPTION_NUMBER", Source: e.commands["reflog"].Source})
+	// The top-level completion helper does not advertise delegated log flags.
+	for i := range logOptions {
+		logOptions[i].Flags = append(append([]string(nil), logOptions[i].Flags...), "PARSE_OPT_NOCOMPLETE")
+	}
+	reflog.Options = append(reflog.Options, logOptions...)
+	for i := range reflog.Subcommands {
+		if reflog.Subcommands[i].Name == "show" {
+			reflog.Subcommands[i].Options = append(reflog.Subcommands[i].Options, logOptions...)
+			reflog.Subcommands[i].Parser = "manual:log-reflog"
+		}
+	}
+	e.grammars["reflog"] = reflog
+
+	bisect := e.grammars["bisect"]
+	f := e.files["builtin/bisect.c"]
+	start, err := manualOptions(f, "bisect_start")
+	if err != nil {
+		return err
+	}
+	for i := range start {
+		switch start[i].Long {
+		case "term-good", "term-old", "term-bad", "term-new":
+			start[i].Arity, start[i].Flags = "required", nil
+		}
+	}
+	for i := range bisect.Subcommands {
+		sub := &bisect.Subcommands[i]
+		switch sub.Name {
+		case "start":
+			sub.Options = start
+		case "terms":
+			for _, name := range []string{"term-good", "term-old", "term-bad", "term-new"} {
+				sub.Options = append(sub.Options, registry.Option{Long: name, Arity: "none", Type: "manual", Kind: "manual:one_of", Source: registry.Source{File: f.name, Entrypoint: "bisect_terms", Line: f.functions["bisect_terms"].line}})
+			}
+		case "run":
+			// The executable and every following token belong to the child.
+			sub.ParseFlags = []string{"PARSE_OPT_STOP_AT_NON_OPTION", "PARSE_OPT_NO_INTERNAL_HELP"}
+		}
+	}
+	e.grammars["bisect"] = bisect
+	return nil
 }

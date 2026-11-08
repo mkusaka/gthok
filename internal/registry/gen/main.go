@@ -167,6 +167,9 @@ func generate(src, out string, verify bool) error {
 	e.grammars["$global"] = registry.Grammar{Parser: "global", Options: globals}
 	e.grammars["$revision"] = registry.Grammar{Parser: "revision", Options: revisions, Adapters: []string{"diff", "revision-number", "revision-pseudo-options"}}
 	e.grammars["$diff"] = diff
+	if err := e.manualGrammars(revisions); err != nil {
+		return err
+	}
 	e.manifest.Coverage.Commands = len(e.commands)
 	if verify {
 		v, err := verifyCompletion(e.commands, e.grammars)
