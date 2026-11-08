@@ -151,3 +151,15 @@ func FuzzNormalize(f *testing.F) {
 		}
 	})
 }
+
+func TestNetworkReadsAreNotRetrySafe(t *testing.T) {
+	for _, argv := range [][]string{{"ls-remote", "origin"}, {"push", "--dry-run", "origin", "main"}} {
+		res := Normalize(model.Invocation{Argv: argv})
+		if res.Classification.RetrySafe {
+			t.Errorf("%q retrySafe = true: %+v", argv, res.Classification)
+		}
+	}
+	if res := Normalize(model.Invocation{Argv: []string{"rev-parse", "HEAD"}}); res.Operations[0].Effect == model.EffectRead && res.Operations[0].Coverage == model.CoverageSemantic && !res.Classification.RetrySafe {
+		t.Errorf("rev-parse should stay retrySafe: %+v", res.Classification)
+	}
+}

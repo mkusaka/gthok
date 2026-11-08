@@ -165,13 +165,18 @@ func aggregate(level model.Level, confidence model.Confidence, ops []model.Opera
 			c.Coverage = op.Coverage
 		}
 		safe := op.Effect == model.EffectRead && op.Coverage == model.CoverageSemantic
+		retry := safe
 		for _, capability := range op.Capabilities {
-			if capability == model.CapabilityIndexRefresh || capability == model.CapabilityFileWrite || capability == model.CapabilityExternalExec || capability == model.CapabilityEditor {
-				safe = false
+			switch capability {
+			case model.CapabilityIndexRefresh, model.CapabilityFileWrite, model.CapabilityExternalExec, model.CapabilityEditor:
+				safe, retry = false, false
+			case model.CapabilityNetwork, model.CapabilityInteractive:
+				// No local Git data changes, but running twice is observable.
+				retry = false
 			}
 		}
 		c.MutationFree = c.MutationFree && safe
-		c.RetrySafe = c.RetrySafe && safe
+		c.RetrySafe = c.RetrySafe && retry
 		if op.Effect == model.EffectUnknown || op.UnknownReason != model.UnknownNone {
 			c.Resolution = model.ResolutionUnresolved
 		} else if c.Resolution != model.ResolutionUnresolved && len(op.Unresolved) > 0 {
