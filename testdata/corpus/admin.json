@@ -1,0 +1,425 @@
+[
+  {
+    "name": "get",
+    "argv": [
+      "config",
+      "get",
+      "User.Name"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.get",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "all"
+          },
+          "target": {
+            "configKeys": {
+              "kind": "exact",
+              "values": [
+                "user.name"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "legacy-get",
+    "argv": [
+      "config",
+      "--get",
+      "core.editor"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.get",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "all"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "implicit-get",
+    "argv": [
+      "config",
+      "core.editor"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.get",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "set",
+    "argv": [
+      "config",
+      "set",
+      "--worktree",
+      "--append",
+      "core.editor",
+      "vim"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.set",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "worktree",
+            "append": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "implicit-set",
+    "argv": [
+      "config",
+      "core.editor",
+      "vim"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.set",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "local"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "add",
+    "argv": [
+      "config",
+      "--global",
+      "--add",
+      "core.editor",
+      "vim"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.add",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "global",
+            "append": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "unset",
+    "argv": [
+      "config",
+      "unset",
+      "--all",
+      "core.editor"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.unset",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "all": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "list",
+    "argv": [
+      "config",
+      "list",
+      "--global"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.list",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "global"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "file",
+    "argv": [
+      "config",
+      "set",
+      "--file=custom",
+      "core.editor",
+      "vim"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "config.set",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "location": "file"
+          },
+          "target": {
+            "paths": {
+              "kind": "exact",
+              "values": [
+                "custom"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "worktree-list",
+    "argv": [
+      "worktree",
+      "list",
+      "--porcelain",
+      "-z"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.admin.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "worktree-add",
+    "argv": [
+      "worktree",
+      "add",
+      "-b",
+      "topic",
+      "../topic",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.admin.add",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/topic"
+              ],
+              "complete": true
+            },
+            "paths": {
+              "kind": "exact",
+              "values": [
+                "../topic"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "worktree-remove",
+    "argv": [
+      "worktree",
+      "remove",
+      "-ff",
+      "../topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.admin.remove",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceLevel": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "worktree-prune",
+    "argv": [
+      "worktree",
+      "prune",
+      "-n"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.admin.prune.preview",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-status",
+    "argv": [
+      "submodule",
+      "status",
+      "--recursive",
+      "--",
+      "lib"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.status",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "recursive": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-init",
+    "argv": [
+      "submodule",
+      "init",
+      "lib"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.init",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-deinit",
+    "argv": [
+      "submodule",
+      "deinit",
+      "--all"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.deinit",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-update",
+    "argv": [
+      "submodule",
+      "update",
+      "--init",
+      "--rebase",
+      "lib"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "strategy": "rebase"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-sync",
+    "argv": [
+      "submodule",
+      "sync",
+      "--recursive",
+      "lib"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.sync",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "recursive": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "submodule-url",
+    "argv": [
+      "submodule",
+      "set-url",
+      "lib",
+      "../new"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "submodule.set-url",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "paths": {
+              "kind": "exact",
+              "values": [
+                "lib"
+              ],
+              "complete": true
+            },
+            "remoteUrl": "../new"
+          }
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,841 @@
+[
+  {
+    "name": "reset-soft",
+    "argv": [
+      "reset",
+      "--soft",
+      "HEAD~2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.soft",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref"
+          ],
+          "parameters": {
+            "mode": "soft"
+          },
+          "target": {
+            "revisions": {
+              "kind": "exact",
+              "values": [
+                "HEAD~2"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-mixed",
+    "argv": [
+      "reset",
+      "--mixed",
+      "HEAD~2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.mixed",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index"
+          ],
+          "parameters": {
+            "mode": "mixed"
+          },
+          "target": {
+            "revisions": {
+              "kind": "exact",
+              "values": [
+                "HEAD~2"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-hard",
+    "argv": [
+      "reset",
+      "--hard",
+      "HEAD~2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.hard",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ],
+          "parameters": {
+            "mode": "hard"
+          },
+          "target": {
+            "revisions": {
+              "kind": "exact",
+              "values": [
+                "HEAD~2"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-merge",
+    "argv": [
+      "reset",
+      "--merge",
+      "HEAD~2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.merge",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ],
+          "parameters": {
+            "mode": "merge"
+          },
+          "target": {
+            "revisions": {
+              "kind": "exact",
+              "values": [
+                "HEAD~2"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-keep",
+    "argv": [
+      "reset",
+      "--keep",
+      "HEAD~2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.keep",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ],
+          "parameters": {
+            "mode": "keep"
+          },
+          "target": {
+            "revisions": {
+              "kind": "exact",
+              "values": [
+                "HEAD~2"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-default",
+    "argv": [
+      "reset"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.mixed",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index"
+          ],
+          "parameters": {
+            "refresh": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-abbreviation",
+    "argv": [
+      "reset",
+      "--har"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.hard",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-last-mode",
+    "argv": [
+      "reset",
+      "--hard",
+      "--soft"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.soft",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-paths",
+    "argv": [
+      "reset",
+      "HEAD~1",
+      "--",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index"
+          ],
+          "parameters": {
+            "pathspecs": [
+              "file"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-no-refresh",
+    "argv": [
+      "reset",
+      "--no-refresh",
+      "--mixed"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.mixed",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "refresh": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "reset-submodules",
+    "argv": [
+      "reset",
+      "--hard",
+      "--recurse-submodules"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.hard",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "submodule"
+          ],
+          "parameters": {
+            "recurseSubmodules": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-worktree",
+    "argv": [
+      "restore",
+      "--",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "source": "index",
+            "worktree": true,
+            "staged": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-staged",
+    "argv": [
+      "restore",
+      "--staged",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index"
+          ],
+          "parameters": {
+            "source": "HEAD",
+            "worktree": false,
+            "staged": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-both",
+    "argv": [
+      "restore",
+      "-SW",
+      "-sHEAD~1",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index",
+            "worktree"
+          ],
+          "parameters": {
+            "source": "HEAD~1"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-ours",
+    "argv": [
+      "restore",
+      "--ours",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "stage": "ours"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-theirs-last",
+    "argv": [
+      "restore",
+      "--ours",
+      "--theirs",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "stage": "theirs"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "restore-no-staged",
+    "argv": [
+      "restore",
+      "-S",
+      "--no-staged",
+      "-W",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.restore.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "staged": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-paths",
+    "argv": [
+      "checkout",
+      "--",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-tree-paths",
+    "argv": [
+      "checkout",
+      "HEAD~1",
+      "--",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.paths",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-create",
+    "argv": [
+      "checkout",
+      "-btopic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-reset",
+    "argv": [
+      "checkout",
+      "-Btopic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.reset",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-orphan",
+    "argv": [
+      "checkout",
+      "--orphan",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.orphan",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "checkout-detach",
+    "argv": [
+      "checkout",
+      "--detach",
+      "HEAD~1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.checkout.detach",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "switch-normal",
+    "argv": [
+      "switch",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.switch.switch",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "switch-create",
+    "argv": [
+      "switch",
+      "-c",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.switch.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "switch-reset",
+    "argv": [
+      "switch",
+      "-Ctopic",
+      "HEAD~1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.switch.reset",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "switch-orphan",
+    "argv": [
+      "switch",
+      "--orphan",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.switch.orphan",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree",
+            "config"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "switch-detach",
+    "argv": [
+      "switch",
+      "--detach"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.switch.detach",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-preview",
+    "argv": [
+      "clean",
+      "-ndx"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean.preview",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "dryRun": true,
+            "ignored": "include"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-force",
+    "argv": [
+      "clean",
+      "-fdx"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "forceCount": 1,
+            "ignored": "include",
+            "directories": true,
+            "nestedRepositories": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-double-force",
+    "argv": [
+      "clean",
+      "-ffX"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "forceCount": 2,
+            "ignored": "only",
+            "nestedRepositories": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-force-reset",
+    "argv": [
+      "clean",
+      "-ff",
+      "--no-force",
+      "-f"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "forceCount": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-exclude",
+    "argv": [
+      "clean",
+      "-f",
+      "-e*.o",
+      "--exclude=keep",
+      "dir"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "worktree"
+          ],
+          "parameters": {
+            "exclude": [
+              "*.o",
+              "keep"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "clean-interactive",
+    "argv": [
+      "clean",
+      "-i"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.clean",
+          "effect": "write",
+          "coverage": "opaque",
+          "scopes": [
+            "worktree"
+          ],
+          "unknownReason": "interactive",
+          "capabilities": [
+            "interactive"
+          ]
+        }
+      ]
+    }
+  }
+]
