@@ -1,0 +1,34 @@
+[
+  {
+    "name": "tag-delete",
+    "argv": ["tag", "-d", "v1"],
+    "want": {
+      "operations": [{"action": "ref.tag.delete", "effect": "write", "coverage": "semantic", "target": {"refs": {"kind": "exact", "values": ["refs/tags/v1"], "complete": true}}}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "diff-explicit-external-program",
+    "argv": ["--no-optional-locks", "diff", "--no-textconv", "--ext-diff", "HEAD"],
+    "want": {
+      "operations": [{"action": "git.diff.read", "effect": "read", "coverage": "semantic", "capabilities": ["external-exec"]}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "log-explicit-textconv",
+    "argv": ["log", "--textconv", "HEAD"],
+    "want": {
+      "operations": [{"action": "git.log.read", "effect": "read", "coverage": "semantic", "capabilities": ["external-exec"]}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "submodule-shell-command",
+    "argv": ["submodule", "foreach", "--recursive", "git", "reset", "--hard"],
+    "want": {
+      "operations": [{"action": "submodule.foreach", "effect": "unknown", "coverage": "opaque", "unknownReason": "external-command", "parameters": {"command": ["git", "reset", "--hard"]}}],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  }
+]

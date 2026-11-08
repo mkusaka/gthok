@@ -1,0 +1,330 @@
+[
+  {
+    "name": "fetch",
+    "argv": [
+      "fetch",
+      "origin",
+      "+refs/heads/main:refs/remotes/origin/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "objects"
+          ],
+          "parameters": {
+            "writeFetchHead": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "fetch-all",
+    "argv": [
+      "fetch",
+      "--all",
+      "--prune",
+      "--prune-tags",
+      "--depth=2"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "all": true,
+            "prune": true,
+            "pruneTags": true,
+            "depth": "2"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "fetch-preview",
+    "argv": [
+      "fetch",
+      "--dry-run",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "dryRun": true,
+            "writeFetchHead": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "fetch-no-head",
+    "argv": [
+      "fetch",
+      "--no-write-fetch-head",
+      "--unshallow",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "writeFetchHead": false,
+            "unshallow": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "prune",
+    "argv": [
+      "remote",
+      "prune",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.prune",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "local-ref",
+            "reflog"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "prune-preview",
+    "argv": [
+      "remote",
+      "prune",
+      "-n",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.prune",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "dryRun": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-list",
+    "argv": [
+      "remote"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-add",
+    "argv": [
+      "remote",
+      "add",
+      "origin",
+      "../upstream"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.config.add",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "url": "../upstream"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-url",
+    "argv": [
+      "remote",
+      "set-url",
+      "--push",
+      "--add",
+      "origin",
+      "../backup"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.config.set-url",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "push": true,
+            "add": true,
+            "url": "../backup"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-show-local",
+    "argv": [
+      "remote",
+      "show",
+      "-n",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.show",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-get-url",
+    "argv": [
+      "remote",
+      "get-url",
+      "--push",
+      "--all",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.get-url",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "push": true,
+            "all": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "fetch-multiple",
+    "argv": [
+      "fetch",
+      "--multiple",
+      "origin",
+      "backup"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pull-merge",
+    "argv": [
+      "pull",
+      "--no-rebase",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.pull",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pull-rebase",
+    "argv": [
+      "pull",
+      "--rebase=merges",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.pull",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-update",
+    "argv": [
+      "remote",
+      "update",
+      "origin",
+      "backup"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.fetch",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,680 @@
+[
+  {
+    "name": "commit-create",
+    "argv": [
+      "commit",
+      "-m",
+      "message"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "amend": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-amend",
+    "argv": [
+      "commit",
+      "--amend",
+      "--no-edit"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.amend",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "amend": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-no-amend",
+    "argv": [
+      "commit",
+      "--amend",
+      "--no-amend",
+      "-m",
+      "message"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "amend": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-bundle",
+    "argv": [
+      "commit",
+      "-ammessage",
+      "--allow-empty",
+      "--no-verify"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "all": true,
+            "allowEmpty": true,
+            "noVerify": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-fixup",
+    "argv": [
+      "commit",
+      "--fixup=amend:HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "fixup": "amend:HEAD"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-squash",
+    "argv": [
+      "commit",
+      "--squash=HEAD",
+      "-m",
+      "message"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "squash": "HEAD"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-dry-run",
+    "argv": [
+      "commit",
+      "--dry-run"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.preview",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "dryRun": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-short",
+    "argv": [
+      "commit",
+      "--short"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.preview",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-only",
+    "argv": [
+      "commit",
+      "--amend",
+      "--only",
+      "-m",
+      "message"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.amend",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "only": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-include",
+    "argv": [
+      "commit",
+      "--include",
+      "-m",
+      "message",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "include": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-stdin",
+    "argv": [
+      "commit",
+      "-F-"
+    ],
+    "stdin": "message\n",
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "texts": {
+            "body": {
+              "value": "message\n",
+              "source": "stdin"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-continue",
+    "argv": [
+      "merge",
+      "--continue"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.continue",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-abort",
+    "argv": [
+      "merge",
+      "--abort"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.abort",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-continue",
+    "argv": [
+      "rebase",
+      "--continue"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.continue",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-abort",
+    "argv": [
+      "rebase",
+      "--abort"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.abort",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-skip",
+    "argv": [
+      "rebase",
+      "--skip"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.skip",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "cherry-pick-continue",
+    "argv": [
+      "cherry-pick",
+      "--continue"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.cherry-pick.continue",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "cherry-pick-abort",
+    "argv": [
+      "cherry-pick",
+      "--abort"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.cherry-pick.abort",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "cherry-pick-skip",
+    "argv": [
+      "cherry-pick",
+      "--skip"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.cherry-pick.skip",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "revert-continue",
+    "argv": [
+      "revert",
+      "--continue"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.revert.continue",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "revert-abort",
+    "argv": [
+      "revert",
+      "--abort"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.revert.abort",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "revert-skip",
+    "argv": [
+      "revert",
+      "--skip"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.revert.skip",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "am-continue",
+    "argv": [
+      "am",
+      "--continue"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.am.continue",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "am-abort",
+    "argv": [
+      "am",
+      "--abort"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.am.abort",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "am-skip",
+    "argv": [
+      "am",
+      "--skip"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.am.skip",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-start",
+    "argv": [
+      "merge",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "commit": true,
+            "fastForward": "allow"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-squash",
+    "argv": [
+      "merge",
+      "--squash",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.squash",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "squash": true,
+            "commit": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-ff",
+    "argv": [
+      "merge",
+      "--ff-only",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "fastForward": "only"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "merge-no-commit",
+    "argv": [
+      "merge",
+      "--no-commit",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.merge.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "commit": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-onto",
+    "argv": [
+      "rebase",
+      "--onto=main",
+      "base",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "onto": "main"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-root",
+    "argv": [
+      "rebase",
+      "--root",
+      "--autosquash",
+      "--no-update-refs"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "root": true,
+            "autosquash": true,
+            "updateRefs": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-exec",
+    "argv": [
+      "rebase",
+      "--exec",
+      "echo one",
+      "-xecho two",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.start",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "exec": [
+              "echo one",
+              "echo two"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "cherry-apply",
+    "argv": [
+      "cherry-pick",
+      "-n",
+      "-m2",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.cherry-pick.apply",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "noCommit": true,
+            "mainline": "2"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "revert-apply",
+    "argv": [
+      "revert",
+      "-n",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.revert.apply",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "noCommit": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "am-file",
+    "argv": [
+      "am",
+      "mailbox"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.am.start",
+          "effect": "write",
+          "coverage": "opaque",
+          "unknownReason": "input-unavailable"
+        }
+      ]
+    }
+  },
+  {
+    "name": "rebase-interactive",
+    "argv": [
+      "rebase",
+      "-i",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "history.rebase.start",
+          "effect": "write",
+          "coverage": "opaque",
+          "unknownReason": "interactive"
+        }
+      ]
+    }
+  }
+]

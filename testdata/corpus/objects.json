@@ -1,0 +1,474 @@
+[
+  {
+    "name": "hash-read",
+    "argv": [
+      "hash-object",
+      "--no-filters",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.hash.read",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "hash-write",
+    "argv": [
+      "hash-object",
+      "-w",
+      "--stdin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.hash.write",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "read-tree",
+    "argv": [
+      "read-tree",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "index.read-tree",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "read-tree-worktree",
+    "argv": [
+      "read-tree",
+      "-mu",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "index.read-tree",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "read-tree-preview",
+    "argv": [
+      "read-tree",
+      "-mnu",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "index.read-tree.preview",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "index",
+            "worktree"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "update-index",
+    "argv": [
+      "update-index",
+      "--refresh"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "index.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "index-remove",
+    "argv": [
+      "update-index",
+      "--force-remove",
+      "file"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "index.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "index"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "write-tree",
+    "argv": [
+      "write-tree"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.write-tree",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects",
+            "index"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-tree",
+    "argv": [
+      "commit-tree",
+      "-mmessage",
+      "tree"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.commit-tree",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "mktag",
+    "argv": [
+      "mktag"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.mktag",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "unpack",
+    "argv": [
+      "unpack-objects",
+      "-q"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.unpack-objects",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "unpack-preview",
+    "argv": [
+      "unpack-objects",
+      "-n"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.unpack-objects.preview",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "prune",
+    "argv": [
+      "prune",
+      "--expire=now"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.prune",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "prune-preview",
+    "argv": [
+      "prune",
+      "-n"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.prune.preview",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "repack",
+    "argv": [
+      "repack",
+      "-ad"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.repack",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "gc",
+    "argv": [
+      "gc",
+      "--prune=now"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.gc",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects",
+            "local-ref",
+            "reflog",
+            "worktree-admin"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "fsck",
+    "argv": [
+      "fsck"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.fsck",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "count",
+    "argv": [
+      "count-objects",
+      "-v"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.count-objects",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "commit-graph",
+    "argv": [
+      "commit-graph",
+      "write",
+      "--reachable"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.commit-graph.write",
+          "effect": "write",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "midx",
+    "argv": [
+      "multi-pack-index",
+      "verify"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.multi-pack-index.verify",
+          "effect": "read",
+          "coverage": "semantic",
+          "scopes": [
+            "objects"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "maintenance",
+    "argv": [
+      "maintenance",
+      "run",
+      "--task=gc"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "maintenance.run",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "maintenance-prefetch",
+    "argv": [
+      "maintenance",
+      "run",
+      "--task=prefetch"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "maintenance.run",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "maintenance-register",
+    "argv": [
+      "maintenance",
+      "register"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "maintenance.register",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "maintenance-stop",
+    "argv": [
+      "maintenance",
+      "stop"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "maintenance.stop",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "fast-import",
+    "argv": [
+      "fast-import"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "objects.fast-import",
+          "effect": "unknown",
+          "coverage": "opaque",
+          "unknownReason": "input-unavailable"
+        }
+      ]
+    }
+  }
+]

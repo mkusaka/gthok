@@ -1,0 +1,692 @@
+[
+  {
+    "name": "explicit",
+    "argv": [
+      "push",
+      "origin",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "none",
+            "leaseMode": "none"
+          },
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/main"
+              ],
+              "complete": true
+            },
+            "remote": "origin"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "force",
+    "argv": [
+      "push",
+      "--force",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "plus",
+    "argv": [
+      "push",
+      "origin",
+      "+HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "bundle",
+    "argv": [
+      "push",
+      "-qf",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "abbreviated",
+    "argv": [
+      "push",
+      "--force-with-leas",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "lease"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "delete",
+    "argv": [
+      "push",
+      "--delete",
+      "origin",
+      "refs/heads/old"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.delete",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/old"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "colon-delete",
+    "argv": [
+      "push",
+      "origin",
+      ":refs/heads/old"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.delete",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/old"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "mirror",
+    "argv": [
+      "push",
+      "--mirror",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.mirror",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional",
+            "mirror": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "all",
+    "argv": [
+      "push",
+      "--all",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "all": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "tags",
+    "argv": [
+      "push",
+      "--tags",
+      "origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.tags",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "tags": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "matching",
+    "argv": [
+      "push",
+      "origin",
+      ":"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.matching",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "matching": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "plus-matching",
+    "argv": [
+      "push",
+      "origin",
+      "+:"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.matching",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "lease",
+    "argv": [
+      "push",
+      "--force-with-lease",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "lease",
+            "leaseMode": "tracking"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "lease-ref",
+    "argv": [
+      "push",
+      "--force-with-lease=refs/heads/main",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "leaseMode": "tracking"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "lease-expect",
+    "argv": [
+      "push",
+      "--force-with-lease=refs/heads/main:expected",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "leaseMode": "explicit"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "lease-empty",
+    "argv": [
+      "push",
+      "--force-with-lease=refs/heads/main:",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "leaseMode": "explicit"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "includes",
+    "argv": [
+      "push",
+      "--force-with-lease",
+      "--force-if-includes",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "leaseMode": "tracking-includes"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "negated",
+    "argv": [
+      "push",
+      "-f",
+      "--no-force",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "none"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "lease-negated",
+    "argv": [
+      "push",
+      "--force-with-lease",
+      "--no-force-with-lease",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "none",
+            "leaseMode": "none"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-operand",
+    "argv": [
+      "push",
+      "origin",
+      "tag",
+      "v1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "refspecs": [
+              "refs/tags/v1:refs/tags/v1"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "wildcard",
+    "argv": [
+      "push",
+      "origin",
+      "refs/heads/*:refs/heads/*"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "refs": {
+              "kind": "pattern",
+              "values": [
+                "refs/heads/*"
+              ],
+              "complete": false
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "atomic",
+    "argv": [
+      "push",
+      "--atomic",
+      "-o",
+      "ci.skip",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "atomic": true,
+            "pushOptions": [
+              "ci.skip"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "repo",
+    "argv": [
+      "push",
+      "--repo=origin"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "remote": "origin"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "terminator",
+    "argv": [
+      "push",
+      "--",
+      "origin",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "remote": "origin"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "upstream",
+    "argv": [
+      "push",
+      "-u",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "setUpstream": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "mixed",
+    "argv": [
+      "push",
+      "origin",
+      ":refs/heads/old",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.delete",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "with-tags",
+    "argv": [
+      "push",
+      "--tags",
+      "origin",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.push.tags",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "prune",
+    "argv": [
+      "push",
+      "--prune",
+      "origin",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.push.delete",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "follow-tags",
+    "argv": [
+      "push",
+      "--follow-tags",
+      "origin",
+      "HEAD:refs/heads/main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic"
+        },
+        {
+          "action": "remote.push.tags",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "preview--n",
+    "argv": [
+      "push",
+      "-n",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "dryRun": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "preview---dry-run",
+    "argv": [
+      "push",
+      "--dry-run",
+      "origin",
+      "main"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "read",
+          "coverage": "semantic",
+          "parameters": {
+            "dryRun": true
+          }
+        }
+      ]
+    }
+  }
+]

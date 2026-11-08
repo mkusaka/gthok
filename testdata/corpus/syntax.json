@@ -1,0 +1,271 @@
+[
+  {
+    "name": "chdir-chain",
+    "argv": [
+      "-C",
+      "outer",
+      "-C",
+      "../inner",
+      "reset",
+      "--hard"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "worktree.reset.hard",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ],
+      "source": {
+        "global": [
+          "-C",
+          "outer",
+          "-C",
+          "../inner"
+        ]
+      }
+    }
+  },
+  {
+    "name": "git-dir-env",
+    "argv": [
+      "symbolic-ref",
+      "HEAD"
+    ],
+    "env": {
+      "GIT_DIR": "/fixture/bare.git"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "ref.symbolic.read",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "inline-alias",
+    "argv": [
+      "-c",
+      "alias.publish=push --force origin \"HEAD:refs/heads/release one\"",
+      "publish"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          },
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/release one"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "quoted-alias",
+    "argv": [
+      "ci"
+    ],
+    "aliases": {
+      "ci": "commit -m \"two words\""
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "texts": {
+            "body": {
+              "value": "two words",
+              "source": "inline"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "single-quoted-alias",
+    "argv": [
+      "ci"
+    ],
+    "aliases": {
+      "ci": "commit -m 'two words'"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "history.commit.create",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ],
+      "source": {
+        "alias": "ci"
+      }
+    }
+  },
+  {
+    "name": "alias-chain",
+    "argv": [
+      "publish"
+    ],
+    "aliases": {
+      "publish": "send",
+      "send": "push origin main"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "target": {
+            "remote": "origin"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "config-env-alias",
+    "argv": [
+      "--config-env=alias.publish=CORPUS_ALIAS",
+      "publish"
+    ],
+    "env": {
+      "CORPUS_ALIAS": "push --force origin main"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "remote.push.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "forceMode": "unconditional"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "status-env",
+    "argv": [
+      "status"
+    ],
+    "env": {
+      "GIT_OPTIONAL_LOCKS": "0"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "status.show",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ],
+      "classification": {
+        "mutationFree": true,
+        "retrySafe": true
+      }
+    }
+  },
+  {
+    "name": "status-refresh",
+    "argv": [
+      "status",
+      "-sb"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "status.show",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ],
+      "classification": {
+        "mutationFree": false,
+        "retrySafe": false
+      }
+    }
+  },
+  {
+    "name": "diff-output",
+    "argv": [
+      "diff",
+      "--output=out",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "git.diff.output",
+          "effect": "write",
+          "coverage": "semantic",
+          "capabilities": [
+            "index-refresh",
+            "file-write",
+            "external-exec"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "shell-alias",
+    "argv": [
+      "shell-command"
+    ],
+    "aliases": {
+      "shell-command": "!echo hello",
+      "loop": "loop"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "unknown",
+          "effect": "unknown",
+          "coverage": "opaque",
+          "unknownReason": "shell-alias"
+        }
+      ]
+    }
+  },
+  {
+    "name": "alias-loop",
+    "argv": [
+      "loop"
+    ],
+    "aliases": {
+      "shell": "!echo hello",
+      "loop": "loop"
+    },
+    "want": {
+      "operations": [
+        {
+          "action": "unknown",
+          "effect": "unknown",
+          "coverage": "conservative",
+          "unknownReason": "alias-loop"
+        }
+      ]
+    }
+  }
+]

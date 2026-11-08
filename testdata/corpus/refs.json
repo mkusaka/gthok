@@ -1,0 +1,509 @@
+[
+  {
+    "name": "list",
+    "argv": [
+      "branch"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "all",
+    "argv": [
+      "branch",
+      "-av"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "remote-list",
+    "argv": [
+      "branch",
+      "-r",
+      "--list",
+      "origin/*"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "create",
+    "argv": [
+      "branch",
+      "topic",
+      "HEAD~1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "force": false
+          },
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/topic"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "force",
+    "argv": [
+      "branch",
+      "-f",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "force": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "rename",
+    "argv": [
+      "branch",
+      "-M",
+      "old",
+      "new"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.rename",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "force": true,
+            "source": "old",
+            "destination": "new"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "copy",
+    "argv": [
+      "branch",
+      "-c",
+      "old",
+      "new"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.copy",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "force": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "upstream",
+    "argv": [
+      "branch",
+      "--set-upstream-to=origin/main",
+      "topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.upstream",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "upstream": "origin/main",
+            "unset": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "unset",
+    "argv": [
+      "branch",
+      "--unset-upstream"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.branch.upstream",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "unset": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-list",
+    "argv": [
+      "tag",
+      "-l",
+      "v*"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.tag.list",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-create",
+    "argv": [
+      "tag",
+      "v1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.tag.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "annotated": false
+          },
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/tags/v1"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-annotated",
+    "argv": [
+      "tag",
+      "-amrelease",
+      "v1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.tag.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "annotated": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-verify",
+    "argv": [
+      "tag",
+      "--ver",
+      "v1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.tag.verify",
+          "effect": "read",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "tag-no-force",
+    "argv": [
+      "tag",
+      "-f",
+      "--no-force",
+      "v1"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.tag.create",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "force": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "update",
+    "argv": [
+      "update-ref",
+      "--no-deref",
+      "refs/heads/topic",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.update",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "noDeref": true,
+            "newOid": "HEAD"
+          },
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "refs/heads/topic"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "delete",
+    "argv": [
+      "update-ref",
+      "-d",
+      "refs/heads/topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.delete",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "noDeref": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "zero-delete",
+    "argv": [
+      "update-ref",
+      "--no-deref",
+      "refs/heads/topic",
+      "0000000000000000000000000000000000000000"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.delete",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "symbolic-read",
+    "argv": [
+      "symbolic-ref",
+      "HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.symbolic.read",
+          "effect": "read",
+          "coverage": "semantic",
+          "target": {
+            "refs": {
+              "kind": "exact",
+              "values": [
+                "HEAD"
+              ],
+              "complete": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "symbolic-set",
+    "argv": [
+      "symbolic-ref",
+      "HEAD",
+      "refs/heads/topic"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.symbolic.set",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "newTarget": "refs/heads/topic"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "symbolic-delete",
+    "argv": [
+      "symbolic-ref",
+      "-d",
+      "refs/remotes/origin/HEAD"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.symbolic.delete",
+          "effect": "write",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "pack",
+    "argv": [
+      "pack-refs",
+      "--all",
+      "--no-prune"
+    ],
+    "want": {
+      "operations": [
+        {
+          "action": "ref.pack",
+          "effect": "write",
+          "coverage": "semantic",
+          "parameters": {
+            "all": true,
+            "prune": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "transaction",
+    "argv": [
+      "update-ref",
+      "--stdin"
+    ],
+    "stdin": "start\ncreate refs/heads/new HEAD\nprepare\ncommit\n",
+    "want": {
+      "operations": [
+        {
+          "action": "ref.transaction.start",
+          "coverage": "semantic"
+        },
+        {
+          "action": "ref.update",
+          "coverage": "semantic"
+        },
+        {
+          "action": "ref.transaction.prepare",
+          "coverage": "semantic"
+        },
+        {
+          "action": "ref.transaction.commit",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "delete-nul",
+    "argv": [
+      "update-ref",
+      "--stdin",
+      "-z"
+    ],
+    "stdin": "delete refs/heads/topic\u0000\u0000",
+    "want": {
+      "operations": [
+        {
+          "action": "ref.delete",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  },
+  {
+    "name": "abort",
+    "argv": [
+      "update-ref",
+      "--stdin"
+    ],
+    "stdin": "start\ndelete refs/heads/topic\nabort\n",
+    "want": {
+      "operations": [
+        {
+          "action": "ref.transaction.start",
+          "coverage": "semantic"
+        },
+        {
+          "action": "ref.delete",
+          "coverage": "semantic",
+          "execution": "skipped"
+        },
+        {
+          "action": "ref.transaction.abort",
+          "coverage": "semantic"
+        }
+      ]
+    }
+  }
+]
