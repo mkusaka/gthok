@@ -1,4 +1,5 @@
 version: 2
+project_name: gthok
 
 builds:
   - main: ./cmd/gthok
@@ -19,24 +20,23 @@ builds:
 
 archives:
   - formats: ["tar.gz"]
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    # mise use github:mkusaka/gthok auto-detects these OS/architecture assets.
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE
 
 nfpms:
   - package_name: gthok
-    file_name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     vendor: mkusaka
     homepage: https://github.com/mkusaka/gthok
     maintainer: mkusaka <https://github.com/mkusaka>
-    description: Transparent wrapper for the GitHub CLI (gh) with pre/post hooks and policies.
+    description: Transparent Git wrapper with canonical operations, policies, and pre/post hooks.
     license: MIT
     formats: [deb, rpm]
     bindir: /usr/bin
-    # Not a hard dependency: gh is often installed from GitHub's own apt/rpm
-    # repository or another channel under a different package name.
-    recommends: [gh]
+    dependencies: [git]
     contents:
       - src: README.md
         dst: /usr/share/doc/gthok/README.md
@@ -45,6 +45,7 @@ nfpms:
 
 checksum:
   name_template: checksums.txt
+  algorithm: sha256
 
 changelog:
   use: github-native

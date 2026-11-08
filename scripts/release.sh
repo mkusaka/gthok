@@ -15,11 +15,11 @@ fi
 
 git fetch --tags origin
 latest=$(git tag --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
-latest=${latest:-v0.0.0}
 if [[ "$arg" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   tag="$arg"
 else
-  IFS=. read -r major minor patch <<<"${latest#v}"
+  base="${latest:-v0.0.0}"
+  IFS=. read -r major minor patch <<<"${base#v}"
   case "$arg" in
     patch) patch=$((patch + 1)) ;;
     minor) minor=$((minor + 1)); patch=0 ;;
@@ -42,7 +42,7 @@ if ! grep -q '[^[:space:]#]' <<<"$notes"; then
   echo "Error: CHANGELOG.md [Unreleased] is empty; describe the changes first"; exit 1
 fi
 
-echo "$latest -> $tag"
+echo "${latest:-<first release>} -> $tag"
 echo "Commit: $(git log --oneline -1)"
 echo "----- release notes -----"
 echo "$notes"
@@ -54,7 +54,12 @@ today=$(date -u +%Y-%m-%d)
 # Rename [Unreleased] to the new version, open a fresh [Unreleased], fix compare links.
 awk -v tag="$tag" -v today="$today" -v prev="$latest" '
   !done && /^## \[Unreleased\]/ { print "## [Unreleased]"; print ""; print "## [" tag "] - " today; done = 1; next }
-  /^\[Unreleased\]: / { print "[Unreleased]: https://github.com/mkusaka/gthok/compare/" tag "...HEAD"; print "[" tag "]: https://github.com/mkusaka/gthok/compare/" prev "..." tag; next }
+  /^\[Unreleased\]: / {
+    print "[Unreleased]: https://github.com/mkusaka/gthok/compare/" tag "...HEAD"
+    if (prev == "") print "[" tag "]: https://github.com/mkusaka/gthok/releases/tag/" tag
+    else print "[" tag "]: https://github.com/mkusaka/gthok/compare/" prev "..." tag
+    next
+  }
   { print }
 ' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 

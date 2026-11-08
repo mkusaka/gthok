@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*"
 
 permissions: {}
 
@@ -104,16 +104,16 @@ jobs:
           base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
           sha() {
             local sum
-            sum="$(awk -v f="gthok_$1.tar.gz" '$2 == f { print $1 }' "$RUNNER_TEMP/checksums.txt")"
+            sum="$(awk -v f="gthok_${VERSION}_$1.tar.gz" '$2 == f { print $1 }' "$RUNNER_TEMP/checksums.txt")"
             [[ "$sum" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::missing checksum for $1" >&2; exit 1; }
             echo "$sum"
           }
           export FORMULA_PATH="$RUNNER_TEMP/gthok.rb"
           cp packaging/homebrew/gthok.rb "$FORMULA_PATH"
-          DARWIN_ARM64_URL="$base/gthok_darwin_arm64.tar.gz"
-          DARWIN_X64_URL="$base/gthok_darwin_amd64.tar.gz"
-          LINUX_ARM64_URL="$base/gthok_linux_arm64.tar.gz"
-          LINUX_X64_URL="$base/gthok_linux_amd64.tar.gz"
+          DARWIN_ARM64_URL="$base/gthok_${VERSION}_darwin_arm64.tar.gz"
+          DARWIN_X64_URL="$base/gthok_${VERSION}_darwin_amd64.tar.gz"
+          LINUX_ARM64_URL="$base/gthok_${VERSION}_linux_arm64.tar.gz"
+          LINUX_X64_URL="$base/gthok_${VERSION}_linux_amd64.tar.gz"
           DARWIN_ARM64_SHA256="$(sha darwin_arm64)"
           DARWIN_X64_SHA256="$(sha darwin_amd64)"
           LINUX_ARM64_SHA256="$(sha linux_arm64)"

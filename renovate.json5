@@ -4,6 +4,16 @@
   minimumReleaseAge: "7 days",
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["config:best-practices", "customManagers:githubActionsVersions"],
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/\\.github/workflows/.*\\.ya?ml$/"],
+      matchStrings: [
+        "version:\\s*(?<currentValue>v[0-9.]+) # renovate: depName=(?<depName>[^\\s]+)",
+      ],
+      datasourceTemplate: "github-releases",
+    },
+  ],
   packageRules: [
     {
       description: "Group non-major and pin Go module updates",

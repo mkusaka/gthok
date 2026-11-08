@@ -6,11 +6,11 @@ on:
     paths: &workflow-paths
       - "action.yml"
       - ".github/workflows/**"
-      - ".github/actions/**"
-      - ".github/scripts/**"
-      - ".github/ghalint.yaml"
       - ".pinact.yaml"
-      - "zizmor.yml"
+      - ".goreleaser.yaml"
+      - "Makefile"
+      - "scripts/**"
+      - "packaging/**"
   pull_request:
     paths: *workflow-paths
     types:
@@ -48,6 +48,9 @@ jobs:
         shell: bash
       - name: Check workflow files
         run: jactionlint --color
+        shell: bash
+      - name: Test packaging scripts (offline)
+        run: ruby scripts/packaging_test.rb
         shell: bash
 
   ghalint:
