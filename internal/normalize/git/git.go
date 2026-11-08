@@ -29,7 +29,14 @@ type Context struct {
 
 // register is called at init time by individual semantic families. The most
 // specific registered command path wins ("stash drop" before "stash").
+// fallbackSemantics holds explicit conservative/opaque entries for commands
+// without a dedicated classifier; register() always takes precedence.
+var fallbackSemantics = map[string]func(*Context) []model.Operation{}
+
 func register(command string, fn func(*Context) []model.Operation) {
+	if semantics[command] != nil {
+		panic("git: duplicate semantics registration for " + command)
+	}
 	semantics[command] = fn
 }
 
@@ -108,7 +115,12 @@ func Normalize(inv model.Invocation) model.Result {
 		r.Operations = readInfo(ctx)
 	} else {
 		for n := len(parsed.Path); n > 0; n-- {
-			if fn := semantics[strings.Join(parsed.Path[:n], " ")]; fn != nil {
+			key := strings.Join(parsed.Path[:n], " ")
+			fn := semantics[key]
+			if fn == nil {
+				fn = fallbackSemantics[key]
+			}
+			if fn != nil {
 				r.Operations = fn(ctx)
 				break
 			}

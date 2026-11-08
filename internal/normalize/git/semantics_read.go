@@ -11,7 +11,7 @@ var adminReadCommands = []string{
 	"log", "show", "diff", "diff-tree", "diff-index", "diff-files", "diff-pairs", "rev-list", "rev-parse", "cat-file",
 	"ls-files", "ls-tree", "grep", "blame", "annotate", "pickaxe", "shortlog", "describe", "name-rev", "format-rev",
 	"merge-base", "show-branch", "whatchanged", "range-diff", "format-patch", "last-modified", "cherry",
-	"check-attr", "check-ignore", "check-mailmap", "check-ref-format", "var", "for-each-ref", "show-ref", "repo",
+	"check-attr", "check-ignore", "check-mailmap", "check-ref-format", "var", "repo",
 	"column", "stripspace", "patch-id", "show-index", "get-tar-commit-id", "fmt-merge-msg", "pack-redundant", "url-parse",
 	"verify-commit", "verify-tag",
 }

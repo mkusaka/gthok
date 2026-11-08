@@ -197,7 +197,7 @@ func TestT7cMaintenanceArchiveBundle(t *testing.T) {
 		{"archive --format=custom HEAD", "archive.create", model.EffectRead, model.CapabilityExternalExec, false},
 		{"archive --list", "archive.list", model.EffectRead, "", true},
 		{"archive -oout.tar HEAD -- path", "archive.output", model.EffectWrite, model.CapabilityFileWrite, false},
-		{"archive --remote=origin HEAD", "archive.create", model.EffectRead, model.CapabilityNetwork, true},
+		{"archive --remote=origin HEAD", "archive.create", model.EffectRead, model.CapabilityNetwork, false},
 		{"bundle create out.bundle --all", "bundle.create", model.EffectWrite, model.CapabilityFileWrite, false},
 		{"bundle create - HEAD", "bundle.stdout", model.EffectRead, "", true},
 		{"bundle unbundle out.bundle", "bundle.unbundle", model.EffectWrite, "", false},

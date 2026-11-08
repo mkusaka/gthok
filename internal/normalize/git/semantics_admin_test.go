@@ -136,7 +136,7 @@ func TestT7cExplicitCommandInventory(t *testing.T) {
 			if entry.Implementation == "option-only" && globals[name] {
 				return
 			}
-			if semantics[name] == nil {
+			if semantics[name] == nil && fallbackSemantics[name] == nil {
 				t.Fatal("command has neither semantics nor an explicit conservative/opaque entry")
 			}
 		})
@@ -163,6 +163,14 @@ func TestT7cExplicitCommandInventory(t *testing.T) {
 		_, op := adminTestOperation(t, command)
 		if op.Coverage != model.CoverageOpaque || op.UnknownReason == model.UnknownNone || op.Effect != model.EffectUnknown {
 			t.Errorf("%s: %+v", command, op)
+		}
+	}
+}
+
+func TestFallbackEntriesHaveNoDedicatedClassifier(t *testing.T) {
+	for command := range fallbackSemantics {
+		if semantics[command] != nil {
+			t.Errorf("%s has a dedicated classifier; remove its stale fallback entry", command)
 		}
 	}
 }

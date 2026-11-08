@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -123,8 +124,10 @@ func TestBoundedQueryOutput(t *testing.T) {
 		t.Fatal("output cap ignored")
 	}
 	f := newFixture(t)
-	f.config("resolver.large", strings.Repeat("x", maxQueryBytes/2))
-	f.config("resolver.large", strings.Repeat("x", maxQueryBytes/2))
+	// Linux caps a single argv string at 128 KiB (MAX_ARG_STRLEN).
+	for i := 0; i*64<<10 <= maxQueryBytes; i++ {
+		f.config("resolver.large"+strconv.Itoa(i), strings.Repeat("x", 64<<10))
+	}
 	r := f.resolver()
 	r.Local()
 	if _, err := r.run(context.Background(), query{kind: configQuery}); err == nil {

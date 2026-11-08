@@ -11,14 +11,10 @@ import (
 
 func init() {
 	for command := range adminConservativeCommands {
-		if semantics[command] == nil {
-			register(command, adminConservative)
-		}
+		fallbackSemantics[command] = adminConservative
 	}
 	for command := range adminOpaqueCommands {
-		if semantics[command] == nil {
-			register(command, adminOpaque)
-		}
+		fallbackSemantics[command] = adminOpaque
 	}
 	register("worktree", worktreeAdmin)
 	register("submodule", submoduleAdmin)
@@ -388,22 +384,9 @@ func submoduleAdmin(c *Context) []model.Operation {
 // Explicit inventory: adding a pinned command must add semantics or a reviewed reason.
 // Other workers' adapters override these conservative registrations at init time.
 var adminConservativeCommands = map[string]string{
-	"add":                    "index staging modes are provided by the worktree adapter",
 	"stage":                  "index staging alias modes are provided by the worktree adapter",
-	"am":                     "mailbox application modes are provided by the history adapter",
-	"apply":                  "patch application modes are provided by the worktree adapter",
-	"bisect":                 "bisection state and run modes are not modeled",
-	"branch":                 "branch ref modes are provided by the refs adapter",
-	"checkout":               "checkout modes are provided by the worktree adapter",
 	"checkout--worker":       "internal checkout worker consumes an unmodeled worker protocol",
 	"checkout-index":         "index checkout modes are provided by the worktree adapter",
-	"cherry-pick":            "sequencer modes are provided by the history adapter",
-	"clean":                  "clean modes are provided by the worktree adapter",
-	"clone":                  "clone modes are provided by the remote adapter",
-	"ls-remote":              "remote ref enumeration is provided by the remote adapter",
-	"commit":                 "commit modes are provided by the history adapter",
-	"fetch":                  "fetch modes are provided by the remote adapter",
-	"fetch-pack":             "low-level fetch transport and ref negotiation are not modeled",
 	"history":                "history rewrite subcommands are not modeled",
 	"http-fetch":             "low-level HTTP fetch transport is not modeled",
 	"http-push":              "low-level HTTP push transport is not modeled",
@@ -411,7 +394,6 @@ var adminConservativeCommands = map[string]string{
 	"interpret-trailers":     "trailer commands and in-place file edits are not modeled",
 	"mailinfo":               "mail message and patch output file operands are not modeled",
 	"mailsplit":              "mailbox splitting writes output files whose names depend on input",
-	"merge":                  "merge modes are provided by the history adapter",
 	"merge-file":             "in-place merge-file output and conflict modes are not modeled",
 	"merge-index":            "merge-index invokes an explicit merge program",
 	"merge-ours":             "internal merge strategy index checks are not modeled",
@@ -420,31 +402,11 @@ var adminConservativeCommands = map[string]string{
 	"merge-recursive-theirs": "internal merge strategy index/worktree/objects writes are not modeled",
 	"merge-subtree":          "internal merge strategy index/worktree/objects writes are not modeled",
 	"merge-tree":             "merge-tree can write objects; legacy read mode is not modeled",
-	"mv":                     "index/worktree move modes are provided by the worktree adapter",
-	"notes":                  "notes ref modes are provided by the refs adapter",
-	"pack-refs":              "ref packing and pruning are not modeled",
-	"pull":                   "pull modes are provided by the remote adapter",
-	"push":                   "push modes are provided by the remote adapter",
-	"rebase":                 "rebase modes are provided by the history adapter",
-	"reflog":                 "reflog modes are provided by the refs adapter",
 	"refs":                   "ref database management subcommands are not modeled",
-	"remote":                 "remote modes are provided by the remote adapter",
 	"replay":                 "revision replay may rewrite refs and objects; modes are not modeled",
-	"replace":                "replacement refs are provided by the refs adapter",
 	"rerere":                 "recorded conflict resolutions and index updates are not modeled",
-	"reset":                  "reset modes are provided by the worktree adapter",
-	"restore":                "restore modes are provided by the worktree adapter",
-	"revert":                 "sequencer modes are provided by the history adapter",
-	"rm":                     "index/worktree removal modes are provided by the worktree adapter",
 	"scalar":                 "repository orchestration can configure maintenance and fetch; modes are not modeled",
-	"send-pack":              "low-level push transport and ref negotiation are not modeled",
-	"sparse-checkout":        "sparse patterns, index and worktree updates are not modeled",
-	"stash":                  "stash modes are provided by the history adapter",
-	"switch":                 "switch modes are provided by the worktree adapter",
-	"symbolic-ref":           "symbolic ref modes are provided by the refs adapter",
-	"tag":                    "tag modes are provided by the refs adapter",
 	"unpack-file":            "temporary file output path depends on object contents and filesystem",
-	"update-ref":             "ref transactions are provided by the refs adapter",
 	"update-server-info":     "server metadata and pack-list file generation are not modeled",
 	"backfill":               "partial-clone object fetching and remote selection are not modeled",
 	"bugreport":              "diagnostic report and optional archive output paths are not modeled",
@@ -493,8 +455,6 @@ var adminOpaqueCommands = map[string]string{
 	"remote-ftps":              "remote helper consumes an interactive transport protocol",
 	"remote-http":              "remote helper consumes an interactive transport protocol",
 	"remote-https":             "remote helper consumes an interactive transport protocol",
-	"receive-pack":             "server-side receive protocol selects ref and object mutations",
-	"upload-pack":              "server-side upload protocol and configured pack hooks are not analyzed",
 	"upload-archive":           "archive server consumes requests after startup",
 	"upload-archive--writer":   "internal archive server consumes requests after startup",
 }

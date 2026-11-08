@@ -76,7 +76,7 @@ func TestUnknownCoverage(t *testing.T) {
 		}
 	}
 	r := Normalize(model.Invocation{Argv: []string{"ls-files"}})
-	if r.Operations[0].Family != "git.ls-files" || r.Operations[0].Effect != model.EffectRead || r.Classification.Coverage != model.CoverageConservative || r.Classification.RetrySafe {
+	if r.Operations[0].Family != "git.ls-files" || r.Operations[0].Effect != model.EffectRead || r.Classification.Coverage != model.CoverageSemantic || !r.Classification.RetrySafe {
 		t.Fatal(r)
 	}
 	if r := Normalize(model.Invocation{}); r.Classification.Level != model.LevelNone {
