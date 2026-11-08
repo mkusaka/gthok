@@ -55,64 +55,74 @@ func ExpandAlias(argv []string, aliases map[string]string) ([]string, string, mo
 }
 
 func expandAlias(argv []string, aliases map[string]string, env map[string]string) ([]string, string, model.UnknownReason) {
+	hops, alias, reason := ExpandAliasHops(argv, aliases, env)
+	return hops[len(hops)-1], alias, reason
+}
+
+// ExpandAliasHops includes the original argv and each accepted expansion, with
+// that hop's global options. The last hop is ExpandAlias's analysis argv; env
+// supplies values for --config-env without performing executable lookup.
+func ExpandAliasHops(argv []string, aliases map[string]string, env map[string]string) ([][]string, string, model.UnknownReason) {
 	out := append([]string(nil), argv...)
+	hops := [][]string{out}
 	first := ""
 	seen := map[string]bool{}
 	for depth := 0; depth < 128; depth++ {
 		g, err := gitargs.Parse(out)
 		if err != nil || g.Command == "" {
-			return out, first, model.UnknownNone
+			return hops, first, model.UnknownNone
 		}
 		entry, known := commands[g.Command]
 		if known && entry.Implementation != "document" && entry.Implementation != "option-only" && !hasFlag(entry.Flags, "DEPRECATED") {
 			// run_argv tries builtins and dashed executables before aliases.
-			return out, first, model.UnknownNone
+			return hops, first, model.UnknownNone
 		}
 		value, ok, ambiguous := lookupAlias(g.Command, aliasesWithGlobals(g, aliases, env))
 		if ambiguous {
 			if first == "" {
 				first = g.Command
 			}
-			return out, first, model.UnknownParseError
+			return hops, first, model.UnknownParseError
 		}
 		if !ok {
-			return out, first, model.UnknownNone
+			return hops, first, model.UnknownNone
 		}
 		if first == "" {
 			first = g.Command
 		}
 		if seen[g.Command] {
-			return out, first, model.UnknownAliasLoop
+			return hops, first, model.UnknownAliasLoop
 		}
 		seen[g.Command] = true
 		if strings.HasPrefix(value, "!") {
-			return out, first, model.UnknownShellAlias
+			return hops, first, model.UnknownShellAlias
 		}
 		words, err := splitCmdline(value)
 		if err != nil {
-			return out, first, model.UnknownParseError
+			return hops, first, model.UnknownParseError
 		}
 		aliasGlobal, err := gitargs.Parse(words)
 		if err != nil {
-			return out, first, model.UnknownParseError
+			return hops, first, model.UnknownParseError
 		}
 		next := append([]string(nil), g.Tokens...)
 		next = append(next, words...)
 		next = append(next, g.Args...)
 		if aliasGlobal.Early != "" && aliasGlobal.Early != "version" && aliasGlobal.Early != "help" {
-			return next, first, model.UnknownNone
+			return append(hops, next), first, model.UnknownNone
 		}
 		// Only cmd_main rewrites -v/--version and -h/--help into commands;
 		// handle_alias leaves those command words verbatim and lookup fails.
 		if n := len(aliasGlobal.Tokens); n < len(words) && (words[n] == "--version" || words[n] == "-v" || words[n] == "--help" || words[n] == "-h") {
-			return next, first, model.UnknownCommand
+			return append(hops, next), first, model.UnknownCommand
 		}
 		if aliasGlobal.Command == "" || aliasChangesEnvironment(aliasGlobal) {
-			return out, first, model.UnknownParseError
+			return hops, first, model.UnknownParseError
 		}
 		out = next
+		hops = append(hops, out)
 	}
-	return out, first, model.UnknownAliasLoop
+	return hops, first, model.UnknownAliasLoop
 }
 
 func lookupAlias(name string, aliases map[string]string) (value string, found, ambiguous bool) {
