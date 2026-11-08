@@ -324,7 +324,7 @@ func BenchmarkRedactorResult(b *testing.B) {
 		SchemaVersion:  model.SchemaVersion,
 		Classification: model.Classification{Level: model.LevelL1, Confidence: model.ConfidenceExact, Resolution: model.ResolutionComplete},
 		Source:         model.Source{Kind: "command", Argv: []string{"push", "https://user:" + "fake-learned-github-credential" + "@example.test/repo"}},
-		Operations:     []model.Operation{{Family: "pr.merge", Action: "pr.merge.direct", Effect: model.EffectWrite, Execution: model.ExecutionWillRun, Target: model.Target{RepoRoot: "/repo", Refs: model.Exact("refs/heads/main")}, Parameters: map[string]any{"variables": map[string]any{"token": "fake-learned-github-credential", "pullRequestId": "PR_fake"}, "nested": []any{map[string]any{"ordinary": "keep"}}}}},
+		Operations:     []model.Operation{{Family: "ref", Action: "ref.update", Effect: model.EffectWrite, Execution: model.ExecutionWillRun, Target: model.Target{RepoRoot: "/repo", Refs: model.Exact("refs/heads/main")}, Parameters: map[string]any{"variables": map[string]any{"token": "fake-learned-github-credential", "ref": "refs/heads/main"}, "nested": []any{map[string]any{"ordinary": "keep"}}}}},
 	}
 	b.ReportAllocs()
 	for b.Loop() {

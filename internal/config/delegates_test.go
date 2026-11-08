@@ -16,7 +16,7 @@ func TestDelegateConfig(t *testing.T) {
 		t.Fatalf("defaults: %+v", c.Delegates)
 	}
 	for _, match := range []string{
-		"{}", "{operation: pr.merge.*}", "{effect: write, level: L1}", "{effect: [read, write], level: L1}",
+		"{}", "{operation: ref.*}", "{effect: write, level: L1}", "{effect: [read, write], level: L1}",
 		"{effect: read}", "{effect: read, level: L3}", "{effect: read, level: [L1, L3]}",
 		"{effect: read, level: L2}", "{effect: read, level: L2, method: POST}",
 		"{effect: read, level: L2, method: [GET, POST]}",

@@ -202,7 +202,7 @@ func (r *Resolver) Local() model.ResolvedContext {
 	return c
 }
 
-// Fill retains the ghok entrypoint; allowAPI never permits remote queries.
+// Fill resolves targets locally; allowAPI never permits remote queries.
 // All locally resolvable target fields are filled, regardless of need.
 func (r *Resolver) Fill(ctx context.Context, res *model.Result, need []string, allowAPI bool) []string {
 	if err := ctx.Err(); err != nil {

@@ -46,7 +46,7 @@ func TestWarnRuleOrderAndPrecedence(t *testing.T) {
 		if decision != "" {
 			p.Rules = append(p.Rules, config.Rule{ID: "blocking", Decision: decision, Reason: "existing decision"})
 		}
-		s := subject(operation("pr.merge.direct", "org/repo", model.EffectWrite))
+		s := subject(operation("ref.update", "/repo", model.EffectWrite))
 		s.Result.Operations = append(s.Result.Operations, s.Result.Operations[0])
 		got := Evaluate(p, s)
 		want := protocol.DecisionAllow

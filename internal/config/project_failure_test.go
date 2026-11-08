@@ -13,7 +13,7 @@ func TestProjectFailureRetainsWholeUserConfig(t *testing.T) {
 		{"parse", "version: ["},
 		{"validate", "version: 1\npolicy: {mode: invalid}\n"},
 		{"restriction", "version: 1\nlogging: {}\n"},
-		{"collision", "version: 1\npolicy: {mode: enforce, protectedRepositories: [project/repo], rules: [{id: user, decision: audit}]}\n"},
+		{"collision", "version: 1\npolicy: {mode: enforce, rules: [{id: user, decision: audit}]}\n"},
 		{"read", ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

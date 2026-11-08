@@ -275,7 +275,7 @@ func TestRoutineConfigNotesAbsentFromLogs(t *testing.T) {
 func TestInvalidConfigWarningThrottleAndLogging(t *testing.T) {
 	s := newSandbox(t)
 	input := []byte{0, 'a', '\n', 255}
-	args := []string{"api", "graphql", "--input", "-", "-f", "body=unchanged content"}
+	args := []string{"hash-object", "--stdin"}
 	writeInvalid := func(body string) {
 		t.Helper()
 		if err := os.WriteFile(s.cfg, []byte(body), 0600); err != nil {

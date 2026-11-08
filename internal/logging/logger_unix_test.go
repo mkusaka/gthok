@@ -622,8 +622,8 @@ func BenchmarkLoggerWrite(b *testing.B) {
 	record := Record{
 		Time:         time.Date(2026, 10, 14, 1, 2, 3, 0, time.UTC),
 		InvocationID: "0123456789abcdef0123456789abcdef", Mode: "wrapper",
-		Argv: []string{"pr", "merge", "123", "--squash"}, Decision: "allow",
-		Operations: []model.Operation{{Family: "pr.merge", Action: "pr.merge.request", Effect: model.EffectWrite, Target: model.Target{RepoRoot: "/repo"}, Parameters: map[string]any{"method": "squash"}}},
+		Argv: []string{"update-ref", "refs/heads/main", "HEAD"}, Decision: "allow",
+		Operations: []model.Operation{{Family: "ref", Action: "ref.update", Effect: model.EffectWrite, Target: model.Target{RepoRoot: "/repo"}, Parameters: map[string]any{"oldValue": "HEAD"}}},
 	}
 	b.ReportAllocs()
 	for b.Loop() {

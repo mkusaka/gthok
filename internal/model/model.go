@@ -9,8 +9,8 @@ package model
 // SchemaVersion of Result and of the hook protocol.
 const SchemaVersion = 1
 
-// Level is the normalization layer that produced a classification. gthok only
-// has native Git commands; the value set mirrors ghok's L1/none meaning.
+// Level is the normalization layer that produced a classification: L1 for a
+// native Git command, none when nothing was classified.
 type Level string
 
 const (
@@ -103,8 +103,8 @@ type Classification struct {
 	Confidence Confidence `json:"confidence" enum:"exact,heuristic,none" doc:"Certainty of operation identity, not execution success."`
 	Resolution Resolution `json:"resolution" enum:"complete,partial,deferred,unresolved" doc:"Completeness of targets and parameters; inspect unresolved entries."`
 	// MutationFree is true only when the normalizer *proved* that no write
-	// happens (e.g. a parsed GraphQL query document, a GET REST call, a known
-	// read-only command). It is false when unknown. Never set it on guesses.
+	// happens (e.g. a known read-only command). It is false when unknown.
+	// Never set it on guesses.
 	MutationFree bool `json:"mutationFree"`
 	// Coverage is the weakest coverage of any operation.
 	Coverage Coverage `json:"coverage" enum:"semantic,conservative,opaque" doc:"Depth of understanding; opaque always carries a named cause."`
@@ -116,12 +116,11 @@ type Classification struct {
 // Operation is one semantic operation. A single invocation may yield many
 // (e.g. a push to a remote group yields one per remote).
 type Operation struct {
-	// Family groups operations with related meaning, e.g. "pr.merge".
+	// Family groups operations with related meaning, e.g. "remote.push".
 	// Unknown operations use family "unknown".
 	Family string `json:"family"`
-	// Action is the specific action, e.g. "pr.merge.request" (gh pr merge:
-	// user intent, server decides merge/auto/queue), "pr.merge.direct",
-	// "pr.merge.auto.enable", "pr.merge.auto.disable", "pr.merge.queue.enqueue".
+	// Action is the specific action, e.g. "ref.update", "ref.delete",
+	// "remote.push.update".
 	// Hook/policy operation globs match against Action.
 	Action string `json:"action"`
 	Effect Effect `json:"effect" enum:"read,write,unknown" doc:"Side-effect classification; unknown never proves safety."`
@@ -142,8 +141,7 @@ type Operation struct {
 	UnknownReason UnknownReason `json:"unknownReason,omitempty" enum:"unknown-command,unknown-flag,external-command,shell-alias,alias-loop,parse-error,input-unavailable,input-too-large,malformed-request,interactive,remote-state,unverified-version" doc:"Machine-readable reason for an unknown or opaque classification."`
 	// Detail is free-form human-readable explanation.
 	Detail string `json:"detail,omitempty"`
-	// Origin ties the operation back to its source (command path, REST route
-	// template, GraphQL field/alias).
+	// Origin ties the operation back to its source (command path).
 	Origin Origin `json:"origin"`
 	// Editable contains execution-only locators, excluded from hook/log JSON.
 	Editable map[string]EditLocator `json:"-"`

@@ -18,10 +18,10 @@ func TestHookInputsMatchPublishedSchema(t *testing.T) {
 		stdin []byte
 	}{
 		{name: "empty-argv"},
-		{name: "native-texts", args: []string{"commit", "--allow-empty", "-R", "acme/project", "-t", "Title", "-b", "Body"}},
-		{name: "stdin-texts", args: []string{"pr", "comment", "7", "-R", "acme/project", "--body-file", "-"}, stdin: []byte("comment body")},
-		{name: "REST-parameters", args: []string{"api", "repos/acme/project/issues", "-f", "title=Title", "-f", "body=Body", "-F", "labels[]=bug", "-F", "labels[]=docs"}},
-		{name: "GraphQL", args: []string{"api", "graphql", "-f", `query=mutation { addComment(input:{subjectId:"opaque",body:"Body"}) { clientMutationId } }`}},
+		{name: "native-texts", args: []string{"commit", "--allow-empty", "-m", "Title", "-m", "Body"}},
+		{name: "stdin-texts", args: []string{"commit", "--allow-empty", "-F", "-"}, stdin: []byte("commit body")},
+		{name: "ref-targets", args: []string{"update-ref", "refs/heads/topic", "HEAD"}},
+		{name: "remote-targets", args: []string{"push", "origin", "HEAD:refs/heads/main"}},
 		{name: "unknown", args: []string{"future-command"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

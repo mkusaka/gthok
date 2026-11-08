@@ -47,7 +47,7 @@ func TestOutcomeMatches(t *testing.T) {
 }
 
 func TestDenialProvenance(t *testing.T) {
-	op := operation("api.post.unknown", "org/repo", model.EffectUnknown)
+	op := operation("unknown", "/repo", model.EffectUnknown)
 	p := config.Policy{
 		Mode: config.ModeEnforce, UnknownMutation: config.UnknownDeny,
 		Rules: []config.Rule{
@@ -59,9 +59,9 @@ func TestDenialProvenance(t *testing.T) {
 		p.Mode = mode
 		got := Evaluate(p, subject(op))
 		want := []Denial{
-			{Kind: DenialRule, ID: "z-first", Reason: "first (api.post.unknown)"},
-			{Kind: DenialRule, ID: "a-second", Reason: "second (api.post.unknown)"},
-			{Kind: DenialPolicy, ID: "unknownMutation", Reason: "unclassified-write: unknownMutation policy (api.post.unknown)"},
+			{Kind: DenialRule, ID: "z-first", Reason: "first (unknown)"},
+			{Kind: DenialRule, ID: "a-second", Reason: "second (unknown)"},
+			{Kind: DenialPolicy, ID: "unknownMutation", Reason: "unclassified-write: unknownMutation policy (unknown)"},
 		}
 		if !reflect.DeepEqual(got.Denials, want) {
 			t.Fatalf("%s denials=%+v, want=%+v", mode, got.Denials, want)

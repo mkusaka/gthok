@@ -134,7 +134,7 @@ func TestHookTrustDefinitionFields(t *testing.T) {
 		{"redactInput", "", "redactInput: true"},
 		{"maxOutputBytes", "", "maxOutputBytes: 1024"},
 		{"files", "", "files: [extra]"},
-		{"operation", "", "match: {operation: pr.merge.*}"},
+		{"operation", "", "match: {operation: ref.*}"},
 		{"command match", "", "match: {command: pr merge}"},
 		{"effect", "", "match: {effect: write}"},
 		{"level", "", "match: {level: L1}"},

@@ -21,7 +21,7 @@ func FuzzLayeredConfig(f *testing.F) {
 	for _, s := range [][3]string{
 		{"version: 1\npolicy: {mode: enforce}\n", "version: 1\npolicy: {mode: observe}\n", ""},
 		{"version: 1\npolicy: {unknownMutation: deny, unknownInput: deny, protectedUnknown: deny}\n", "version: 1\npolicy: {unknownMutation: allow, unknownInput: allow, protectedUnknown: allow}\n", "version: 1\npolicy: {unknownMutation: audit}\n"},
-		{"version: 1\npolicy:\n  rules: [{id: u, match: {operation: repo.delete}, decision: deny}]\n  protectedRepositories: [o/r]\n", "version: 1\npolicy:\n  mode: enforce\n  rules: [{id: p, match: {operation: pr.merge.*}, decision: audit}]\n", "version: 1\npolicy: {protectedRepositories: [o/*]}\n"},
+		{"version: 1\npolicy:\n  rules: [{id: u, match: {operation: ref.delete}, decision: deny}]\n", "version: 1\npolicy:\n  mode: enforce\n  rules: [{id: p, match: {operation: ref.*}, decision: audit}]\n", "version: 1\npolicy: {mode: observe}\n"},
 		{"version: 1\n", "version: 1\ntrust: {repositories: [\"~/repo\"]}\n" + hook, ""},
 		{"version: 1\n", "version: 1\ntrust: {directories: [\"~\"]}\n", "version: 1\ntrust: {include: [x]}\n"},
 		{"version: 1\n", "version: 1\nruntime: {hookConcurrency: 1}\n", "version: 1\nlogging: {enabled: false}\n"},
@@ -48,8 +48,8 @@ func FuzzLayeredConfig(f *testing.F) {
 func TestLayeredConfigInvariantsLoadOverlays(t *testing.T) {
 	base, eff := checkLayeredConfig(t,
 		"version: 1\npolicy: {mode: enforce}\ntrust: {repositories: [\"~/repo\"]}\n",
-		"version: 1\npolicy:\n  rules: [{id: p, match: {operation: pr.merge.*}, decision: deny}]\nhooks:\n  pre:\n  - {id: p, command: [./check]}\n",
-		"version: 1\npolicy:\n  rules: [{id: l, match: {operation: repo.delete}, decision: deny}]\n")
+		"version: 1\npolicy:\n  rules: [{id: p, match: {operation: ref.*}, decision: deny}]\nhooks:\n  pre:\n  - {id: p, command: [./check]}\n",
+		"version: 1\npolicy:\n  rules: [{id: l, match: {operation: ref.delete}, decision: deny}]\n")
 	if eff == nil || len(eff.Diagnostics) != 0 || len(eff.Policy.Rules) != len(base.Policy.Rules)+2 || len(eff.Hooks) != 1 || len(eff.IgnoredHooks) != 0 {
 		t.Fatalf("overlays did not load: %+v", eff)
 	}

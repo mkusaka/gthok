@@ -32,9 +32,9 @@ func TestMatchInvocationEnvironment(t *testing.T) {
 		{"one entry fails", map[string]string{"WORKER": "1", "CI": "true"}, map[string]string{"WORKER": "1"}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			s := subject(operation("pr.merge.direct", "org/repo", model.EffectWrite))
+			s := subject(operation("ref.update", "/repo", model.EffectWrite))
 			s.Env = tc.env
-			m := config.Match{Env: tc.pattern, Operations: config.StringList{"pr.merge.*"}}
+			m := config.Match{Env: tc.pattern, Operations: config.StringList{"ref.*"}}
 			if got, _ := Matches(m, nil, s); got != tc.want {
 				t.Fatalf("Matches=%t, want %t", got, tc.want)
 			}
