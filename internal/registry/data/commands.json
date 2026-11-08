@@ -1,0 +1,3438 @@
+{
+  "--exec-path": {
+    "name": "--exec-path",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 178,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--help": {
+    "name": "--help",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 171,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--html-path": {
+    "name": "--html-path",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 186,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--info-path": {
+    "name": "--info-path",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 194,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--list-cmds": {
+    "name": "--list-cmds",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 329,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--man-path": {
+    "name": "--man-path",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 190,
+      "entrypoint": "handle_options"
+    }
+  },
+  "--version": {
+    "name": "--version",
+    "builtin": false,
+    "implementation": "option-only",
+    "source": {
+      "file": "git.c",
+      "line": 172,
+      "entrypoint": "handle_options"
+    }
+  },
+  "add": {
+    "name": "add",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "worktree"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_add",
+    "source": {
+      "file": "builtin/add.c",
+      "line": 460,
+      "entrypoint": "cmd_add"
+    }
+  },
+  "am": {
+    "name": "am",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_am",
+    "source": {
+      "file": "builtin/am.c",
+      "line": 2312,
+      "entrypoint": "cmd_am"
+    }
+  },
+  "annotate": {
+    "name": "annotate",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_annotate",
+    "source": {
+      "file": "builtin/annotate.c",
+      "line": 11,
+      "entrypoint": "cmd_annotate"
+    }
+  },
+  "apply": {
+    "name": "apply",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_apply",
+    "source": {
+      "file": "builtin/apply.c",
+      "line": 12,
+      "entrypoint": "cmd_apply"
+    }
+  },
+  "archimport": {
+    "name": "archimport",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-archimport.perl",
+      "line": 1
+    }
+  },
+  "archive": {
+    "name": "archive",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_archive",
+    "source": {
+      "file": "builtin/archive.c",
+      "line": 78,
+      "entrypoint": "cmd_archive"
+    }
+  },
+  "backfill": {
+    "name": "backfill",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_backfill",
+    "source": {
+      "file": "builtin/backfill.c",
+      "line": 142,
+      "entrypoint": "cmd_backfill"
+    }
+  },
+  "bisect": {
+    "name": "bisect",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_bisect",
+    "source": {
+      "file": "builtin/bisect.c",
+      "line": 1598,
+      "entrypoint": "cmd_bisect"
+    }
+  },
+  "blame": {
+    "name": "blame",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_blame",
+    "source": {
+      "file": "builtin/blame.c",
+      "line": 957,
+      "entrypoint": "cmd_blame"
+    }
+  },
+  "branch": {
+    "name": "branch",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "DELAY_PAGER_CONFIG"
+    ],
+    "entrypoint": "cmd_branch",
+    "source": {
+      "file": "builtin/branch.c",
+      "line": 969,
+      "entrypoint": "cmd_branch"
+    }
+  },
+  "bugreport": {
+    "name": "bugreport",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_bugreport",
+    "source": {
+      "file": "builtin/bugreport.c",
+      "line": 93,
+      "entrypoint": "cmd_bugreport"
+    }
+  },
+  "bundle": {
+    "name": "bundle",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_bundle",
+    "source": {
+      "file": "builtin/bundle.c",
+      "line": 227,
+      "entrypoint": "cmd_bundle"
+    }
+  },
+  "cat-file": {
+    "name": "cat-file",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_cat_file",
+    "source": {
+      "file": "builtin/cat-file.c",
+      "line": 1182,
+      "entrypoint": "cmd_cat_file"
+    }
+  },
+  "check-attr": {
+    "name": "check-attr",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_check_attr",
+    "source": {
+      "file": "builtin/check-attr.c",
+      "line": 110,
+      "entrypoint": "cmd_check_attr"
+    }
+  },
+  "check-ignore": {
+    "name": "check-ignore",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_check_ignore",
+    "source": {
+      "file": "builtin/check-ignore.c",
+      "line": 155,
+      "entrypoint": "cmd_check_ignore"
+    }
+  },
+  "check-mailmap": {
+    "name": "check-mailmap",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_check_mailmap",
+    "source": {
+      "file": "builtin/check-mailmap.c",
+      "line": 52,
+      "entrypoint": "cmd_check_mailmap"
+    }
+  },
+  "check-ref-format": {
+    "name": "check-ref-format",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_check_ref_format",
+    "source": {
+      "file": "builtin/check-ref-format.c",
+      "line": 56,
+      "entrypoint": "cmd_check_ref_format"
+    }
+  },
+  "checkout": {
+    "name": "checkout",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_checkout",
+    "source": {
+      "file": "builtin/checkout.c",
+      "line": 2111,
+      "entrypoint": "cmd_checkout"
+    }
+  },
+  "checkout--worker": {
+    "name": "checkout--worker",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_checkout__worker",
+    "source": {
+      "file": "builtin/checkout--worker.c",
+      "line": 120,
+      "entrypoint": "cmd_checkout__worker"
+    }
+  },
+  "checkout-index": {
+    "name": "checkout-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_checkout_index",
+    "source": {
+      "file": "builtin/checkout-index.c",
+      "line": 213,
+      "entrypoint": "cmd_checkout_index"
+    }
+  },
+  "cherry": {
+    "name": "cherry",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_cherry",
+    "source": {
+      "file": "builtin/log.c",
+      "line": 2735,
+      "entrypoint": "cmd_cherry"
+    }
+  },
+  "cherry-pick": {
+    "name": "cherry-pick",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_cherry_pick",
+    "source": {
+      "file": "builtin/revert.c",
+      "line": 301,
+      "entrypoint": "cmd_cherry_pick"
+    }
+  },
+  "citool": {
+    "name": "citool",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "mainporcelain"
+    ],
+    "source": {
+      "file": "git-gui/git-gui.sh",
+      "line": 1
+    }
+  },
+  "clean": {
+    "name": "clean",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_clean",
+    "source": {
+      "file": "builtin/clean.c",
+      "line": 919,
+      "entrypoint": "cmd_clean"
+    }
+  },
+  "clone": {
+    "name": "clone",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "init"
+    ],
+    "entrypoint": "cmd_clone",
+    "source": {
+      "file": "builtin/clone.c",
+      "line": 869,
+      "entrypoint": "cmd_clone"
+    }
+  },
+  "column": {
+    "name": "column",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_column",
+    "source": {
+      "file": "builtin/column.c",
+      "line": 22,
+      "entrypoint": "cmd_column"
+    }
+  },
+  "commit": {
+    "name": "commit",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_commit",
+    "source": {
+      "file": "builtin/commit.c",
+      "line": 1698,
+      "entrypoint": "cmd_commit"
+    }
+  },
+  "commit-graph": {
+    "name": "commit-graph",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_commit_graph",
+    "source": {
+      "file": "builtin/commit-graph.c",
+      "line": 341,
+      "entrypoint": "cmd_commit_graph"
+    }
+  },
+  "commit-tree": {
+    "name": "commit-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_commit_tree",
+    "source": {
+      "file": "builtin/commit-tree.c",
+      "line": 95,
+      "entrypoint": "cmd_commit_tree"
+    }
+  },
+  "config": {
+    "name": "config",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "DELAY_PAGER_CONFIG"
+    ],
+    "entrypoint": "cmd_config",
+    "source": {
+      "file": "builtin/config.c",
+      "line": 1627,
+      "entrypoint": "cmd_config"
+    }
+  },
+  "count-objects": {
+    "name": "count-objects",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_count_objects",
+    "source": {
+      "file": "builtin/count-objects.c",
+      "line": 97,
+      "entrypoint": "cmd_count_objects"
+    }
+  },
+  "credential": {
+    "name": "credential",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_credential",
+    "source": {
+      "file": "builtin/credential.c",
+      "line": 12,
+      "entrypoint": "cmd_credential"
+    }
+  },
+  "credential-cache": {
+    "name": "credential-cache",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "entrypoint": "cmd_credential_cache",
+    "source": {
+      "file": "builtin/credential-cache.c",
+      "line": 192,
+      "entrypoint": "cmd_credential_cache"
+    }
+  },
+  "credential-cache--daemon": {
+    "name": "credential-cache--daemon",
+    "builtin": true,
+    "implementation": "builtin",
+    "entrypoint": "cmd_credential_cache_daemon",
+    "source": {
+      "file": "builtin/credential-cache--daemon.c",
+      "line": 337,
+      "entrypoint": "cmd_credential_cache_daemon"
+    }
+  },
+  "credential-store": {
+    "name": "credential-store",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "entrypoint": "cmd_credential_store",
+    "source": {
+      "file": "builtin/credential-store.c",
+      "line": 169,
+      "entrypoint": "cmd_credential_store"
+    }
+  },
+  "cvsexportcommit": {
+    "name": "cvsexportcommit",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-cvsexportcommit.perl",
+      "line": 1
+    }
+  },
+  "cvsimport": {
+    "name": "cvsimport",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-cvsimport.perl",
+      "line": 1
+    }
+  },
+  "cvsserver": {
+    "name": "cvsserver",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-cvsserver.perl",
+      "line": 1
+    }
+  },
+  "daemon": {
+    "name": "daemon",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "synchingrepositories"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "daemon.c",
+      "line": 1258,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "describe": {
+    "name": "describe",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_describe",
+    "source": {
+      "file": "builtin/describe.c",
+      "line": 601,
+      "entrypoint": "cmd_describe"
+    }
+  },
+  "diagnose": {
+    "name": "diagnose",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_diagnose",
+    "source": {
+      "file": "builtin/diagnose.c",
+      "line": 16,
+      "entrypoint": "cmd_diagnose"
+    }
+  },
+  "diff": {
+    "name": "diff",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_diff",
+    "source": {
+      "file": "builtin/diff.c",
+      "line": 399,
+      "entrypoint": "cmd_diff"
+    }
+  },
+  "diff-files": {
+    "name": "diff-files",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_diff_files",
+    "source": {
+      "file": "builtin/diff-files.c",
+      "line": 23,
+      "entrypoint": "cmd_diff_files"
+    }
+  },
+  "diff-index": {
+    "name": "diff-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_diff_index",
+    "source": {
+      "file": "builtin/diff-index.c",
+      "line": 19,
+      "entrypoint": "cmd_diff_index"
+    }
+  },
+  "diff-pairs": {
+    "name": "diff-pairs",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_diff_pairs",
+    "source": {
+      "file": "builtin/diff-pairs.c",
+      "line": 30,
+      "entrypoint": "cmd_diff_pairs"
+    }
+  },
+  "diff-tree": {
+    "name": "diff-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_diff_tree",
+    "source": {
+      "file": "builtin/diff-tree.c",
+      "line": 112,
+      "entrypoint": "cmd_diff_tree"
+    }
+  },
+  "difftool": {
+    "name": "difftool",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_difftool",
+    "source": {
+      "file": "builtin/difftool.c",
+      "line": 717,
+      "entrypoint": "cmd_difftool"
+    }
+  },
+  "difftool--helper": {
+    "name": "difftool--helper",
+    "builtin": false,
+    "implementation": "script",
+    "source": {
+      "file": "git-difftool--helper.sh",
+      "line": 1
+    }
+  },
+  "fast-export": {
+    "name": "fast-export",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fast_export",
+    "source": {
+      "file": "builtin/fast-export.c",
+      "line": 1310,
+      "entrypoint": "cmd_fast_export"
+    }
+  },
+  "fast-import": {
+    "name": "fast-import",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_fast_import",
+    "source": {
+      "file": "builtin/fast-import.c",
+      "line": 4123,
+      "entrypoint": "cmd_fast_import"
+    }
+  },
+  "fetch": {
+    "name": "fetch",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "remote"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fetch",
+    "source": {
+      "file": "builtin/fetch.c",
+      "line": 2505,
+      "entrypoint": "cmd_fetch"
+    }
+  },
+  "fetch-pack": {
+    "name": "fetch-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchingrepositories"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_fetch_pack",
+    "source": {
+      "file": "builtin/fetch-pack.c",
+      "line": 49,
+      "entrypoint": "cmd_fetch_pack"
+    }
+  },
+  "filter-branch": {
+    "name": "filter-branch",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "ancillarymanipulators"
+    ],
+    "source": {
+      "file": "git-filter-branch.sh",
+      "line": 1
+    }
+  },
+  "fmt-merge-msg": {
+    "name": "fmt-merge-msg",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fmt_merge_msg",
+    "source": {
+      "file": "builtin/fmt-merge-msg.c",
+      "line": 12,
+      "entrypoint": "cmd_fmt_merge_msg"
+    }
+  },
+  "for-each-ref": {
+    "name": "for-each-ref",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_for_each_ref",
+    "source": {
+      "file": "builtin/for-each-ref.c",
+      "line": 113,
+      "entrypoint": "cmd_for_each_ref"
+    }
+  },
+  "for-each-repo": {
+    "name": "for-each-repo",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_for_each_repo",
+    "source": {
+      "file": "builtin/for-each-repo.c",
+      "line": 33,
+      "entrypoint": "cmd_for_each_repo"
+    }
+  },
+  "format-patch": {
+    "name": "format-patch",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_format_patch",
+    "source": {
+      "file": "builtin/log.c",
+      "line": 1955,
+      "entrypoint": "cmd_format_patch"
+    }
+  },
+  "format-rev": {
+    "name": "format-rev",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_format_rev",
+    "source": {
+      "file": "builtin/name-rev.c",
+      "line": 811,
+      "entrypoint": "cmd_format_rev"
+    }
+  },
+  "fsck": {
+    "name": "fsck",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fsck",
+    "source": {
+      "file": "builtin/fsck.c",
+      "line": 839,
+      "entrypoint": "cmd_fsck"
+    }
+  },
+  "fsck-objects": {
+    "name": "fsck-objects",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fsck",
+    "source": {
+      "file": "builtin/fsck.c",
+      "line": 839,
+      "entrypoint": "cmd_fsck"
+    }
+  },
+  "fsmonitor--daemon": {
+    "name": "fsmonitor--daemon",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_fsmonitor__daemon",
+    "source": {
+      "file": "builtin/fsmonitor--daemon.c",
+      "line": 1634,
+      "entrypoint": "cmd_fsmonitor__daemon"
+    }
+  },
+  "gc": {
+    "name": "gc",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_gc",
+    "source": {
+      "file": "builtin/gc.c",
+      "line": 566,
+      "entrypoint": "cmd_gc"
+    }
+  },
+  "get-tar-commit-id": {
+    "name": "get-tar-commit-id",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_get_tar_commit_id",
+    "source": {
+      "file": "builtin/get-tar-commit-id.c",
+      "line": 15,
+      "entrypoint": "cmd_get_tar_commit_id"
+    }
+  },
+  "gitattributes": {
+    "name": "gitattributes",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 215
+    }
+  },
+  "gitcli": {
+    "name": "gitcli",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 216
+    }
+  },
+  "gitcore-tutorial": {
+    "name": "gitcore-tutorial",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 217
+    }
+  },
+  "gitcredentials": {
+    "name": "gitcredentials",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 218
+    }
+  },
+  "gitcvs-migration": {
+    "name": "gitcvs-migration",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 219
+    }
+  },
+  "gitdatamodel": {
+    "name": "gitdatamodel",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 220
+    }
+  },
+  "gitdiffcore": {
+    "name": "gitdiffcore",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 221
+    }
+  },
+  "giteveryday": {
+    "name": "giteveryday",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 222
+    }
+  },
+  "gitfaq": {
+    "name": "gitfaq",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 223
+    }
+  },
+  "gitformat-bundle": {
+    "name": "gitformat-bundle",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 224
+    }
+  },
+  "gitformat-chunk": {
+    "name": "gitformat-chunk",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 225
+    }
+  },
+  "gitformat-commit-graph": {
+    "name": "gitformat-commit-graph",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 226
+    }
+  },
+  "gitformat-index": {
+    "name": "gitformat-index",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 227
+    }
+  },
+  "gitformat-pack": {
+    "name": "gitformat-pack",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 228
+    }
+  },
+  "gitformat-signature": {
+    "name": "gitformat-signature",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 229
+    }
+  },
+  "gitglossary": {
+    "name": "gitglossary",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 230
+    }
+  },
+  "githooks": {
+    "name": "githooks",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 231
+    }
+  },
+  "gitignore": {
+    "name": "gitignore",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 232
+    }
+  },
+  "gitk": {
+    "name": "gitk",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "mainporcelain"
+    ],
+    "source": {
+      "file": "gitk-git/gitk",
+      "line": 1
+    }
+  },
+  "gitmailmap": {
+    "name": "gitmailmap",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 234
+    }
+  },
+  "gitmodules": {
+    "name": "gitmodules",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 235
+    }
+  },
+  "gitnamespaces": {
+    "name": "gitnamespaces",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 236
+    }
+  },
+  "gitprotocol-capabilities": {
+    "name": "gitprotocol-capabilities",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 237
+    }
+  },
+  "gitprotocol-common": {
+    "name": "gitprotocol-common",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 238
+    }
+  },
+  "gitprotocol-http": {
+    "name": "gitprotocol-http",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 239
+    }
+  },
+  "gitprotocol-pack": {
+    "name": "gitprotocol-pack",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 240
+    }
+  },
+  "gitprotocol-v2": {
+    "name": "gitprotocol-v2",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "developerinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 241
+    }
+  },
+  "gitremote-helpers": {
+    "name": "gitremote-helpers",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 242
+    }
+  },
+  "gitrepository-layout": {
+    "name": "gitrepository-layout",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 243
+    }
+  },
+  "gitrevisions": {
+    "name": "gitrevisions",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "userinterfaces"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 244
+    }
+  },
+  "gitsubmodules": {
+    "name": "gitsubmodules",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 245
+    }
+  },
+  "gittutorial": {
+    "name": "gittutorial",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 246
+    }
+  },
+  "gittutorial-2": {
+    "name": "gittutorial-2",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 247
+    }
+  },
+  "gitweb": {
+    "name": "gitweb",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "source": {
+      "file": "gitweb/gitweb.perl",
+      "line": 1
+    }
+  },
+  "gitworkflows": {
+    "name": "gitworkflows",
+    "builtin": false,
+    "implementation": "document",
+    "categories": [
+      "guide"
+    ],
+    "source": {
+      "file": "command-list.txt",
+      "line": 249
+    }
+  },
+  "grep": {
+    "name": "grep",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_grep",
+    "source": {
+      "file": "builtin/grep.c",
+      "line": 1021,
+      "entrypoint": "cmd_grep"
+    }
+  },
+  "gui": {
+    "name": "gui",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "mainporcelain"
+    ],
+    "source": {
+      "file": "git-gui/git-gui.sh",
+      "line": 1
+    }
+  },
+  "hash-object": {
+    "name": "hash-object",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "entrypoint": "cmd_hash_object",
+    "source": {
+      "file": "builtin/hash-object.c",
+      "line": 64,
+      "entrypoint": "cmd_hash_object"
+    }
+  },
+  "help": {
+    "name": "help",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "entrypoint": "cmd_help",
+    "source": {
+      "file": "builtin/help.c",
+      "line": 662,
+      "entrypoint": "cmd_help"
+    }
+  },
+  "history": {
+    "name": "history",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_history",
+    "source": {
+      "file": "builtin/history.c",
+      "line": 1192,
+      "entrypoint": "cmd_history"
+    }
+  },
+  "hook": {
+    "name": "hook",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_hook",
+    "source": {
+      "file": "builtin/hook.c",
+      "line": 192,
+      "entrypoint": "cmd_hook"
+    }
+  },
+  "http-backend": {
+    "name": "http-backend",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "synchingrepositories"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "http-backend.c",
+      "line": 764,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "http-fetch": {
+    "name": "http-fetch",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "synchelpers"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "http-fetch.c",
+      "line": 98,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "http-push": {
+    "name": "http-push",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "synchelpers"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "http-push.c",
+      "line": 1716,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "imap-send": {
+    "name": "imap-send",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "imap-send.c",
+      "line": 1804,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "index-pack": {
+    "name": "index-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_index_pack",
+    "source": {
+      "file": "builtin/index-pack.c",
+      "line": 1886,
+      "entrypoint": "cmd_index_pack"
+    }
+  },
+  "init": {
+    "name": "init",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "init"
+    ],
+    "entrypoint": "cmd_init_db",
+    "source": {
+      "file": "builtin/init-db.c",
+      "line": 72,
+      "entrypoint": "cmd_init_db"
+    }
+  },
+  "init-db": {
+    "name": "init-db",
+    "builtin": true,
+    "implementation": "builtin",
+    "entrypoint": "cmd_init_db",
+    "source": {
+      "file": "builtin/init-db.c",
+      "line": 72,
+      "entrypoint": "cmd_init_db"
+    }
+  },
+  "instaweb": {
+    "name": "instaweb",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "source": {
+      "file": "git-instaweb.sh",
+      "line": 1
+    }
+  },
+  "interpret-trailers": {
+    "name": "interpret-trailers",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_interpret_trailers",
+    "source": {
+      "file": "builtin/interpret-trailers.c",
+      "line": 139,
+      "entrypoint": "cmd_interpret_trailers"
+    }
+  },
+  "last-modified": {
+    "name": "last-modified",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_last_modified",
+    "source": {
+      "file": "builtin/last-modified.c",
+      "line": 520,
+      "entrypoint": "cmd_last_modified"
+    }
+  },
+  "log": {
+    "name": "log",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_log",
+    "source": {
+      "file": "builtin/log.c",
+      "line": 825,
+      "entrypoint": "cmd_log"
+    }
+  },
+  "ls-files": {
+    "name": "ls-files",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_ls_files",
+    "source": {
+      "file": "builtin/ls-files.c",
+      "line": 590,
+      "entrypoint": "cmd_ls_files"
+    }
+  },
+  "ls-remote": {
+    "name": "ls-remote",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_ls_remote",
+    "source": {
+      "file": "builtin/ls-remote.c",
+      "line": 41,
+      "entrypoint": "cmd_ls_remote"
+    }
+  },
+  "ls-tree": {
+    "name": "ls-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_ls_tree",
+    "source": {
+      "file": "builtin/ls-tree.c",
+      "line": 338,
+      "entrypoint": "cmd_ls_tree"
+    }
+  },
+  "mailinfo": {
+    "name": "mailinfo",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_mailinfo",
+    "source": {
+      "file": "builtin/mailinfo.c",
+      "line": 52,
+      "entrypoint": "cmd_mailinfo"
+    }
+  },
+  "mailsplit": {
+    "name": "mailsplit",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_mailsplit",
+    "source": {
+      "file": "builtin/mailsplit.c",
+      "line": 274,
+      "entrypoint": "cmd_mailsplit"
+    }
+  },
+  "maintenance": {
+    "name": "maintenance",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_maintenance",
+    "source": {
+      "file": "builtin/gc.c",
+      "line": 3125,
+      "entrypoint": "cmd_maintenance"
+    }
+  },
+  "merge": {
+    "name": "merge",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_merge",
+    "source": {
+      "file": "builtin/merge.c",
+      "line": 1363,
+      "entrypoint": "cmd_merge"
+    }
+  },
+  "merge-base": {
+    "name": "merge-base",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_merge_base",
+    "source": {
+      "file": "builtin/merge-base.c",
+      "line": 149,
+      "entrypoint": "cmd_merge_base"
+    }
+  },
+  "merge-file": {
+    "name": "merge-file",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_merge_file",
+    "source": {
+      "file": "builtin/merge-file.c",
+      "line": 60,
+      "entrypoint": "cmd_merge_file"
+    }
+  },
+  "merge-index": {
+    "name": "merge-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_index",
+    "source": {
+      "file": "builtin/merge-index.c",
+      "line": 81,
+      "entrypoint": "cmd_merge_index"
+    }
+  },
+  "merge-octopus": {
+    "name": "merge-octopus",
+    "builtin": false,
+    "implementation": "script",
+    "source": {
+      "file": "git-merge-octopus.sh",
+      "line": 1
+    }
+  },
+  "merge-one-file": {
+    "name": "merge-one-file",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "purehelpers"
+    ],
+    "source": {
+      "file": "git-merge-one-file.sh",
+      "line": 1
+    }
+  },
+  "merge-ours": {
+    "name": "merge-ours",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_ours",
+    "source": {
+      "file": "builtin/merge-ours.c",
+      "line": 20,
+      "entrypoint": "cmd_merge_ours"
+    }
+  },
+  "merge-recursive": {
+    "name": "merge-recursive",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_recursive",
+    "source": {
+      "file": "builtin/merge-recursive.c",
+      "line": 24,
+      "entrypoint": "cmd_merge_recursive"
+    }
+  },
+  "merge-recursive-ours": {
+    "name": "merge-recursive-ours",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_recursive",
+    "source": {
+      "file": "builtin/merge-recursive.c",
+      "line": 24,
+      "entrypoint": "cmd_merge_recursive"
+    }
+  },
+  "merge-recursive-theirs": {
+    "name": "merge-recursive-theirs",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_recursive",
+    "source": {
+      "file": "builtin/merge-recursive.c",
+      "line": 24,
+      "entrypoint": "cmd_merge_recursive"
+    }
+  },
+  "merge-resolve": {
+    "name": "merge-resolve",
+    "builtin": false,
+    "implementation": "script",
+    "source": {
+      "file": "git-merge-resolve.sh",
+      "line": 1
+    }
+  },
+  "merge-subtree": {
+    "name": "merge-subtree",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_merge_recursive",
+    "source": {
+      "file": "builtin/merge-recursive.c",
+      "line": 24,
+      "entrypoint": "cmd_merge_recursive"
+    }
+  },
+  "merge-tree": {
+    "name": "merge-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_merge_tree",
+    "source": {
+      "file": "builtin/merge-tree.c",
+      "line": 539,
+      "entrypoint": "cmd_merge_tree"
+    }
+  },
+  "mergetool": {
+    "name": "mergetool",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "source": {
+      "file": "git-mergetool.sh",
+      "line": 1
+    }
+  },
+  "mergetool--lib": {
+    "name": "mergetool--lib",
+    "builtin": false,
+    "implementation": "script",
+    "source": {
+      "file": "Makefile",
+      "line": 742
+    }
+  },
+  "mktag": {
+    "name": "mktag",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_mktag",
+    "source": {
+      "file": "builtin/mktag.c",
+      "line": 75,
+      "entrypoint": "cmd_mktag"
+    }
+  },
+  "mktree": {
+    "name": "mktree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_mktree",
+    "source": {
+      "file": "builtin/mktree.c",
+      "line": 153,
+      "entrypoint": "cmd_mktree"
+    }
+  },
+  "multi-pack-index": {
+    "name": "multi-pack-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_multi_pack_index",
+    "source": {
+      "file": "builtin/multi-pack-index.c",
+      "line": 406,
+      "entrypoint": "cmd_multi_pack_index"
+    }
+  },
+  "mv": {
+    "name": "mv",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "worktree"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_mv",
+    "source": {
+      "file": "builtin/mv.c",
+      "line": 215,
+      "entrypoint": "cmd_mv"
+    }
+  },
+  "name-rev": {
+    "name": "name-rev",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_name_rev",
+    "source": {
+      "file": "builtin/name-rev.c",
+      "line": 636,
+      "entrypoint": "cmd_name_rev"
+    }
+  },
+  "notes": {
+    "name": "notes",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_notes",
+    "source": {
+      "file": "builtin/notes.c",
+      "line": 1127,
+      "entrypoint": "cmd_notes"
+    }
+  },
+  "p4": {
+    "name": "p4",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-p4.py",
+      "line": 1
+    }
+  },
+  "pack-objects": {
+    "name": "pack-objects",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_pack_objects",
+    "source": {
+      "file": "builtin/pack-objects.c",
+      "line": 5123,
+      "entrypoint": "cmd_pack_objects"
+    }
+  },
+  "pack-redundant": {
+    "name": "pack-redundant",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT",
+      "DEPRECATED"
+    ],
+    "entrypoint": "cmd_pack_redundant",
+    "source": {
+      "file": "builtin/pack-redundant.c",
+      "line": 590,
+      "entrypoint": "cmd_pack_redundant"
+    }
+  },
+  "pack-refs": {
+    "name": "pack-refs",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_pack_refs",
+    "source": {
+      "file": "builtin/pack-refs.c",
+      "line": 5,
+      "entrypoint": "cmd_pack_refs"
+    }
+  },
+  "patch-id": {
+    "name": "patch-id",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_patch_id",
+    "source": {
+      "file": "builtin/patch-id.c",
+      "line": 222,
+      "entrypoint": "cmd_patch_id"
+    }
+  },
+  "pickaxe": {
+    "name": "pickaxe",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_blame",
+    "source": {
+      "file": "builtin/blame.c",
+      "line": 957,
+      "entrypoint": "cmd_blame"
+    }
+  },
+  "prune": {
+    "name": "prune",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_prune",
+    "source": {
+      "file": "builtin/prune.c",
+      "line": 153,
+      "entrypoint": "cmd_prune"
+    }
+  },
+  "prune-packed": {
+    "name": "prune-packed",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_prune_packed",
+    "source": {
+      "file": "builtin/prune-packed.c",
+      "line": 11,
+      "entrypoint": "cmd_prune_packed"
+    }
+  },
+  "pull": {
+    "name": "pull",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "remote"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_pull",
+    "source": {
+      "file": "builtin/pull.c",
+      "line": 856,
+      "entrypoint": "cmd_pull"
+    }
+  },
+  "push": {
+    "name": "push",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "remote"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_push",
+    "source": {
+      "file": "builtin/push.c",
+      "line": 691,
+      "entrypoint": "cmd_push"
+    }
+  },
+  "quiltimport": {
+    "name": "quiltimport",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-quiltimport.sh",
+      "line": 1
+    }
+  },
+  "range-diff": {
+    "name": "range-diff",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "USE_PAGER"
+    ],
+    "entrypoint": "cmd_range_diff",
+    "source": {
+      "file": "builtin/range-diff.c",
+      "line": 35,
+      "entrypoint": "cmd_range_diff"
+    }
+  },
+  "read-tree": {
+    "name": "read-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_read_tree",
+    "source": {
+      "file": "builtin/read-tree.c",
+      "line": 111,
+      "entrypoint": "cmd_read_tree"
+    }
+  },
+  "rebase": {
+    "name": "rebase",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_rebase",
+    "source": {
+      "file": "builtin/rebase.c",
+      "line": 1099,
+      "entrypoint": "cmd_rebase"
+    }
+  },
+  "receive-pack": {
+    "name": "receive-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchelpers"
+    ],
+    "entrypoint": "cmd_receive_pack",
+    "source": {
+      "file": "builtin/receive-pack.c",
+      "line": 2491,
+      "entrypoint": "cmd_receive_pack"
+    }
+  },
+  "reflog": {
+    "name": "reflog",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_reflog",
+    "source": {
+      "file": "builtin/reflog.c",
+      "line": 467,
+      "entrypoint": "cmd_reflog"
+    }
+  },
+  "refs": {
+    "name": "refs",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_refs",
+    "source": {
+      "file": "builtin/refs.c",
+      "line": 377,
+      "entrypoint": "cmd_refs"
+    }
+  },
+  "remote": {
+    "name": "remote",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_remote",
+    "source": {
+      "file": "builtin/remote.c",
+      "line": 1933,
+      "entrypoint": "cmd_remote"
+    }
+  },
+  "remote-ext": {
+    "name": "remote-ext",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_remote_ext",
+    "source": {
+      "file": "builtin/remote-ext.c",
+      "line": 198,
+      "entrypoint": "cmd_remote_ext"
+    }
+  },
+  "remote-fd": {
+    "name": "remote-fd",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_remote_fd",
+    "source": {
+      "file": "builtin/remote-fd.c",
+      "line": 56,
+      "entrypoint": "cmd_remote_fd"
+    }
+  },
+  "remote-ftp": {
+    "name": "remote-ftp",
+    "builtin": false,
+    "implementation": "external",
+    "source": {
+      "file": "remote-curl.c",
+      "line": 1
+    }
+  },
+  "remote-ftps": {
+    "name": "remote-ftps",
+    "builtin": false,
+    "implementation": "external",
+    "source": {
+      "file": "remote-curl.c",
+      "line": 1
+    }
+  },
+  "remote-http": {
+    "name": "remote-http",
+    "builtin": false,
+    "implementation": "external",
+    "source": {
+      "file": "remote-curl.c",
+      "line": 1
+    }
+  },
+  "remote-https": {
+    "name": "remote-https",
+    "builtin": false,
+    "implementation": "external",
+    "source": {
+      "file": "remote-curl.c",
+      "line": 1
+    }
+  },
+  "repack": {
+    "name": "repack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_repack",
+    "source": {
+      "file": "builtin/repack.c",
+      "line": 158,
+      "entrypoint": "cmd_repack"
+    }
+  },
+  "replace": {
+    "name": "replace",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillarymanipulators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_replace",
+    "source": {
+      "file": "builtin/replace.c",
+      "line": 545,
+      "entrypoint": "cmd_replace"
+    }
+  },
+  "replay": {
+    "name": "replay",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_replay",
+    "source": {
+      "file": "builtin/replay.c",
+      "line": 69,
+      "entrypoint": "cmd_replay"
+    }
+  },
+  "repo": {
+    "name": "repo",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_repo",
+    "source": {
+      "file": "builtin/repo.c",
+      "line": 983,
+      "entrypoint": "cmd_repo"
+    }
+  },
+  "request-pull": {
+    "name": "request-pull",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface",
+      "complete"
+    ],
+    "source": {
+      "file": "git-request-pull.sh",
+      "line": 1
+    }
+  },
+  "rerere": {
+    "name": "rerere",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_rerere",
+    "source": {
+      "file": "builtin/rerere.c",
+      "line": 53,
+      "entrypoint": "cmd_rerere"
+    }
+  },
+  "reset": {
+    "name": "reset",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_reset",
+    "source": {
+      "file": "builtin/reset.c",
+      "line": 336,
+      "entrypoint": "cmd_reset"
+    }
+  },
+  "restore": {
+    "name": "restore",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "worktree"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_restore",
+    "source": {
+      "file": "builtin/checkout.c",
+      "line": 2202,
+      "entrypoint": "cmd_restore"
+    }
+  },
+  "rev-list": {
+    "name": "rev-list",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_rev_list",
+    "source": {
+      "file": "builtin/rev-list.c",
+      "line": 714,
+      "entrypoint": "cmd_rev_list"
+    }
+  },
+  "rev-parse": {
+    "name": "rev-parse",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_rev_parse",
+    "source": {
+      "file": "builtin/rev-parse.c",
+      "line": 698,
+      "entrypoint": "cmd_rev_parse"
+    }
+  },
+  "revert": {
+    "name": "revert",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_revert",
+    "source": {
+      "file": "builtin/revert.c",
+      "line": 281,
+      "entrypoint": "cmd_revert"
+    }
+  },
+  "rm": {
+    "name": "rm",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "worktree"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_rm",
+    "source": {
+      "file": "builtin/rm.c",
+      "line": 265,
+      "entrypoint": "cmd_rm"
+    }
+  },
+  "scalar": {
+    "name": "scalar",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "mainporcelain"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "scalar.c",
+      "line": 1016,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "send-email": {
+    "name": "send-email",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface",
+      "complete"
+    ],
+    "source": {
+      "file": "git-send-email.perl",
+      "line": 1
+    }
+  },
+  "send-pack": {
+    "name": "send-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchingrepositories"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_send_pack",
+    "source": {
+      "file": "builtin/send-pack.c",
+      "line": 151,
+      "entrypoint": "cmd_send_pack"
+    }
+  },
+  "sh-i18n": {
+    "name": "sh-i18n",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "purehelpers"
+    ],
+    "source": {
+      "file": "Makefile",
+      "line": 743
+    }
+  },
+  "sh-i18n--envsubst": {
+    "name": "sh-i18n--envsubst",
+    "builtin": false,
+    "implementation": "external",
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "sh-i18n--envsubst.c",
+      "line": 66,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "sh-setup": {
+    "name": "sh-setup",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "purehelpers"
+    ],
+    "source": {
+      "file": "Makefile",
+      "line": 744
+    }
+  },
+  "shell": {
+    "name": "shell",
+    "builtin": false,
+    "implementation": "external",
+    "categories": [
+      "synchelpers"
+    ],
+    "entrypoint": "cmd_main",
+    "source": {
+      "file": "shell.c",
+      "line": 161,
+      "entrypoint": "cmd_main"
+    }
+  },
+  "shortlog": {
+    "name": "shortlog",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "USE_PAGER"
+    ],
+    "entrypoint": "cmd_shortlog",
+    "source": {
+      "file": "builtin/shortlog.c",
+      "line": 383,
+      "entrypoint": "cmd_shortlog"
+    }
+  },
+  "show": {
+    "name": "show",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_show",
+    "source": {
+      "file": "builtin/log.c",
+      "line": 661,
+      "entrypoint": "cmd_show"
+    }
+  },
+  "show-branch": {
+    "name": "show-branch",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_show_branch",
+    "source": {
+      "file": "builtin/show-branch.c",
+      "line": 636,
+      "entrypoint": "cmd_show_branch"
+    }
+  },
+  "show-index": {
+    "name": "show-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY"
+    ],
+    "entrypoint": "cmd_show_index",
+    "source": {
+      "file": "builtin/show-index.c",
+      "line": 16,
+      "entrypoint": "cmd_show_index"
+    }
+  },
+  "show-ref": {
+    "name": "show-ref",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_show_ref",
+    "source": {
+      "file": "builtin/show-ref.c",
+      "line": 300,
+      "entrypoint": "cmd_show_ref"
+    }
+  },
+  "sparse-checkout": {
+    "name": "sparse-checkout",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_sparse_checkout",
+    "source": {
+      "file": "builtin/sparse-checkout.c",
+      "line": 1183,
+      "entrypoint": "cmd_sparse_checkout"
+    }
+  },
+  "stage": {
+    "name": "stage",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_add",
+    "source": {
+      "file": "builtin/add.c",
+      "line": 460,
+      "entrypoint": "cmd_add"
+    }
+  },
+  "stash": {
+    "name": "stash",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_stash",
+    "source": {
+      "file": "builtin/stash.c",
+      "line": 2456,
+      "entrypoint": "cmd_stash"
+    }
+  },
+  "status": {
+    "name": "status",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "info"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_status",
+    "source": {
+      "file": "builtin/commit.c",
+      "line": 1537,
+      "entrypoint": "cmd_status"
+    }
+  },
+  "stripspace": {
+    "name": "stripspace",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "entrypoint": "cmd_stripspace",
+    "source": {
+      "file": "builtin/stripspace.c",
+      "line": 33,
+      "entrypoint": "cmd_stripspace"
+    }
+  },
+  "submodule": {
+    "name": "submodule",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "mainporcelain"
+    ],
+    "source": {
+      "file": "git-submodule.sh",
+      "line": 1
+    }
+  },
+  "submodule--helper": {
+    "name": "submodule--helper",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_submodule__helper",
+    "source": {
+      "file": "builtin/submodule--helper.c",
+      "line": 3808,
+      "entrypoint": "cmd_submodule__helper"
+    }
+  },
+  "svn": {
+    "name": "svn",
+    "builtin": false,
+    "implementation": "script",
+    "categories": [
+      "foreignscminterface"
+    ],
+    "source": {
+      "file": "git-svn.perl",
+      "line": 1
+    }
+  },
+  "switch": {
+    "name": "switch",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NEED_WORK_TREE"
+    ],
+    "entrypoint": "cmd_switch",
+    "source": {
+      "file": "builtin/checkout.c",
+      "line": 2163,
+      "entrypoint": "cmd_switch"
+    }
+  },
+  "symbolic-ref": {
+    "name": "symbolic-ref",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_symbolic_ref",
+    "source": {
+      "file": "builtin/symbolic-ref.c",
+      "line": 46,
+      "entrypoint": "cmd_symbolic_ref"
+    }
+  },
+  "tag": {
+    "name": "tag",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain",
+      "history"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "DELAY_PAGER_CONFIG"
+    ],
+    "entrypoint": "cmd_tag",
+    "source": {
+      "file": "builtin/tag.c",
+      "line": 454,
+      "entrypoint": "cmd_tag"
+    }
+  },
+  "unpack-file": {
+    "name": "unpack-file",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_unpack_file",
+    "source": {
+      "file": "builtin/unpack-file.c",
+      "line": 34,
+      "entrypoint": "cmd_unpack_file"
+    }
+  },
+  "unpack-objects": {
+    "name": "unpack-objects",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_unpack_objects",
+    "source": {
+      "file": "builtin/unpack-objects.c",
+      "line": 617,
+      "entrypoint": "cmd_unpack_objects"
+    }
+  },
+  "update-index": {
+    "name": "update-index",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_update_index",
+    "source": {
+      "file": "builtin/update-index.c",
+      "line": 915,
+      "entrypoint": "cmd_update_index"
+    }
+  },
+  "update-ref": {
+    "name": "update-ref",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_update_ref",
+    "source": {
+      "file": "builtin/update-ref.c",
+      "line": 810,
+      "entrypoint": "cmd_update_ref"
+    }
+  },
+  "update-server-info": {
+    "name": "update-server-info",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchingrepositories"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_update_server_info",
+    "source": {
+      "file": "builtin/update-server-info.c",
+      "line": 13,
+      "entrypoint": "cmd_update_server_info"
+    }
+  },
+  "upload-archive": {
+    "name": "upload-archive",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchelpers"
+    ],
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_upload_archive",
+    "source": {
+      "file": "builtin/upload-archive.c",
+      "line": 87,
+      "entrypoint": "cmd_upload_archive"
+    }
+  },
+  "upload-archive--writer": {
+    "name": "upload-archive--writer",
+    "builtin": true,
+    "implementation": "builtin",
+    "flags": [
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_upload_archive_writer",
+    "source": {
+      "file": "builtin/upload-archive.c",
+      "line": 21,
+      "entrypoint": "cmd_upload_archive_writer"
+    }
+  },
+  "upload-pack": {
+    "name": "upload-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "synchelpers"
+    ],
+    "entrypoint": "cmd_upload_pack",
+    "source": {
+      "file": "builtin/upload-pack.c",
+      "line": 22,
+      "entrypoint": "cmd_upload_pack"
+    }
+  },
+  "url-parse": {
+    "name": "url-parse",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "purehelpers"
+    ],
+    "entrypoint": "cmd_url_parse",
+    "source": {
+      "file": "builtin/url-parse.c",
+      "line": 100,
+      "entrypoint": "cmd_url_parse"
+    }
+  },
+  "var": {
+    "name": "var",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP_GENTLY",
+      "NO_PARSEOPT"
+    ],
+    "entrypoint": "cmd_var",
+    "source": {
+      "file": "builtin/var.c",
+      "line": 217,
+      "entrypoint": "cmd_var"
+    }
+  },
+  "verify-commit": {
+    "name": "verify-commit",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_verify_commit",
+    "source": {
+      "file": "builtin/verify-commit.c",
+      "line": 54,
+      "entrypoint": "cmd_verify_commit"
+    }
+  },
+  "verify-pack": {
+    "name": "verify-pack",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbinginterrogators"
+    ],
+    "entrypoint": "cmd_verify_pack",
+    "source": {
+      "file": "builtin/verify-pack.c",
+      "line": 66,
+      "entrypoint": "cmd_verify_pack"
+    }
+  },
+  "verify-tag": {
+    "name": "verify-tag",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_verify_tag",
+    "source": {
+      "file": "builtin/verify-tag.c",
+      "line": 23,
+      "entrypoint": "cmd_verify_tag"
+    }
+  },
+  "version": {
+    "name": "version",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators"
+    ],
+    "entrypoint": "cmd_version",
+    "source": {
+      "file": "help.c",
+      "line": 833,
+      "entrypoint": "cmd_version"
+    }
+  },
+  "web--browse": {
+    "name": "web--browse",
+    "builtin": false,
+    "implementation": "script",
+    "source": {
+      "file": "git-web--browse.sh",
+      "line": 1
+    }
+  },
+  "whatchanged": {
+    "name": "whatchanged",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "ancillaryinterrogators",
+      "complete"
+    ],
+    "flags": [
+      "RUN_SETUP",
+      "DEPRECATED"
+    ],
+    "entrypoint": "cmd_whatchanged",
+    "source": {
+      "file": "builtin/log.c",
+      "line": 526,
+      "entrypoint": "cmd_whatchanged"
+    }
+  },
+  "worktree": {
+    "name": "worktree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "mainporcelain"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_worktree",
+    "source": {
+      "file": "builtin/worktree.c",
+      "line": 1512,
+      "entrypoint": "cmd_worktree"
+    }
+  },
+  "write-tree": {
+    "name": "write-tree",
+    "builtin": true,
+    "implementation": "builtin",
+    "categories": [
+      "plumbingmanipulators"
+    ],
+    "flags": [
+      "RUN_SETUP"
+    ],
+    "entrypoint": "cmd_write_tree",
+    "source": {
+      "file": "builtin/write-tree.c",
+      "line": 21,
+      "entrypoint": "cmd_write_tree"
+    }
+  }
+}

@@ -1,0 +1,577 @@
+{
+  "git": "2.56.0",
+  "tag": "v2.56.0",
+  "commit": "a018953688f1b10bddf91bff8747068f5f4746a4",
+  "generatorVersion": "1",
+  "coverage": {
+    "commands": 226,
+    "builtins": 149,
+    "tables": 249,
+    "options": 1810,
+    "adapters": 116
+  },
+  "exclusions": [
+    {
+      "name": "--exec-path",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--help",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--html-path",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--info-path",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--list-cmds",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--man-path",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "--version",
+      "reason": "git.c option-only mode uses the global parser"
+    },
+    {
+      "name": "annotate",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "archimport",
+      "reason": "script parser requires manual:git-archimport.perl adapter"
+    },
+    {
+      "name": "bisect",
+      "reason": "requires default-subcommand:builtin/bisect.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "blame",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "check-ref-format",
+      "reason": "non-table or mixed parser requires manual:builtin/check-ref-format.c adapter"
+    },
+    {
+      "name": "cherry-pick",
+      "reason": "requires conditional-options:builtin/revert.c:151 adapter in addition to extracted tables"
+    },
+    {
+      "name": "cherry-pick",
+      "reason": "requires conditional-options:builtin/revert.c:164 adapter in addition to extracted tables"
+    },
+    {
+      "name": "citool",
+      "reason": "script parser requires manual:git-gui/git-gui.sh adapter"
+    },
+    {
+      "name": "config",
+      "reason": "requires default-subcommand:builtin/config.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "credential",
+      "reason": "non-table or mixed parser requires manual:builtin/credential.c adapter"
+    },
+    {
+      "name": "cvsexportcommit",
+      "reason": "script parser requires manual:git-cvsexportcommit.perl adapter"
+    },
+    {
+      "name": "cvsimport",
+      "reason": "script parser requires manual:git-cvsimport.perl adapter"
+    },
+    {
+      "name": "cvsserver",
+      "reason": "script parser requires manual:git-cvsserver.perl adapter"
+    },
+    {
+      "name": "daemon",
+      "reason": "standalone executable requires manual:daemon.c adapter"
+    },
+    {
+      "name": "diff",
+      "reason": "non-table or mixed parser requires diff adapter"
+    },
+    {
+      "name": "diff",
+      "reason": "requires callback:diff_opt_output adapter in addition to extracted tables"
+    },
+    {
+      "name": "diff-files",
+      "reason": "non-table or mixed parser requires diff adapter"
+    },
+    {
+      "name": "diff-index",
+      "reason": "non-table or mixed parser requires diff adapter"
+    },
+    {
+      "name": "diff-pairs",
+      "reason": "non-table or mixed parser requires diff adapter"
+    },
+    {
+      "name": "diff-pairs",
+      "reason": "requires callback:diff_opt_output adapter in addition to extracted tables"
+    },
+    {
+      "name": "diff-tree",
+      "reason": "non-table or mixed parser requires diff adapter"
+    },
+    {
+      "name": "difftool--helper",
+      "reason": "script parser requires manual:git-difftool--helper.sh adapter"
+    },
+    {
+      "name": "fast-import",
+      "reason": "non-table or mixed parser requires manual:builtin/fast-import.c adapter"
+    },
+    {
+      "name": "fetch-pack",
+      "reason": "non-table or mixed parser requires manual:builtin/fetch-pack.c adapter"
+    },
+    {
+      "name": "filter-branch",
+      "reason": "script parser requires manual:git-filter-branch.sh adapter"
+    },
+    {
+      "name": "format-patch",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "format-rev",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "get-tar-commit-id",
+      "reason": "non-table or mixed parser requires manual:builtin/get-tar-commit-id.c adapter"
+    },
+    {
+      "name": "gitattributes",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitcli",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitcore-tutorial",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitcredentials",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitcvs-migration",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitdatamodel",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitdiffcore",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "giteveryday",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitfaq",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-bundle",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-chunk",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-commit-graph",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-index",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-pack",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitformat-signature",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitglossary",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "githooks",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitignore",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitk",
+      "reason": "script parser requires manual:gitk-git/gitk adapter"
+    },
+    {
+      "name": "gitmailmap",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitmodules",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitnamespaces",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitprotocol-capabilities",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitprotocol-common",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitprotocol-http",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitprotocol-pack",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitprotocol-v2",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitremote-helpers",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitrepository-layout",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitrevisions",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitsubmodules",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gittutorial",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gittutorial-2",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gitweb",
+      "reason": "script parser requires manual:gitweb/gitweb.perl adapter"
+    },
+    {
+      "name": "gitworkflows",
+      "reason": "command-list documentation/interface entry, not an executable command"
+    },
+    {
+      "name": "gui",
+      "reason": "script parser requires manual:git-gui/git-gui.sh adapter"
+    },
+    {
+      "name": "http-backend",
+      "reason": "standalone executable requires manual:http-backend.c adapter"
+    },
+    {
+      "name": "http-fetch",
+      "reason": "standalone executable requires manual:http-fetch.c adapter"
+    },
+    {
+      "name": "http-push",
+      "reason": "standalone executable requires manual:http-push.c adapter"
+    },
+    {
+      "name": "imap-send",
+      "reason": "standalone executable requires manual:imap-send.c adapter"
+    },
+    {
+      "name": "index-pack",
+      "reason": "non-table or mixed parser requires manual:builtin/index-pack.c adapter"
+    },
+    {
+      "name": "instaweb",
+      "reason": "script parser requires manual:git-instaweb.sh adapter"
+    },
+    {
+      "name": "last-modified",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "log",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "mailsplit",
+      "reason": "non-table or mixed parser requires manual:builtin/mailsplit.c adapter"
+    },
+    {
+      "name": "merge",
+      "reason": "requires callback:option_read_message adapter in addition to extracted tables"
+    },
+    {
+      "name": "merge-index",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-index.c adapter"
+    },
+    {
+      "name": "merge-octopus",
+      "reason": "script parser requires manual:git-merge-octopus.sh adapter"
+    },
+    {
+      "name": "merge-one-file",
+      "reason": "script parser requires manual:git-merge-one-file.sh adapter"
+    },
+    {
+      "name": "merge-ours",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-ours.c adapter"
+    },
+    {
+      "name": "merge-recursive",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-recursive.c adapter"
+    },
+    {
+      "name": "merge-recursive-ours",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-recursive.c adapter"
+    },
+    {
+      "name": "merge-recursive-theirs",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-recursive.c adapter"
+    },
+    {
+      "name": "merge-resolve",
+      "reason": "script parser requires manual:git-merge-resolve.sh adapter"
+    },
+    {
+      "name": "merge-subtree",
+      "reason": "non-table or mixed parser requires manual:builtin/merge-recursive.c adapter"
+    },
+    {
+      "name": "mergetool",
+      "reason": "script parser requires manual:git-mergetool.sh adapter"
+    },
+    {
+      "name": "mergetool--lib",
+      "reason": "script parser requires manual:Makefile adapter"
+    },
+    {
+      "name": "notes",
+      "reason": "requires default-subcommand:builtin/notes.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "p4",
+      "reason": "script parser requires manual:git-p4.py adapter"
+    },
+    {
+      "name": "pack-redundant",
+      "reason": "non-table or mixed parser requires manual:builtin/pack-redundant.c adapter"
+    },
+    {
+      "name": "patch-id",
+      "reason": "non-table or mixed parser requires manual:builtin/patch-id.c adapter"
+    },
+    {
+      "name": "pickaxe",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "quiltimport",
+      "reason": "script parser requires manual:git-quiltimport.sh adapter"
+    },
+    {
+      "name": "range-diff",
+      "reason": "requires callback:diff_opt_output adapter in addition to extracted tables"
+    },
+    {
+      "name": "reflog",
+      "reason": "requires default-subcommand:builtin/reflog.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "remote",
+      "reason": "requires default-subcommand:builtin/remote.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "remote-ext",
+      "reason": "non-table or mixed parser requires manual:builtin/remote-ext.c adapter"
+    },
+    {
+      "name": "remote-fd",
+      "reason": "non-table or mixed parser requires manual:builtin/remote-fd.c adapter"
+    },
+    {
+      "name": "remote-ftp",
+      "reason": "standalone executable requires manual:remote-curl.c adapter"
+    },
+    {
+      "name": "remote-ftps",
+      "reason": "standalone executable requires manual:remote-curl.c adapter"
+    },
+    {
+      "name": "remote-http",
+      "reason": "standalone executable requires manual:remote-curl.c adapter"
+    },
+    {
+      "name": "remote-https",
+      "reason": "standalone executable requires manual:remote-curl.c adapter"
+    },
+    {
+      "name": "request-pull",
+      "reason": "script parser requires manual:git-request-pull.sh adapter"
+    },
+    {
+      "name": "rev-list",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "rev-parse",
+      "reason": "non-table or mixed parser requires manual:builtin/rev-parse.c adapter"
+    },
+    {
+      "name": "revert",
+      "reason": "requires conditional-options:builtin/revert.c:151 adapter in addition to extracted tables"
+    },
+    {
+      "name": "revert",
+      "reason": "requires conditional-options:builtin/revert.c:164 adapter in addition to extracted tables"
+    },
+    {
+      "name": "scalar",
+      "reason": "standalone executable requires manual:scalar.c adapter"
+    },
+    {
+      "name": "send-email",
+      "reason": "script parser requires manual:git-send-email.perl adapter"
+    },
+    {
+      "name": "sh-i18n",
+      "reason": "script parser requires manual:Makefile adapter"
+    },
+    {
+      "name": "sh-i18n--envsubst",
+      "reason": "standalone executable requires manual:sh-i18n--envsubst.c adapter"
+    },
+    {
+      "name": "sh-setup",
+      "reason": "script parser requires manual:Makefile adapter"
+    },
+    {
+      "name": "shell",
+      "reason": "standalone executable requires manual:shell.c adapter"
+    },
+    {
+      "name": "shortlog",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "show",
+      "reason": "non-table or mixed parser requires revision adapter"
+    },
+    {
+      "name": "stash",
+      "reason": "requires default-subcommand:builtin/stash.c adapter in addition to extracted tables"
+    },
+    {
+      "name": "submodule",
+      "reason": "script parser requires manual:git-submodule.sh adapter"
+    },
+    {
+      "name": "svn",
+      "reason": "script parser requires manual:git-svn.perl adapter"
+    },
+    {
+      "name": "unpack-file",
+      "reason": "non-table or mixed parser requires manual:builtin/unpack-file.c adapter"
+    },
+    {
+      "name": "unpack-objects",
+      "reason": "non-table or mixed parser requires manual:builtin/unpack-objects.c adapter"
+    },
+    {
+      "name": "update-index",
+      "reason": "requires callback:cacheinfo_callback adapter in addition to extracted tables"
+    },
+    {
+      "name": "update-index",
+      "reason": "requires callback:reupdate_callback adapter in addition to extracted tables"
+    },
+    {
+      "name": "update-index",
+      "reason": "requires callback:stdin_cacheinfo_callback adapter in addition to extracted tables"
+    },
+    {
+      "name": "update-index",
+      "reason": "requires callback:stdin_callback adapter in addition to extracted tables"
+    },
+    {
+      "name": "update-index",
+      "reason": "requires callback:unresolve_callback adapter in addition to extracted tables"
+    },
+    {
+      "name": "upload-archive",
+      "reason": "non-table or mixed parser requires manual:builtin/upload-archive.c adapter"
+    },
+    {
+      "name": "upload-archive--writer",
+      "reason": "non-table or mixed parser requires manual:builtin/upload-archive.c adapter"
+    },
+    {
+      "name": "var",
+      "reason": "non-table or mixed parser requires manual:builtin/var.c adapter"
+    },
+    {
+      "name": "web--browse",
+      "reason": "script parser requires manual:git-web--browse.sh adapter"
+    },
+    {
+      "name": "whatchanged",
+      "reason": "non-table or mixed parser requires revision adapter"
+    }
+  ],
+  "verification": {
+    "git": "2.56.0",
+    "checked": 120,
+    "mismatches": [
+      {
+        "command": "cherry-pick",
+        "extra": [
+          "reference"
+        ]
+      },
+      {
+        "command": "revert",
+        "extra": [
+          "allow-empty",
+          "allow-empty-message",
+          "empty",
+          "ff",
+          "keep-redundant-commits"
+        ]
+      }
+    ]
+  }
+}
