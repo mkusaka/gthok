@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mkusaka/gthok/main/schema/config.schema.json
+# Run these commands from the repository root (Go is needed only to build).
+# Respect an existing GTHOK_CONFIG_DIR; otherwise use gthok's default location:
+#   config_dir="${GTHOK_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/gthok}"
+#   mkdir -p "$config_dir/hooks" "$config_dir/logs"
+#   chmod 700 "$config_dir" "$config_dir/hooks" "$config_dir/logs"
+#   go build -o "$config_dir/hooks/deny-admin-merge" ./examples/hooks/deny-admin-merge
+#   go build -o "$config_dir/hooks/audit-merge" ./examples/hooks/audit-merge
+#   cp examples/config.yaml "$config_dir/config.yaml"
+#   chmod 600 "$config_dir/config.yaml"
+# The config works unchanged after installation: hook executable paths are
+# relative to this config, and audit-merge writes to its sibling ../logs directory.
+# Existing configs must be merged manually rather than overwritten with cp.
+#
+# Optional Python equivalent (only this alternative requires Python 3):
+#   cp examples/hooks/deny-admin-merge.py "$config_dir/hooks/deny-admin-merge.py"
+#   chmod 700 "$config_dir/hooks/deny-admin-merge.py"
+# Replace the pre-hook command below with:
+#   command: ["./hooks/deny-admin-merge.py"]
+# Use either Go OR Python, not both; they implement the same check.
+#
+# Inspect without running gh: gthok hooks test -- pr merge 123 --admin -R org/repo
+# This runs the real pre-hook, but never executes gh or merges a PR.
+# Hook code is trusted. This is a convenience guardrail, not a security boundary;
+# it rejects explicit admin=true merge requests, not unknown API/extension calls.
+# The post-hook audits command outcomes, not confirmed server-side merge events.
+version: 1
+policy:
+  mode: enforce # observe would record denials without blocking gh.
+  rules:
+    - id: review-repository-deletion
+      match: {operation: repo.delete}
+      decision: warn # Allows; another deny still wins. Pre-only, in either mode.
+      reason: Confirm backups and downstream consumers before deleting a repository.
+hooks:
+  pre:
+    - id: deny-admin-merge
+      match:
+        operation: "pr.merge.*"
+      command: ["./hooks/deny-admin-merge"]
+      timeout: 5s
+      onError: deny
+    # Optional dynamic warning (POSIX sh + jq + gh; read-only API calls):
+    # Install: cp examples/hooks/warn-merge.sh "$config_dir/hooks/warn-merge.sh"
+    #          chmod 700 "$config_dir/hooks/warn-merge.sh"
+    # - id: warn-merge
+    #   match: {operation: "pr.merge.*"}
+    #   command: ["./hooks/warn-merge.sh"]
+    #   timeout: 5s
+    #   onError: allow
+    # Internal gh calls inherit verified nested passthrough, not recursive hooks.
+    # Returns schemaVersion 1 / abstain / warning for --admin, release labels,
+    # or local off-hours; no warning changes the decision or exit status.
+  post:
+    - id: audit-merge
+      match:
+        operation: "pr.merge.*"
+      command: ["./hooks/audit-merge"]
+      timeout: 5s
+      onError: ignore
+      # No captureOutput: preserve gh's inherited stdio/TTY behavior.
+
+# Optional request rewriting (runs before policy and pre-hooks):
+#   mkdir -p "$config_dir/transforms"
+#   chmod 700 "$config_dir/transforms"
+#   go build -o "$config_dir/transforms/attribute-session" ./examples/transforms/attribute-session
+# Uncomment after building. Without CLAUDE_CODE_SESSION_ID it makes no change.
+# Project equivalents require `gthok config trust`; inspect code first.
+# transforms:
+#   pre:
+#     - id: attribute-session
+#       match:
+#         operation: "*comment.create"
+#         env:
+#           CLAUDE_CODE_SESSION_ID: "*"
+#       command: ["./transforms/attribute-session"]
+#       timeout: 5s
+#       onError: deny # Failures stop execution with 78 even in observe mode.
+#       # allow instead rolls back ALL request/env edits and executes the original invocation.
+#     # Trusted credential swap; build first:
+#     # go build -o "$config_dir/transforms/gain-token" ./examples/transforms/gain-token
+#     - id: gain-token
+#       match:
+#         operation: "pr.merge.*"
+#       command: ["./transforms/gain-token"]
+#       timeout: 15s # Default 5s, maximum 10m; token minting may need longer.
+#       onError: deny
+#       # Runs gain [--profile $GAIN_PROFILE] token; sets GH_TOKEN, unsets GITHUB_TOKEN.

@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mkusaka/gthok/main/schema/local.schema.json
+#
+# gthok local config. Created by `gthok config init --scope local`.
+#
+# Personal settings for this checkout only (like CLAUDE.local.md). Keep it
+# uncommitted: `config init` added it to .git/info/exclude, and gthok ignores it
+# while git tracks it. Loaded after the user config and .gthok.yaml. Its hooks and
+# transforms run WITHOUT `gthok config trust`; policy can only tighten the others.
+# runtime, logging and trust are not allowed here (including repositories/directories).
+# Path trust belongs only in user config; a repository cannot trust itself.
+# Docs: https://github.com/mkusaka/gthok
+
+version: 1
+
+policy:
+  rules: []
+  #  - id: no-merge-from-here
+  #    match: {operation: "pr.merge.*"}
+  #    decision: deny # deny | audit | warn (pre-only allow + reason warning)
+  #    reason: merge from the web UI
+
+hooks: {}
+#  pre:
+#    - id: my-check
+#      command: ["./scripts/my-check"]   # relative to the repository root
+
+transforms: {}
+#  pre:
+#    - id: attribute-session
+#      match: {operation: ["comment.create", "*.comment.create"]}
+#      command: ["/absolute/path/attribute-session"]

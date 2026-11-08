@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mkusaka/gthok/main/schema/project.schema.json
+#
+# gthok project config. Created by `gthok config init` (scope: project).
+#
+# Commit this file to share policy and hooks with everyone using the repository.
+# Declarative tightening, rules and protected repositories apply automatically;
+# they can never weaken the user policy. runtime/logging are not allowed here.
+# Inspect hooks and run `gthok config trust`, unless user trust.repositories or
+# trust.directories covers this repository. Those fields are user-only: a project
+# cannot trust itself; setting either here rejects the project overlay.
+# Trust is per hook: its definition, command file, `files` and trust.include.
+# Changing one hook untrusts only that hook; a changed gate (pre hook with
+# onError deny and continueOnError disabled) denies matching commands in enforce mode until re-trusted.
+# Interpreters, PATH tools and unlisted imports/data are not hashed: list them in
+# the hook's `files` or, for every hook, in trust.include.
+# Docs: https://github.com/mkusaka/gthok
+
+version: 1
+
+# Project-only: files every hook depends on (hashed into each hook's trust).
+# trust:
+#   include:
+#     - .gitleaks.toml
+
+policy:
+  # Only a stricter value than the user config takes effect:
+  # mode: observe < enforce; unknownMutation / unknownInput / protectedUnknown: allow < audit < deny
+  # mode: enforce
+  # unknownMutation: deny
+  # unknownInput: deny
+
+  # owner/repo globs this project wants protected (added to the user list).
+  protectedRepositories: []
+  #  - my-org/my-repo
+
+  rules: []
+  #  - id: no-direct-merge
+  #    match:
+  #      operation: pr.merge.direct     # action glob; see `gthok explain -- <gh args>`
+  #    decision: deny                   # deny | audit | warn (pre-only allow + reason warning)
+  #    onUnresolved: deny               # deny (default): conservative target match | ignore: skip
+  #    reason: use the merge queue
+
+# Hook IDs must not collide with hooks in the user config. Project commands must
+# use ./relative or absolute paths (user hooks may use bare PATH names).
+# Relative paths resolve under the repo root. Hooks are trusted code run as you.
+hooks: {}
+#  pre:
+#    - id: project-pre-merge
+#      match:
+#        operation: "pr.merge.*"
+#      command: ["./scripts/gthok/pre-merge"]
+#      files: [scripts/gthok/lib.ts]  # this hook's dependencies (trust)
+#      timeout: 10s
+#      onError: deny                 # deny | allow | ignore

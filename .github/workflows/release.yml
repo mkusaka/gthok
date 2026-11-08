@@ -1,0 +1,161 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: CI
+    # The full CI matrix (tests, race, fuzz smoke, lint, every OS/arch) on the tag.
+    uses: ./.github/workflows/ci.yml
+    permissions: {}
+
+  release:
+    name: Build and publish
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Validate release tag
+        shell: bash
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tags must use vX.Y.Z format, got ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        # The tag's CHANGELOG.md section (breaking changes first) goes above the
+        # generated changelog. scripts/release.sh creates that section.
+        run: |
+          header="$RUNNER_TEMP/release-header.md"
+          scripts/changelog-section.sh "$GITHUB_REF_NAME" > "$header"
+          if ! grep -q '[^[:space:]#]' "$header"; then
+            echo "::error::CHANGELOG.md has no section for ${GITHUB_REF_NAME}; release with scripts/release.sh"
+            exit 1
+          fi
+          echo "args=--release-header $header" >> "$GITHUB_OUTPUT"
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          version: "~> v2"
+          args: release --clean ${{ steps.notes.outputs.args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/checksums.txt
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+      - name: Export version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+  homebrew:
+    name: Update Homebrew tap
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Render Homebrew formula
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Fails unless the published release is immutable and its attestation verifies.
+          gh release verify "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY"
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern checksums.txt --dir "$RUNNER_TEMP"
+          (cd "$RUNNER_TEMP" && gh release verify-asset "$GITHUB_REF_NAME" checksums.txt --repo "$GITHUB_REPOSITORY")
+          base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
+          sha() {
+            local sum
+            sum="$(awk -v f="gthok_$1.tar.gz" '$2 == f { print $1 }' "$RUNNER_TEMP/checksums.txt")"
+            [[ "$sum" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::missing checksum for $1" >&2; exit 1; }
+            echo "$sum"
+          }
+          export FORMULA_PATH="$RUNNER_TEMP/gthok.rb"
+          cp packaging/homebrew/gthok.rb "$FORMULA_PATH"
+          DARWIN_ARM64_URL="$base/gthok_darwin_arm64.tar.gz"
+          DARWIN_X64_URL="$base/gthok_darwin_amd64.tar.gz"
+          LINUX_ARM64_URL="$base/gthok_linux_arm64.tar.gz"
+          LINUX_X64_URL="$base/gthok_linux_amd64.tar.gz"
+          DARWIN_ARM64_SHA256="$(sha darwin_arm64)"
+          DARWIN_X64_SHA256="$(sha darwin_amd64)"
+          LINUX_ARM64_SHA256="$(sha linux_arm64)"
+          LINUX_X64_SHA256="$(sha linux_amd64)"
+          export DARWIN_ARM64_URL DARWIN_X64_URL LINUX_ARM64_URL LINUX_X64_URL
+          export DARWIN_ARM64_SHA256 DARWIN_X64_SHA256 LINUX_ARM64_SHA256 LINUX_X64_SHA256
+          ruby <<'RUBY'
+          path = ENV.fetch("FORMULA_PATH")
+          text = File.read(path)
+          %w[VERSION DARWIN_ARM64_URL DARWIN_ARM64_SHA256 DARWIN_X64_URL DARWIN_X64_SHA256
+             LINUX_ARM64_URL LINUX_ARM64_SHA256 LINUX_X64_URL LINUX_X64_SHA256].each do |key|
+            placeholder = "__#{key}__"
+            raise "missing placeholder: #{placeholder}" unless text.include?(placeholder)
+            text.gsub!(placeholder, ENV.fetch(key))
+          end
+          File.write(path, text)
+          RUBY
+          ruby -c "$FORMULA_PATH"
+          cat "$FORMULA_PATH"
+          {
+            echo "FORMULA_CONTENTS_B64=$(base64 < "$FORMULA_PATH" | tr -d '\n')"
+            echo "DARWIN_ARM64_URL=$DARWIN_ARM64_URL"
+            echo "DARWIN_ARM64_SHA256=$DARWIN_ARM64_SHA256"
+            echo "DARWIN_X64_URL=$DARWIN_X64_URL"
+            echo "DARWIN_X64_SHA256=$DARWIN_X64_SHA256"
+          } >> "$GITHUB_ENV"
+      - name: Dispatch tap update
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::Missing required secret: HOMEBREW_TAP_TOKEN (environment: release)"
+            exit 1
+          fi
+          gh api repos/mkusaka/homebrew-tap/dispatches \
+            -f event_type=update-formula \
+            -f "client_payload[formula]=gthok" \
+            -f "client_payload[repository]=${GITHUB_REPOSITORY}" \
+            -f "client_payload[version]=${VERSION}" \
+            -f "client_payload[formula_contents_b64]=${FORMULA_CONTENTS_B64}" \
+            -f "client_payload[darwin_arm64_url]=${DARWIN_ARM64_URL}" \
+            -f "client_payload[darwin_arm64_sha256]=${DARWIN_ARM64_SHA256}" \
+            -f "client_payload[darwin_x64_url]=${DARWIN_X64_URL}" \
+            -f "client_payload[darwin_x64_sha256]=${DARWIN_X64_SHA256}"

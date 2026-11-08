@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mkusaka/gthok/main/schema/config.schema.json
+#
+# gthok user config. Created by `gthok config init --scope user`.
+# Check it with `gthok config validate`; see what a command would do with
+# `gthok explain -- pr merge 123`. Docs: https://github.com/mkusaka/gthok
+#
+# gthok is not a security boundary: anything that calls the real gh, curl or
+# another API client directly bypasses it. Server-side branch protection and
+# rulesets remain the real control.
+
+# Config format version (must be 1).
+version: 1
+
+# Optional user-only path trust. ALL project hooks/transforms in these locations
+# run as you without per-hook review, including code pulled from others.
+# repositories: exact repo roots, including all linked worktrees.
+# directories: directory itself and descendants, on path boundaries.
+# Absolute or ~/... paths; symlinks resolve; trailing slashes have no special meaning.
+# Projects cannot set these fields; trust.include is project-only.
+# trust:
+#   repositories: ["~/src/github.com/me/my-repo"]
+#   directories: ["~/src/my-org"]
+# Manage with `gthok config trust repo [PATH]` (default .) or `trust dir DIR`;
+# matching `untrust` commands remove entries; --dry-run previews without writes.
+
+policy:
+  # observe: classify and log every gh invocation, never block (default).
+  # enforce: deny according to rules, unknown handling and pre-hooks.
+  mode: observe
+
+  # Readable write/unknown operations gthok could not classify (unknown gh
+  # subcommand, unmapped REST route or GraphQL mutation):
+  # allow | audit (allow, but flag in the log; default) | deny
+  unknownMutation: audit
+
+  # Request input could not be read, was too large, or stdin analysis timed out.
+  # Independent of unknownMutation; allow | audit (default) | deny.
+  unknownInput: audit
+
+  # owner/repo globs. In enforce mode, unclassified writes to these repos, and
+  # writes whose target repository cannot be resolved, use protectedUnknown.
+  protectedRepositories: []
+  #  - my-org/*
+
+  # allow | audit | deny (default: deny, i.e. fail closed)
+  protectedUnknown: deny
+
+  # Declarative pre-only rules. decision: deny | audit | warn (allow + reason warning).
+  # match criteria are ANDed; a list within one criterion is ORed.
+  rules: []
+  #  - id: no-direct-merge
+  #    match:
+  #      operation: pr.merge.direct     # action glob, e.g. "pr.merge.*"
+  #      repositories: ["my-org/*"]     # owner/repo globs
+  #      # command: "pr merge"          # gh command path prefix
+  #      # effect: write                # read | write | unknown
+  #      # level: L1                    # L1 gh command | L2 gh api REST | L3 gh api graphql
+  #      # token: app                   # app (GitHub App token: gain, Actions) | user | unknown | none
+  #      # hosts: ["github.com"]
+  #    decision: deny
+  #    onUnresolved: deny             # deny (default): conservative target match | ignore: skip
+  #    reason: merge via the merge queue instead of bypassing it
+
+# Executables run before (pre) or after (post) the real gh. They receive a
+# JSON document on stdin and pre-hooks answer {"decision":"allow|deny|abstain"}
+# on stdout. Hooks are trusted code that runs as you. Protocol:
+# https://github.com/mkusaka/gthok/blob/main/docs/hook-protocol.md
+# Each phase is a list run in order; GitHub Actions-style items run hooks
+# concurrently: `- parallel: [hooks]`, `background: true` on a hook, and
+# `- wait: id` / `- wait-all:` to join background hooks.
+hooks: {}
+#  pre:
+#    - id: check-pr-policy
+#      match:
+#        operation: "pr.merge.*"
+#      command: ["./hooks/check-pr-policy"]   # relative to this file's directory
+#      timeout: 10s                  # default 10s
+#      onError: deny                 # deny (pre default) | allow | ignore (post default)
+#      # dependsOn: [other-hook-id]  # earlier hook of the same list
+#      # optional: false             # skip if the command is missing
+#      # env: {KEY: value}
+#      # enabled: true
+#    - parallel:                     # run concurrently, then continue
+#        - id: check-ci
+#          command: ["./hooks/check-ci"]
+#        - id: check-reviews
+#          command: ["./hooks/check-reviews"]
+#  post:
+#    - id: audit-merge
+#      match:
+#        operation: "pr.merge.*"
+#      command: ["./hooks/audit-merge"]
+#      timeout: 5s
+#      onError: ignore
+#      # captureOutput: false        # post only: pass gh stdout/stderr to the hook
+#    - id: on-gh-failure
+#      match:
+#        command: "pr merge"
+#        result: failure             # post only: success | failure (non-zero exit, signal, start error)
+#        # exitCode: [1]             # post only: specific gh exit codes
+#      command: ["./hooks/notify-failure"]
+
+# Defaults shown; uncomment to change.
+runtime: {}
+#  hookConcurrency: 4                # max hooks running at once (parallel/background)
+#  stdinMaxBytes: 8388608            # stdin analysed for `gh api --input -` (8 MiB)
+#  stdinTimeout: 3s
+#  fileMaxBytes: 8388608             # --input FILE / -F k=@FILE read limit
+#  captureLimit: 1048576             # captured gh output per stream for post-hooks
+#  resolveTimeout: 2s                # read-only GitHub API lookups for targets
+#  resolveAPI: auto                  # auto: actionable target lookups | never: no implicit API
+#  realGh: /opt/homebrew/bin/gh      # pin the real gh instead of PATH discovery
+
+logging: {}
+#  enabled: true
+#  ignoredHooksWarning: true         # stderr reminder for untrusted/changed project hooks (10 min per manifest)
+#  path: /absolute/path/gthok.jsonl  # default: <config dir>/logs/gthok.jsonl
+#  level: info                       # info: every invocation | decision: non-allow, warnings or errors
+

@@ -1,0 +1,349 @@
+# Changelog
+
+All notable changes to gthok. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+Add entries under **Unreleased** as you change things; `scripts/release.sh` turns that
+section into the new version and the release workflow puts it at the top of the GitHub
+release notes. Mark changes that require users to update config, hooks or scripts under
+**Breaking**.
+
+## [Unreleased]
+
+## [v0.0.25] - 2026-11-02
+
+### Changed
+
+- `gthok doctor` uses gh 2.103.3, the release the command registry is generated
+  from, as the verified baseline; gh older than 2.103 is reported as a warning.
+
+## [v0.0.24] - 2026-11-02
+
+### Added
+
+- User-config `extensions: [{name, effect}]` classifies installed gh extensions as
+  `extension.<name>` for `gh <name>` (also behind root flags and gh aliases) and
+  `gh extension exec <name>`, following gh's precedence (built-ins, then extensions,
+  then aliases and official stubs such as `stack`). The effect defaults to unknown;
+  a same-named gh alias keeps the call unknown. Targets stay unresolved, so
+  repository/host rules and `protectedRepositories` match conservatively. Project
+  configs cannot set `extensions`.
+- `gh issue artifact` commands (`issue.artifact.*`) and the matching REST issue
+  artifact routes.
+
+### Changed
+
+- Snapshots follow gh v2.103.3, the REST OpenAPI description at `43bf9878`
+  (1,254 operations) and the GraphQL schema of 2026-11-03.
+- A repository or host that argv names but gthok cannot read (for example an
+  invalid `-R` value) is no longer filled from the current git repository; it
+  stays unresolved and matches conservatively.
+
+## [v0.0.23] - 2026-10-26
+
+### Added
+
+- Opt-in ordered `delegates` route configured native reads and REST GET requests
+  to trusted argv executables after transforms, policy and pre-hooks. Exit 125
+  means not handled; start failure and timeout before output default to real-gh
+  fallback (`onError: deny` returns 78). Other statuses, including checks exit 8,
+  and signals pass through; post-hooks receive the final outcome once.
+- Delegate config validation/schema, project content/path trust, explain/normalize
+  selection, doctor executable checks, automatic `GTHOK_NO_DELEGATE=1` recursion
+  guard, private streaming stdin replay, and a Bun/ghro example.
+- `match.method` filters normalized REST HTTP methods in rules, hooks, transforms
+  and delegates. Delegates require explicit read-only constraints; GraphQL,
+  non-GET API and unknown native syntax remain on real gh.
+
+## [v0.0.22] - 2026-10-25
+
+### Fixed
+
+- Transforms with `repositories`/`hosts` criteria apply only on a definite match. Targets are filled from env and local git first, so a token-minting transform no longer runs for requests outside the listed repositories (for example `gh api rate_limit`).
+- Command and REST operations without a repository (`gh api rate_limit`, gists) never match `repositories` in rules, hooks or transforms, and are not treated as unresolved writes under `protectedRepositories`. GraphQL documents keep matching against the current repository.
+- `gh api` endpoints with `{owner}`/`{repo}` placeholders on unmapped routes count as targeting the current repository, not as repository-less.
+
+## [v0.0.21] - 2026-10-22
+
+### Security
+
+- Build with Go 1.27.3, which fixes a crypto/x509 issue (CVE-2026-111943, leaked eMudhra intermediate CA key).
+
+## [v0.0.20] - 2026-10-19
+
+### Added
+
+- `unless:` next to `match:` on rules, hooks and transforms: operations that any entry matches definitively are excluded (maybe-matches never exclude). For example, keep `gh run watch` and `gh pr checks --watch` off a token-minting transform.
+- `match.parameters` matches normalized operation parameters, e.g. `{watch: "true"}`.
+
+## [v0.0.19] - 2026-10-18
+
+### Fixed
+
+- `gthok shim install` from a mise install (`github:mkusaka/gthok`) points the gh shim at mise's `installs/<tool>/latest` link instead of the version directory, so `mise upgrade`/`mise prune` no longer leave gh on an old or deleted gthok.
+
+## [v0.0.18] - 2026-10-17
+
+### Breaking
+
+- `trust.skip` is replaced by user-only `trust.repositories` (exact repository
+  roots, including linked worktrees) and `trust.directories` (directory itself
+  and descendants on path boundaries). Migrate entries explicitly; trailing
+  slashes no longer select matching behavior. Absolute and `~/...` paths resolve
+  symlinks. Projects cannot grant themselves path trust.
+
+### Added
+
+- `gthok config trust/untrust repo [PATH]` (default `.`) and `dir DIR` safely edit
+  an existing valid user config, preserving comments, mode and symlink targets;
+  `--dry-run` previews the diff without writes. Trust lists include user path
+  entries and mark the selected match with `(matches here)`. `untrust --all`
+  retains path entries while clearing per-hook state.
+- Per-hook trust success suggests repository trust when not path-covered;
+  ignored-project warnings point to `gthok config trust repo .`, without changing
+  gate-denial behavior.
+
+### Fixed
+
+- Hooks in a project (or local) config's `parallel` block, or marked `background`, no longer wait for their earlier siblings: they waited for every earlier background hook of the same file, so they ran one at a time and a deny skipped the rest instead of reporting all reasons.
+- Documentation ID suggestions prioritize matching ID prefixes, so expanded
+  trust documentation does not displace the intended section.
+
+## [v0.0.17] - 2026-10-17
+
+### Breaking
+
+- Pre-hook denial no longer cancels running hooks: parallel siblings and background
+  hooks finish within their own timeout before aggregation. Hooks not yet started
+  are `skipped` with reason `after pre-hook denial`; wrapper signals still cancel.
+
+### Added
+
+- Pre-only policy `decision: warn` allows with `reason` as advisory text;
+  successful allow/abstain hook responses and transform responses accept
+  `warning`. Deterministic, redacted/sanitized warnings print only when gh runs
+  (post warnings follow gh output), remain visible in explain/hooks-test
+  text/JSON and decision-level logs, and never change decisions or statuses.
+  Includes a POSIX sh+jq read-only dynamic merge-warning hook.
+
+- Pre-hook `continueOnError: true` keeps returned/onError denials non-blocking,
+  records their real outcome/decision with `effective: abstain` and
+  `continuedOnError: true`, and satisfies dependents. Continued denials print
+  sanitized, redacted warnings only when gh runs; other enforced denials suppress
+  warnings without hiding logs. Hooks list/test and generated schemas expose the
+  option/results; post hooks and transforms reject it.
+
+## [v0.0.16] - 2026-10-17
+
+### Added
+
+- User config `trust.skip: [paths]` runs project hooks and transforms without trust for repositories at those paths (trailing `/` = that directory and below, otherwise exact; `~` expands; linked git worktrees also match through their main worktree). Project configs cannot set it.
+
+### Changed
+
+- `gthok docs skill` (and its subsections) start with a comment giving the skill's source URL at the release tag matching the binary, for installing it with an agent's skill tool.
+
+## [v0.0.15] - 2026-10-17
+
+### Added
+
+- Offline, version-matched `gthok docs` section browsing, full Markdown output
+  and BM25 search; `gthok actions [prefix]` lists curated actions with their
+  effects and statically mapped native commands, REST routes and GraphQL fields.
+
+## [v0.0.14] - 2026-10-17
+
+### Added
+
+- Transform response `env` edits for trusted credential swaps and other allowed
+  variables, atomic request/environment rollback, post-edit token matching and
+  names-only redacted diagnostics; includes a `gain-token` Go example.
+
+## [v0.0.13] - 2026-10-17
+
+### Added
+
+- `.gthok.local.yaml`: a personal, uncommitted config at the repository root, loaded after `.gthok.yaml` (like `CLAUDE.local.md`). Its hooks and transforms run without trust; it is ignored while git tracks it; policy can only tighten. `gthok config init --scope local` creates it and adds it to `.git/info/exclude`. Its JSON Schema is `schema/local.schema.json` (`gthok schema local-config`).
+
+## [v0.0.12] - 2026-10-16
+
+### Fixed
+
+- `gthok exec` hands every following argument to gh unparsed; `--` is optional and no arguments (bare `gh` through the shell function) runs gh, which prints its help, instead of failing with a usage error.
+
+### Added
+
+- `gh --version` / `gh version` through gthok print `gthok version X (wrapping /path/to/gh)` after gh's own version lines when stdout is a terminal; piped output stays unchanged for scripts and hooks.
+
+### Changed
+
+- Homebrew caveats mention the `gthok shell-init` alternative to the shim and `gthok config init --scope user` (gh passes through untouched without a config).
+
+## [v0.0.11] - 2026-10-16
+
+### Added
+
+- Trusted serial `transforms.pre` rewrites supported native flags/texts/targets,
+  REST input and GraphQL variables before policy and hooks, with strict paths,
+  atomic semantic round-trip checks, private file/stdin transport, project trust
+  and redacted diagnostics. Failures deny with 78 even in observe mode, or
+  `onError: allow` rolls the whole chain back to the original request.
+- Session attribution transform example and transform-aware explain/hooks-test
+  previews; normalize remains read-only and does not execute transforms.
+
+## [v0.0.10] - 2026-10-15
+
+### Fixed
+
+- Trust follows content again: a hook trusted in one worktree or clone is trusted in every checkout with identical content (0.0.8 made trust per checkout path). Worktrees of a repository share one record that keeps earlier grants, so older branches stay trusted, and a changed gate is blocked the same way in every worktree instead of only in the one that trusted it.
+
+## [v0.0.9] - 2026-10-15
+
+### Breaking
+
+- Hooks are grouped by phase: `hooks: {pre: [...], post: [...]}` replaces the single list with a per-hook `phase:`. `parallel`/`background`/`wait`/`wait-all` and `dependsOn` work within one phase list.
+
+## [v0.0.8] - 2026-10-15
+
+### Breaking
+
+- Hook `priority` is removed: hooks run in config order (user config, then project), and `dependsOn` may reference only earlier hooks (a later hook is a config error; cycles can no longer form).
+- Project trust is now per hook, not YAML bytes or a global content-digest set. One checkout-local record holds canonical hook definitions/digests; old records require `gthok config trust` again. Unrelated YAML edits no longer disable trusted siblings. Changed pre-`onError: deny` gates, or untrusted gates alongside active trusted project hooks, deny matching enforce invocations as `config <id>` (exit 78); observe records would-deny. `config untrust` removes the whole project's record.
+
+### Added
+
+- GitHub Actions-style hook concurrency: `- parallel: [hooks]` blocks, `background: true` hooks, and `- wait: id|[ids]` / `- wait-all:` items in `hooks`. A pre deny still cancels every running hook; project hooks start after user background hooks. `runtime.hookConcurrency` now defaults to 4. `gthok hooks list` shows `background` and the hooks each one waits for; the config schemas describe the new items.
+- Project `hooks[].files` tracks hook-specific dependency files; `trust.include` applies to every hook. Repeatable `config trust --hook ID` authorizes selected hooks while preserving siblings' trusted digests and exact-byte review baselines. Review is grouped by hook/shared files; list/explain/validate/doctor and throttled warnings identify per-hook reasons and inactive gates.
+
+## [v0.0.7] - 2026-10-15
+
+### Added
+
+- `gthok shell-init zsh|bash|fish` prints an eval-able `gh` shell function that runs `gthok exec --`, for adopting gthok without a PATH shim; the output carries a comment that gh started by scripts or other programs is not covered.
+- `gthok exec` records its last use in `<config-dir>/state/exec-entry`. When it was used within seven days and no owned shim exists, `doctor` reports the shim PATH/ownership checks as info and adds a `shell-entry` check naming the child-process gap; with a shim it notes the shim also covers child processes.
+
+## [v0.0.6] - 2026-10-15
+
+### Breaking
+
+- Enforce denial stderr now has a stable `gthok: denied by <source>` header and ordered per-denial entries, preferring multiline messages over reasons. Content denials exit 77 (`EX_NOPERM`); hook-`onError`-only and fail-closed config denials exit 78 (`EX_CONFIG`), replacing exit 1. Content wins over errors; observe and `hooks test` mismatch statuses are unchanged.
+- Hook-authored terminal diagnostics now escape controls (except newline/tab) and invalid UTF-8, and bound each denial/text entry to 40 lines, 4 KiB and 500 characters per line with visible truncation markers. Denials, `hooks test` text, explain and hook/config notes share the sanitizer; JSON, `--print-input` and logs retain their structured values and existing redaction.
+- Replace `gthok config schema [--project]` with `gthok schema config|project-config|hook-input|hook-response`. Empty typed hook arrays are now omitted instead of `null`; absent means empty.
+- Without a user config or applicable project `.gthok.yaml`, the shim now execs gh directly without logging, normalization, stdin capture, resolution, or hook warnings. Logging remains default-on once either config exists; machine-wide shim installation is the recommended adoption path.
+
+### Added
+
+- Deny output for a malfunctioning hook (onError, exit 78) includes the last two non-empty lines of its stderr (redacted, sanitised, 200 bytes each; withheld for `redactInput` hooks), so causes like `env: bun: No such file or directory` are visible without the log.
+- Hooks receive `GTHOK_EVENT_SOURCE` (`shim`, `exec`, `test`) for skipping side effects in tests; the input JSON stays identical (`invocation.via` is never `test`). `hooks test --print-input` keeps stdout pure JSON and prints its source note on stderr.
+
+- `gthok hooks test --print-input [--phase pre|post] [--hook ID]` previews hook JSON without starting hooks or gh, with synthetic post results, credential masking notices, and `--show-secrets` that still honors hook `redactInput`.
+- `gthok exec -- <gh args>` runs the shim's exact pipeline without a PATH shim, preserving discovery/recursion checks, policy, hooks, logs, argv, streams, statuses and signals. Hook input and JSONL records include `invocation.via: "exec"|"shim"`; the hook-input schema is regenerated.
+- Generated hook input/response JSON Schemas, closed-value enums and documentation from Go tags, `schemaVersion: {const: 1}`, and TypeScript generation instructions. Regenerate all four contracts with `go generate ./internal/schema`.
+- Throttled stderr reminders for enabled project hooks ignored by trust, including up to three changed filenames; user `logging.ignoredHooksWarning: false` opts out.
+- Bounded private persistent manifest hash cache under `<config-dir>/state/`, invalidated by canonical path and file metadata; project YAML is always read fresh.
+- Repository-aware "what changed since trust" hints in `config trust`, `config validate` and `doctor`, with recorded HEAD/common-dir/normalized-origin provenance, changed/added/removed files and executable-bit changes; `config trust --dry-run` previews without state writes.
+
+### Changed
+
+- Trust review now compares exact stored trusted bytes, including dirty files, instead of the recorded commit. Private deduplicated copies are bounded to 1 MiB/file and 64 MiB total, integrity-checked and garbage-collected on trust/untrust; `untrust --all` purges them. Trust/dry-run show anchored unified diffs with credentials masked (`--show-secrets` reveals, `--no-diff` opts out); binary/large/missing/corrupt baselines show explanations. Removed Git object/pack-index lookup.
+
+### Fixed
+
+- A malformed trust-store entry is skipped with a named note instead of discarding other valid trusted digests.
+- Manifest hashes now remain cached across projects, with oldest-first eviction beyond 4096 entries. `doctor` explains no-config passthrough and skips unused log-path checks.
+
+## [v0.0.5] - 2026-10-15
+
+### Breaking
+
+- **Comment actions renamed (L1).** `pr.comment` / `issue.comment` are now `pr.comment.create|edit|delete` and `issue.comment.create|edit|delete`, shared with REST and GraphQL. Writes whose subject is unknown (REST `POST .../issues/{n}/comments`, GraphQL `addComment` before node resolution) are `comment.create`. **Update `match.operation`**; to never miss a comment write, also match `comment.*`. `gthok config validate` warns about patterns that match no known action.
+- **`GTHOK_NESTED=1` alone no longer bypasses hooks.** Passthrough now also requires a per-invocation token that gthok gives only to its own hooks and resolver. Scripts that set `GTHOK_NESTED=1` to skip gthok must call the real gh by absolute path instead.
+- **Hook input is raw.** `argv`, `texts` and `parameters` reach hooks exactly as gh receives them, including credentials (hooks already inherit `GH_TOKEN`; redacting their input only broke secret scanning). **Hooks that forward their input anywhere (Slack, webhooks, files) must set `redactInput: true`.** Logs, `explain`/`normalize` output and terminal messages are still redacted.
+- **An invalid user config in `enforce` mode now stops gh (fail-closed).** If your global `config.yaml` is invalid and declares `policy.mode: enforce`, gh is not run (exit 1, message every time). Previously gh ran without hooks. Observe-mode configs still fail open with a warning. `GTHOK_FAIL_CLOSED=1` makes any invalid config fail closed (useful in CI). Run `gthok config validate` after upgrading.
+- Project trust records from v0.0.3 or earlier must be re-created once with `gthok config trust`.
+
+### Added
+
+- `hooks test`: separate Hooks / Policy / FINAL results; `--expect` (final), `--expect-hooks`, `--expect-policy`; reads stdin like the wrapper.
+- Per-hook `redactInput: true` with per-text `redactions` counts; log records count redactions.
+- `policy.unknownInput` (unreadable request) separate from `unknownMutation`; per-rule `onUnresolved: deny|ignore`; `runtime.resolveAPI: auto|never`; `GTHOK_FAIL_CLOSED=1`.
+- GraphQL node IDs are resolved (2 s timeout, on-disk cache) only when a rule or hook can act on the answer; `comment.create` specialises to `pr.comment.create` / `issue.comment.create`.
+- One canonical action catalogue shared by all layers; `config validate` warns about patterns that match no known action.
+
+### Changed
+
+- A broken project `.gthok.yaml` or unknown keys in it only drop the project part (with a note); the user config keeps working. `$HOME` itself is never a project root.
+- stdin analysis waits at most 3 s (was 30 s).
+- `changed since trust` is reported only against this checkout's own trust record; otherwise `untrusted`.
+
+### Fixed
+
+- `kill -STOP` of gh no longer strands the wrapper; a failed exec is logged correctly.
+
+## [v0.0.4] - 2026-10-15
+
+### Breaking
+
+- Project trust is content-addressed: a set of digests over `.gthok.yaml`, repository-local hook executables and `trust.include` files, so it survives worktrees and clones. Existing trust must be re-created with `gthok config trust`.
+- Project hooks must use `./relative` or absolute commands (bare names are rejected).
+
+### Added
+
+- `operations[].texts` (`title`, `body`, `notes` with `source`, `bytes`, `truncated`) for L1, REST and GraphQL; `--body-file -` stdin is captured and replayed when a pre hook could need it.
+- `match.env`, `gthok hooks test --expect`, `gthok config trust --list`, `gthok config untrust [--all]`.
+- `gthok version` falls back to Go build info for `go install` builds; `doctor` warns on development builds.
+
+## [v0.0.3] - 2026-10-15
+
+### Changed
+
+- Logs mask free text (titles, bodies, comments, GraphQL documents) as `[content: N bytes]`; repository/action/target stay readable. Hook input unchanged.
+- Routine config-source notes are no longer written to every log record; unanalysed stdin is logged as `allow` with `stdin not analyzed`.
+- Concise "real gh not found" error; invalid-config warning at most once per 10 minutes.
+
+## [v0.0.2] - 2026-10-15
+
+### Breaking
+
+- Project `.gthok.yaml` rules, protected repositories and policy tightening apply without trust; only project hooks need `gthok config trust`.
+
+### Added
+
+- `match.token` (`app|user|unknown|none`), `match.result` / `match.exitCode` for post hooks, `hooks test --exit-code`.
+- L1/L2/L3 registries generated from gh's cobra tree, GitHub's OpenAPI description and GraphQL schema.
+- GitHub Action, Linux packages (deb/rpm), immutable releases, an Agent Skill.
+
+### Changed
+
+- `explain`/`normalize`/`hooks test` resolve local repository context by default; conclusion-first `explain`; cobra-standard help.
+
+## [v0.0.1] - 2026-10-15
+
+### Added
+
+- First release: transparent `gh` wrapper with pre/post hooks, policy (observe/enforce), L1/L2/L3 normalization, JSON hook protocol, management CLI (`shim`, `doctor`, `explain`, `normalize`, `hooks`, `config`), JSONL logging with redaction, Homebrew tap.
+
+[Unreleased]: https://github.com/mkusaka/gthok/compare/v0.0.25...HEAD
+[v0.0.25]: https://github.com/mkusaka/gthok/compare/v0.0.24...v0.0.25
+[v0.0.24]: https://github.com/mkusaka/gthok/compare/v0.0.23...v0.0.24
+[v0.0.23]: https://github.com/mkusaka/gthok/compare/v0.0.22...v0.0.23
+[v0.0.22]: https://github.com/mkusaka/gthok/compare/v0.0.21...v0.0.22
+[v0.0.21]: https://github.com/mkusaka/gthok/compare/v0.0.20...v0.0.21
+[v0.0.20]: https://github.com/mkusaka/gthok/compare/v0.0.19...v0.0.20
+[v0.0.19]: https://github.com/mkusaka/gthok/compare/v0.0.18...v0.0.19
+[v0.0.18]: https://github.com/mkusaka/gthok/compare/v0.0.17...v0.0.18
+[v0.0.17]: https://github.com/mkusaka/gthok/compare/v0.0.16...v0.0.17
+[v0.0.16]: https://github.com/mkusaka/gthok/compare/v0.0.15...v0.0.16
+[v0.0.15]: https://github.com/mkusaka/gthok/compare/v0.0.14...v0.0.15
+[v0.0.14]: https://github.com/mkusaka/gthok/compare/v0.0.13...v0.0.14
+[v0.0.13]: https://github.com/mkusaka/gthok/compare/v0.0.12...v0.0.13
+[v0.0.12]: https://github.com/mkusaka/gthok/compare/v0.0.11...v0.0.12
+[v0.0.11]: https://github.com/mkusaka/gthok/compare/v0.0.10...v0.0.11
+[v0.0.10]: https://github.com/mkusaka/gthok/compare/v0.0.9...v0.0.10
+[v0.0.9]: https://github.com/mkusaka/gthok/compare/v0.0.8...v0.0.9
+[v0.0.8]: https://github.com/mkusaka/gthok/compare/v0.0.7...v0.0.8
+[v0.0.7]: https://github.com/mkusaka/gthok/compare/v0.0.6...v0.0.7
+[v0.0.6]: https://github.com/mkusaka/gthok/compare/v0.0.5...v0.0.6
+[v0.0.5]: https://github.com/mkusaka/gthok/compare/v0.0.4...v0.0.5
+[v0.0.4]: https://github.com/mkusaka/gthok/compare/v0.0.3...v0.0.4
+[v0.0.3]: https://github.com/mkusaka/gthok/compare/v0.0.2...v0.0.3
+[v0.0.2]: https://github.com/mkusaka/gthok/compare/v0.0.1...v0.0.2
+[v0.0.1]: https://github.com/mkusaka/gthok/releases/tag/v0.0.1

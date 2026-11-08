@@ -1,0 +1,58 @@
+version: 2
+
+builds:
+  - main: ./cmd/gthok
+    binary: gthok
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.FullCommit}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: ["tar.gz"]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+
+nfpms:
+  - package_name: gthok
+    file_name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    vendor: mkusaka
+    homepage: https://github.com/mkusaka/gthok
+    maintainer: mkusaka <https://github.com/mkusaka>
+    description: Transparent wrapper for the GitHub CLI (gh) with pre/post hooks and policies.
+    license: MIT
+    formats: [deb, rpm]
+    bindir: /usr/bin
+    # Not a hard dependency: gh is often installed from GitHub's own apt/rpm
+    # repository or another channel under a different package name.
+    recommends: [gh]
+    contents:
+      - src: README.md
+        dst: /usr/share/doc/gthok/README.md
+      - src: LICENSE
+        dst: /usr/share/doc/gthok/LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github-native
+
+release:
+  # Created as a draft so every asset is attached before publication; the
+  # release workflow publishes it afterwards (immutable releases lock assets
+  # and the tag once a release is published).
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto

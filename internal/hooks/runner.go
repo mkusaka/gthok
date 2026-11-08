@@ -1,0 +1,299 @@
+// Package hooks runs trusted executables using the versioned hook protocol.
+package hooks
+
+import (
+	"context"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/mkusaka/gthok/internal/config"
+	"github.com/mkusaka/gthok/internal/policy"
+	"github.com/mkusaka/gthok/internal/protocol"
+	"github.com/mkusaka/gthok/internal/redact"
+)
+
+const (
+	DefaultTimeout              = 10 * time.Second
+	DefaultConcurrency          = 4
+	DefaultMaxOutputBytes int64 = 1 << 20
+	DefaultMaxStderrBytes int64 = 64 << 10
+	DefaultPreOnError           = config.OnErrorDeny
+	DefaultPostOnError          = config.OnErrorIgnore
+	TerminationGrace            = 500 * time.Millisecond
+)
+
+type Runner struct {
+	Hooks       []config.Hook
+	BaseDir     string
+	Concurrency int
+	Env         []string
+	RealGh      string
+	Now         func() time.Time
+	Redact      func(string) string
+	// Redactor is shared across serial transforms, hook input and diagnostics.
+	Redactor *redact.Redactor
+	// Source is exported to hooks as GTHOK_EVENT_SOURCE (shim, exec or test).
+	// Hooks may use it only to skip side effects (notifications) in tests,
+	// never to change their decision.
+	Source string
+}
+
+type Aggregate struct {
+	Decision protocol.Decision
+	Results  []protocol.HookResult
+	Message  string
+}
+
+// Select conservatively includes unresolved repository/host matches, in config
+// order (dependencies point backwards). Missing dependencies remain in the
+// selection so Run can report their skipped outcome.
+func (r *Runner) Select(phase string, s policy.Subject) []config.Hook {
+	if len(r.Hooks) == 0 {
+		return nil
+	}
+	s.Phase = phase
+	var selected []config.Hook
+	for _, h := range r.Hooks {
+		if h.Phase != phase || h.Enabled != nil && !*h.Enabled {
+			continue
+		}
+		yes, _ := policy.Matches(h.Match, h.Unless, s)
+		if !yes {
+			yes, _ = policy.MatchMaybe(h.Match, h.Unless, s)
+		}
+		if yes {
+			selected = append(selected, h)
+		}
+	}
+	return selected
+}
+
+func effective(phase string, h config.Hook, result protocol.HookResult) protocol.Decision {
+	if phase == config.PhasePost {
+		return protocol.DecisionAbstain
+	}
+	if result.Outcome == protocol.OutcomeOK {
+		return result.Decision
+	}
+	if result.Outcome == protocol.OutcomeSkipped {
+		return protocol.DecisionAbstain
+	}
+	switch h.OnError {
+	case config.OnErrorAllow:
+		return protocol.DecisionAllow
+	case config.OnErrorIgnore:
+		return protocol.DecisionAbstain
+	default:
+		return protocol.DecisionDeny
+	}
+}
+
+func classify(phase string, h config.Hook, result *protocol.HookResult) {
+	result.Effective = effective(phase, h, *result)
+	if phase == config.PhasePre && h.ContinueOnError && result.Effective == protocol.DecisionDeny {
+		result.Effective = protocol.DecisionAbstain
+		result.ContinuedOnError = true
+	}
+}
+
+func (r *Runner) diagnostic(phase string, h config.Hook, outcome protocol.Outcome, reason string) protocol.HookResult {
+	v := protocol.HookResult{HookID: h.ID, Phase: phase, Outcome: outcome, ExitCode: -1, Reason: r.redact(reason)}
+	classify(phase, h, &v)
+	return v
+}
+
+func (r *Runner) redact(s string) string {
+	if r.Redact != nil {
+		return r.Redact(s)
+	}
+	if r.Redactor != nil {
+		return r.Redactor.String(s)
+	}
+	return s
+}
+func (r *Runner) now() time.Time {
+	if r.Now != nil {
+		return r.Now()
+	}
+	return time.Now()
+}
+
+// PrepareInput applies the per-hook envelope and payload settings without
+// starting the hook. Dependencies must already be populated in in.Previous.
+func PrepareInput(phase string, h config.Hook, in protocol.Input, redactor *redact.Redactor) protocol.Input {
+	in.SchemaVersion = 1
+	in.Event = phase
+	in.HookID = h.ID
+	if phase == config.PhasePost && in.Result != nil && !h.CaptureOutput {
+		result := *in.Result
+		result.Stdout, result.Stderr = nil, nil
+		in.Result = &result
+	}
+	if h.RedactInput {
+		in = redactor.Input(in)
+	}
+	return in
+}
+
+// Run returns results in selection order. A pre denial skips pending hooks but
+// lets running hooks finish; post decisions are informational only.
+func (r *Runner) Run(ctx context.Context, phase string, hooks []config.Hook, in protocol.Input) Aggregate {
+	aggregate := Aggregate{Decision: protocol.DecisionAbstain}
+	if len(hooks) == 0 {
+		return aggregate
+	}
+	aggregate.Results = make([]protocol.HookResult, len(hooks))
+	concurrency := r.Concurrency
+	if concurrency <= 0 {
+		concurrency = DefaultConcurrency
+	}
+	type completion struct {
+		index  int
+		result protocol.HookResult
+	}
+	completed := make(chan completion, len(hooks))
+	// 0 pending, 1 running, 2 completed. Only this goroutine touches state.
+	state := make([]uint8, len(hooks))
+	ids := make(map[string]int, len(hooks))
+	duplicate := make(map[string]bool)
+	for i, h := range hooks {
+		if _, ok := ids[h.ID]; ok {
+			duplicate[h.ID] = true
+		}
+		ids[h.ID] = i
+	}
+	remaining, running := len(hooks), 0
+	denied := false
+	inputRedactor := r.Redactor
+	finish := func(i int, result protocol.HookResult) {
+		state[i] = 2
+		aggregate.Results[i] = result
+		remaining--
+		if phase == config.PhasePre && result.Effective == protocol.DecisionDeny {
+			denied = true
+		}
+	}
+	for remaining > 0 {
+		progressed := false
+		for i, h := range hooks {
+			if state[i] != 0 {
+				continue
+			}
+			if denied {
+				finish(i, r.diagnostic(phase, h, protocol.OutcomeSkipped, "after pre-hook denial"))
+				progressed = true
+				continue
+			}
+			if ctx.Err() != nil {
+				finish(i, r.diagnostic(phase, h, protocol.OutcomeCanceled, "context canceled"))
+				progressed = true
+				continue
+			}
+			if duplicate[h.ID] {
+				finish(i, r.diagnostic(phase, h, protocol.OutcomeSkipped, "duplicate hook ID"))
+				progressed = true
+				continue
+			}
+			if h.Enabled != nil && !*h.Enabled || h.Phase != phase {
+				finish(i, r.diagnostic(phase, h, protocol.OutcomeSkipped, "disabled hook or phase mismatch"))
+				progressed = true
+				continue
+			}
+			ready, skip := true, ""
+			for _, dep := range h.DependsOn {
+				j, ok := ids[dep]
+				if !ok || duplicate[dep] {
+					skip = "unknown or ambiguous dependency: " + dep
+					break
+				}
+				if state[j] != 2 {
+					ready = false
+					continue
+				}
+				prev := aggregate.Results[j]
+				if !prev.ContinuedOnError && (phase == config.PhasePre && prev.Effective == protocol.DecisionDeny || !h.Optional && prev.Outcome != protocol.OutcomeOK) {
+					skip = "dependency did not succeed: " + dep
+					break
+				}
+			}
+			if skip != "" {
+				finish(i, r.diagnostic(phase, h, protocol.OutcomeSkipped, skip))
+				progressed = true
+				continue
+			}
+			// Start after every earlier foreground hook and the background
+			// hooks this one waits for (absent ones were not selected).
+			for j := 0; j < i && ready; j++ {
+				ready = hooks[j].Background || state[j] == 2
+			}
+			for _, w := range h.Wait {
+				if j, ok := ids[w]; ok && j < i && state[j] != 2 {
+					ready = false
+				}
+			}
+			if !ready || running >= concurrency {
+				continue
+			}
+			input := in
+			input.Previous = nil
+			for _, dep := range h.DependsOn {
+				input.Previous = append(input.Previous, aggregate.Results[ids[dep]])
+			}
+			if h.RedactInput && inputRedactor == nil {
+				base := r.Env
+				if base == nil {
+					base = os.Environ()
+				}
+				env := make(map[string]string, len(base))
+				for _, entry := range base {
+					if key, value, ok := strings.Cut(entry, "="); ok {
+						env[key] = value
+					}
+				}
+				inputRedactor = redact.New(env)
+			}
+			input = PrepareInput(phase, h, input, inputRedactor)
+			state[i] = 1
+			running++
+			progressed = true
+			go func(i int, h config.Hook, input protocol.Input) {
+				completed <- completion{i, r.execute(ctx, phase, h, input)}
+			}(i, h, input)
+		}
+		if remaining == 0 {
+			break
+		}
+		if running == 0 {
+			if !progressed {
+				for i, h := range hooks {
+					if state[i] == 0 {
+						finish(i, r.diagnostic(phase, h, protocol.OutcomeSkipped, "dependency cycle"))
+					}
+				}
+			}
+			continue
+		}
+		c := <-completed
+		running--
+		finish(c.index, c.result)
+	}
+	// First effective deny in selection order supplies the user diagnostic.
+	for _, v := range aggregate.Results {
+		if phase == config.PhasePre && v.Effective == protocol.DecisionDeny {
+			aggregate.Decision = protocol.DecisionDeny
+			aggregate.Message = v.Message
+			if aggregate.Message == "" {
+				aggregate.Message = v.Reason
+			}
+			if aggregate.Message == "" {
+				aggregate.Message = v.Error
+			}
+			return aggregate
+		}
+		if v.Effective == protocol.DecisionAllow {
+			aggregate.Decision = protocol.DecisionAllow
+		}
+	}
+	return aggregate
+}
