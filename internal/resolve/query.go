@@ -33,6 +33,11 @@ const (
 	trackedFileQuery
 	objectTypeQuery
 	objectSizeQuery
+	configBoolQuery
+	allFilesQuery
+	untrackedFilesQuery
+	ignoredFilesQuery
+	symbolicRefQuery
 )
 
 type query struct {
@@ -41,7 +46,7 @@ type query struct {
 }
 
 func (q query) args() ([]string, error) {
-	fileQuery := q.kind == filesQuery || q.kind == trackedFileQuery
+	fileQuery := q.kind == filesQuery || q.kind == trackedFileQuery || q.kind == allFilesQuery || q.kind == untrackedFilesQuery || q.kind == ignoredFilesQuery
 	if strings.ContainsRune(q.value, '\x00') || (!fileQuery && (strings.ContainsAny(q.value, "\r\n") || strings.HasPrefix(q.value, "-"))) {
 		return nil, fmt.Errorf("invalid resolver query operand")
 	}
@@ -61,8 +66,16 @@ func (q query) args() ([]string, error) {
 		}
 	case headQuery:
 		return []string{"symbolic-ref", "-q", "HEAD"}, nil
+	case symbolicRefQuery:
+		if q.value != "" {
+			return []string{"symbolic-ref", "-q", q.value}, nil
+		}
 	case configQuery:
 		return []string{"config", "--null", "--list"}, nil
+	case configBoolQuery:
+		if q.value != "" {
+			return []string{"config", "--null", "--type=bool", "--get", q.value}, nil
+		}
 	case configGetQuery, configAllQuery, configRegexpQuery:
 		if q.value != "" {
 			option := map[queryKind]string{configGetQuery: "--get", configAllQuery: "--get-all", configRegexpQuery: "--get-regexp"}[q.kind]
@@ -84,12 +97,23 @@ func (q query) args() ([]string, error) {
 			}
 			return append(args, q.value), nil
 		}
-	case filesQuery, trackedFileQuery:
-		args := []string{"ls-files", "-z"}
-		if q.kind == trackedFileQuery {
+	case filesQuery, trackedFileQuery, allFilesQuery, untrackedFilesQuery, ignoredFilesQuery:
+		args := []string{"ls-files", "-z", "--full-name"}
+		switch q.kind {
+		case trackedFileQuery:
 			args = append(args, "--error-unmatch")
+		case allFilesQuery:
+			args = append(args, "--cached", "--others", "--exclude-standard")
+		case untrackedFilesQuery:
+			args = append(args, "--others", "--exclude-standard")
+		case ignoredFilesQuery:
+			args = append(args, "--others", "--ignored", "--exclude-standard")
 		}
-		return append(args, "--", q.value), nil
+		args = append(args, "--")
+		if q.value != "" {
+			args = append(args, q.value)
+		}
+		return args, nil
 	case objectTypeQuery, objectSizeQuery:
 		if gitmeta.ValidSHA(q.value) {
 			option := "-t"
@@ -134,7 +158,9 @@ func selectionGlobals(tokens []string) ([]string, error) {
 				return nil, fmt.Errorf("invalid resolver global option")
 			}
 			out = append(out, key)
-		case "-p", "--paginate", "-P", "--no-pager", "--no-replace-objects", "--no-lazy-fetch", "--no-optional-locks", "--literal-pathspecs", "--glob-pathspecs", "--noglob-pathspecs", "--icase-pathspecs", "--no-advice":
+		case "--literal-pathspecs", "--glob-pathspecs", "--noglob-pathspecs", "--icase-pathspecs":
+			out = append(out, key)
+		case "-p", "--paginate", "-P", "--no-pager", "--no-replace-objects", "--no-lazy-fetch", "--no-optional-locks", "--no-advice":
 			// These are not repository-selection or configuration options.
 		default:
 			return nil, fmt.Errorf("unsupported resolver global option")
@@ -176,7 +202,12 @@ func (r *Resolver) run(ctx context.Context, q query) ([]byte, error) {
 	if !filepath.IsAbs(r.RealGit) {
 		return nil, fmt.Errorf("resolver requires an absolute real git path")
 	}
-	args = append(append([]string(nil), r.globals...), args...)
+	globals := append([]string(nil), r.globals...)
+	if args[0] == "ls-files" {
+		// Reading the index must not invoke a configured fsmonitor executable.
+		globals = append(globals, "-c", "core.fsmonitor=false")
+	}
+	args = append(globals, args...)
 	callCtx, cancel := context.WithTimeout(ctx, r.timeout())
 	defer cancel()
 	cmd := exec.CommandContext(callCtx, r.RealGit, args...)
