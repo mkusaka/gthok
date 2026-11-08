@@ -258,7 +258,7 @@ func (e *extractor) inventory(src string) error {
 	if err != nil {
 		return err
 	}
-	defer list.Close()
+	defer func() { _ = list.Close() }()
 	scanner := bufio.NewScanner(list)
 	for line := 1; scanner.Scan(); line++ {
 		fields := strings.Fields(scanner.Text())

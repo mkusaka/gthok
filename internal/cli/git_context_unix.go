@@ -60,7 +60,7 @@ type aliasOutput struct{ data bytes.Buffer }
 
 func (w *aliasOutput) Write(p []byte) (int, error) {
 	if w.data.Len()+len(p) > 1<<20 {
-		return 0, fmt.Errorf("Git alias output exceeds 1 MiB")
+		return 0, fmt.Errorf("git alias output exceeds 1 MiB")
 	}
 	return w.data.Write(p)
 }

@@ -52,9 +52,10 @@ func configLegacyGrammar(g registry.Grammar) registry.Grammar {
 		opt := registry.Option{Long: name, Arity: "none", Type: "OPTION_SET_INT", Kind: "OPT_CMDMODE",
 			Flags:  []string{"PARSE_OPT_CMDMODE", "PARSE_OPT_NOARG", "PARSE_OPT_NONEG"},
 			Source: registry.Source{File: "builtin/config.c", Line: 1374, Entrypoint: "cmd_config_actions"}}
-		if name == "list" {
+		switch name {
+		case "list":
 			opt.Short = "l"
-		} else if name == "edit" {
+		case "edit":
 			opt.Short = "e"
 		}
 		out.Options = append(out.Options, opt)

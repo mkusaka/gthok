@@ -85,9 +85,10 @@ func remoteFetch(c *Context) []model.Operation {
 		rrParameter(&base, p, name)
 	}
 	for _, o := range p.Options {
-		if o.Name == "tags" {
+		switch o.Name {
+		case "tags":
 			base.Parameters["tags"] = !o.Negated
-		} else if o.Name == "n" {
+		case "n":
 			base.Parameters["tags"] = false
 		}
 	}

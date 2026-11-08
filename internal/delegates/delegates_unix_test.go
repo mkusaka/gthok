@@ -11,14 +11,6 @@ import (
 	"github.com/mkusaka/gthok/internal/policy"
 )
 
-func joinArgs(args []string) string {
-	name := ""
-	for _, arg := range args {
-		name += arg + " "
-	}
-	return name
-}
-
 func TestSelectionRequiresEntireReadOnlyRequest(t *testing.T) {
 	c := &config.Config{Delegates: []config.Delegate{{ID: "read", Match: config.Match{Effects: config.StringList{"read"}}, Command: []string{"relay"}}}}
 	r := normalize.Normalize(model.Invocation{Argv: []string{"pr", "view", "1"}})

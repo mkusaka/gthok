@@ -241,13 +241,14 @@ func whMerge(c *Context) []model.Operation {
 	op.Parameters["fastForward"] = ff
 	whCurrentRef(&op)
 	op.Target.Paths = model.UnknownSet()
-	if mode == "quit" {
+	switch mode {
+	case "quit":
 		op.Scopes = []model.Scope{model.ScopeWorktreeAdmin, model.ScopeStash}
 		op.Target.Refs, op.Unresolved = nil, nil
-	} else if mode == "squash" {
+	case "squash":
 		// --squash leaves HEAD alone, but cmd_merge still writes ORIG_HEAD.
 		op.Target.Refs, op.Unresolved = model.Exact("ORIG_HEAD"), nil
-	} else if mode == "start" {
+	case "start":
 		op.Target.Revisions = whSet(p.Values())
 		if len(p.Positionals) == 0 {
 			whUnresolved(&op, "target.revisions", "default merge heads come from branch upstream configuration", "git")
@@ -494,11 +495,12 @@ func whBisect(c *Context) []model.Operation {
 	if mode == "" && len(args) > 0 {
 		mode, args = args[0], args[1:]
 	}
-	if mode == "old" {
+	switch mode {
+	case "old":
 		mode = "good"
-	} else if mode == "new" {
+	case "new":
 		mode = "bad"
-	} else if mode == "view" {
+	case "view":
 		mode = "visualize"
 	}
 	action := "history.bisect." + mode

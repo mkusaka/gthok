@@ -107,9 +107,10 @@ func refsBranch(c *Context) []model.Operation {
 	op.Parameters["force"] = p.Has("force") || p.Has("D") || p.Has("M") || p.Has("C")
 	prefix, allBranches := "refs/heads/", false
 	for _, o := range p.Options {
-		if o.Name == "remotes" {
+		switch o.Name {
+		case "remotes":
 			prefix, allBranches = "refs/remotes/", false
-		} else if o.Name == "all" {
+		case "all":
 			prefix, allBranches = "refs/heads/", true
 		}
 	}
@@ -397,16 +398,17 @@ func refsReplace(c *Context) []model.Operation {
 	op := rrOperation("ref.replace."+mode, model.ScopeLocalRef)
 	op.Parameters["force"] = p.Has("force")
 	op.Target.Refs = model.UnknownSet()
-	if mode == "list" {
+	switch mode {
+	case "list":
 		if len(args) == 0 {
 			args = []string{"*"}
 		}
 		op.Target.Refs = rrSet(rrNames(args, "refs/replace/"), true)
-	} else if mode == "convert" {
+	case "convert":
 		op.Scopes = append(op.Scopes, model.ScopeObjects, model.ScopeFileOutput)
 		op.Capabilities = append(op.Capabilities, model.CapabilityFileWrite)
 		rrUnresolved(&op, "target.refs", "grafts file requires local input", "git")
-	} else {
+	default:
 		if len(args) == 0 {
 			return rrInvalid(op, "object required")
 		}

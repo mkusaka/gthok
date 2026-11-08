@@ -232,9 +232,10 @@ func readExternalCapabilities(op *model.Operation, c *Context) {
 	}
 	signature := false
 	for _, o := range p.Options {
-		if o.Name == "show-signature" {
+		switch o.Name {
+		case "show-signature":
 			signature = !o.Negated
-		} else if o.Name == "no-show-signature" {
+		case "no-show-signature":
 			signature = o.Negated
 		}
 	}

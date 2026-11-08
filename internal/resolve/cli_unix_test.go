@@ -28,7 +28,7 @@ func TestNormalizeNoResolveStartsNoGit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer output.Close()
+	defer func() { _ = output.Close() }()
 	oldOut, oldErr := os.Stdout, os.Stderr
 	os.Stdout, os.Stderr = output, output
 	defer func() { os.Stdout, os.Stderr = oldOut, oldErr }()

@@ -70,7 +70,7 @@ func TestDelegateFallbackAndReplay(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer spool.Close()
+			defer func() { _ = spool.Close() }()
 			timeout := 5 * time.Second
 			if strings.Contains(tc.body, "/bin/sleep 10") {
 				timeout = 2 * time.Second
