@@ -203,7 +203,7 @@ func printDenials(w io.Writer, denials []denial, redact func(string) string) {
 	}
 }
 
-// printWarning is shared by gh-runs-only diagnostics. Callers must first rule
+// printWarning is shared by git-runs-only diagnostics. Callers must first rule
 // out an enforced denial; the entire warning uses the denial display bounds.
 func printWarning(w io.Writer, source, id, detail, message string, redact func(string) string) {
 	entry := "gthok: warning from " + source + " " + strings.ReplaceAll(redact(id), "\n", `\n`)

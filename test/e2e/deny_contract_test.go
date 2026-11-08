@@ -28,16 +28,16 @@ func TestDenyContractContent(t *testing.T) {
 				c.Policy.Mode = config.ModeEnforce
 				if hook {
 					h := s.hook("review", config.PhasePre)
-					h.Env["FAKEGH_HOOK_RESPONSE"] = `{"decision":"deny","reason":"unused reason","message":"review required\n` + secret + `\ncontact owners"}`
+					h.Env["FAKEGIT_HOOK_RESPONSE"] = `{"decision":"deny","reason":"unused reason","message":"review required\n` + secret + `\ncontact owners"}`
 					c.Hooks = []config.Hook{h}
 				} else {
 					c.Policy.Rules = []config.Rule{{ID: "no-merge", Decision: "deny", Reason: "review required"}}
 				}
 			})
-			got := s.gh(nil, "pr", "merge", "1", "-R", "acme/project")
+			got := s.git(nil, "push", "origin", "1", "-R", "acme/project")
 			got.code(t, 77)
 			s.absentRecord()
-			want := "gthok: denied by rule no-merge\n  - rule no-merge: review required (pr.merge.request)\n"
+			want := "gthok: denied by rule no-merge\n  - rule no-merge: review required (unknown)\n"
 			if hook {
 				want = "gthok: denied by hook review\n  - hook review: review required\n    [REDACTED]\n    contact owners\n"
 			}
@@ -59,19 +59,19 @@ func TestDenyContractHookErrors(t *testing.T) {
 				switch kind {
 				case "timeout":
 					h.Timeout = config.Duration(2 * time.Second)
-					h.Env["FAKEGH_HOOK_SLEEP"] = "1m"
+					h.Env["FAKEGIT_HOOK_SLEEP"] = "1m"
 				case "exit 23":
-					h.Env["FAKEGH_HOOK_EXIT"] = "23"
+					h.Env["FAKEGIT_HOOK_EXIT"] = "23"
 				case "exit -1":
 					h.Command = []string{"/bin/sh", "-c", "kill -TERM $$"}
 				case "invalid response":
-					h.Env["FAKEGH_HOOK_RESPONSE"] = "not JSON"
+					h.Env["FAKEGIT_HOOK_RESPONSE"] = "not JSON"
 				case "spawn failed":
 					h.Command = []string{filepath.Join(s.root, "missing-hook")}
 				}
 				c.Hooks = []config.Hook{h}
 			})
-			got := s.gh(nil, "version")
+			got := s.git(nil, "version")
 			got.code(t, 78)
 			s.absentRecord()
 			want := "gthok: denied by hook gate (error: " + kind + ")\n  - hook gate: "
@@ -93,16 +93,16 @@ func TestDenyContractMixedOrdering(t *testing.T) {
 		c.Logging.Enabled = &yes
 		failed := s.hook("failed", config.PhasePre)
 		failed.OnError = config.OnErrorDeny
-		failed.Env["FAKEGH_HOOK_EXIT"] = "23"
+		failed.Env["FAKEGIT_HOOK_EXIT"] = "23"
 		pending := s.hook("pending", config.PhasePre)
 		pending.OnError = config.OnErrorDeny
 		pending.DependsOn = []string{"failed"}
 		c.Hooks = []config.Hook{failed, pending}
 	})
-	got := s.gh(nil, "api", "-X", "POST", "repos/acme/project/unknown")
+	got := s.git(nil, "push", "--future-option")
 	got.code(t, 77)
 	s.absentRecord()
-	want := "gthok: denied by rule z-first (+3 more)\n  - rule z-first: first configured (api.post.unknown)\n  - rule a-second: second configured (api.post.unknown)\n  - policy unknownMutation: unclassified-write: unknownMutation policy (api.post.unknown)\n  - hook failed: exit status 23\n"
+	want := "gthok: denied by rule z-first (+3 more)\n  - rule z-first: first configured (unknown)\n  - rule a-second: second configured (unknown)\n  - policy unknownMutation: unclassified-write: unknownMutation policy (unknown)\n  - hook failed: exit status 23\n"
 	if string(got.stderr) != want {
 		t.Fatalf("stderr=%q, want=%q", got.stderr, want)
 	}
@@ -119,22 +119,22 @@ func TestDenyContractInvalidConfig(t *testing.T) {
 	if err := os.WriteFile(s.cfg, []byte("version: 1\npolicy: {mode: broken}\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 78)
 	s.absentRecord()
-	if !bytes.HasPrefix(got.stderr, []byte("gthok: denied by config\n  - config: ")) || !bytes.Contains(got.stderr, []byte("\n    fail-closed: not running gh")) || !bytes.Contains(got.stderr, []byte("gthok config validate")) {
+	if !bytes.HasPrefix(got.stderr, []byte("gthok: denied by config\n  - config: ")) || !bytes.Contains(got.stderr, []byte("\n    fail-closed: not running git")) || !bytes.Contains(got.stderr, []byte("gthok config validate")) {
 		t.Fatalf("stderr=%q", got.stderr)
 	}
 }
 
 func TestDenyContractObservePreservesStatus(t *testing.T) {
 	s := newSandbox(t)
-	s.env["FAKEGH_EXIT"] = "42"
+	s.env["FAKEGIT_EXIT"] = "42"
 	s.configure(func(c *config.Config) {
 		c.Policy.Mode = config.ModeObserve
 		c.Policy.Rules = []config.Rule{{ID: "observe", Decision: "deny"}}
 	})
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 42)
 	if len(got.stderr) != 0 {
 		t.Fatalf("observe printed denial: %s", got.stderr)
@@ -149,7 +149,7 @@ func TestDenyHeaderPrecedesIgnoredProjectHooks(t *testing.T) {
 		c.Policy.Mode = config.ModeEnforce
 		c.Policy.Rules = []config.Rule{{ID: "user-deny", Decision: "deny"}}
 	})
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 77)
 	s.absentRecord()
 	if !bytes.HasPrefix(got.stderr, []byte("gthok: denied by rule user-deny\n")) {
@@ -161,37 +161,6 @@ func TestDenyHeaderPrecedesIgnoredProjectHooks(t *testing.T) {
 	}
 }
 
-func TestDenyContractPolicySources(t *testing.T) {
-	for _, source := range []string{"unknownMutation", "protectedUnknown", "protectedRepositories", "unknownInput"} {
-		t.Run(source, func(t *testing.T) {
-			s := newSandbox(t)
-			args := []string{"api", "-X", "POST", "repos/acme/project/unknown"}
-			s.configure(func(c *config.Config) {
-				c.Policy.Mode = config.ModeEnforce
-				c.Policy.UnknownMutation = config.UnknownAllow
-				switch source {
-				case "unknownMutation":
-					c.Policy.UnknownMutation = config.UnknownDeny
-				case "protectedUnknown":
-					c.Policy.ProtectedRepositories = []string{"acme/*"}
-					args = []string{"pr", "merge", "1"}
-				case "protectedRepositories":
-					c.Policy.ProtectedRepositories = []string{"acme/*"}
-				case "unknownInput":
-					c.Policy.UnknownInput = config.UnknownDeny
-					args = []string{"api", "graphql", "--input", "missing.json"}
-				}
-			})
-			got := s.gh(nil, args...)
-			got.code(t, 77)
-			s.absentRecord()
-			if want := "gthok: denied by policy " + source + "\n  - policy " + source + ": "; !bytes.HasPrefix(got.stderr, []byte(want)) {
-				t.Fatalf("policy denial=%q, want prefix=%q", got.stderr, want)
-			}
-		})
-	}
-}
-
 func TestDenyHookMessageFallback(t *testing.T) {
 	for _, message := range []string{"", "review required"} {
 		t.Run("message="+message, func(t *testing.T) {
@@ -199,10 +168,10 @@ func TestDenyHookMessageFallback(t *testing.T) {
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = config.ModeEnforce
 				h := s.hook("review", config.PhasePre)
-				h.Env["FAKEGH_HOOK_RESPONSE"] = `{"decision":"deny","reason":"review required","message":"` + message + `"}`
+				h.Env["FAKEGIT_HOOK_RESPONSE"] = `{"decision":"deny","reason":"review required","message":"` + message + `"}`
 				c.Hooks = []config.Hook{h}
 			})
-			got := s.gh(nil, "version")
+			got := s.git(nil, "version")
 			got.code(t, 77)
 			s.absentRecord()
 			if want := "gthok: denied by hook review\n  - hook review: review required\n"; string(got.stderr) != want {

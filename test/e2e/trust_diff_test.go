@@ -50,7 +50,7 @@ func TestTrustDryRunAndReviewHints(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"config", "trust", "--dry-run"}, {"config", "validate"}, {"doctor", "--json"}} {
-		setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+		setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 		result = s.management(nil, args...)
 		result.code(t, 0)
 		text := string(result.stdout)

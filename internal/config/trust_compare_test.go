@@ -41,7 +41,7 @@ func trustRepositoryFixture(t *testing.T) (string, map[string]string, string) {
 	trustGit(t, repo, "add", ".")
 	trustGit(t, repo, "commit", "-m", "reviewed")
 	commit := trustGit(t, repo, "rev-parse", "HEAD")
-	env := map[string]string{"HOME": root, "GTHOK_CONFIG_DIR": filepath.Join(root, "config")}
+	env := map[string]string{"HOME": root, "GTHOK_CONFIG_DIR": filepath.Join(root, "config"), "PATH": os.Getenv("PATH"), "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null"}
 	return repo, env, commit
 }
 

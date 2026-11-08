@@ -74,7 +74,7 @@ func managementExplain(a *managementAnalysis, showSecrets bool) int {
 		}
 	}
 	if selected := a.delegate(); selected != nil {
-		fmt.Fprintln(&output, display(fmt.Sprintf("  Delegate that WOULD run: %s command=%s timeout=%s onError=%s (fallback: real gh; not-handled exit=125)", selected.ID, managementCompact(selected.Command), selected.Timeout.D(), selected.OnError)))
+		fmt.Fprintln(&output, display(fmt.Sprintf("  Delegate that WOULD run: %s command=%s timeout=%s onError=%s (fallback: real git; not-handled exit=125)", selected.ID, managementCompact(selected.Command), selected.Timeout.D(), selected.OnError)))
 	} else {
 		reason := "no matching trusted read-only delegate"
 		if a.env["GTHOK_NO_DELEGATE"] == "1" {
@@ -153,13 +153,13 @@ func managementExplain(a *managementAnalysis, showSecrets bool) int {
 	for _, note := range a.notes {
 		fmt.Fprintln(&output, display("Config note: "+note))
 	}
-	fmt.Fprintln(&output, "\nPolicy only; hook outcomes and gh results are unknown. No hooks or original gh command were executed.")
+	fmt.Fprintln(&output, "\nPolicy only; hook outcomes and git results are unknown. No hooks or original git command were executed.")
 	if evaluation.Mode == config.ModeObserve {
 		fmt.Fprintln(&output, "Observe mode never blocks; denials are recorded as would-deny.")
 	} else if evaluation.WouldDeny {
-		fmt.Fprintln(&output, "Enforce denial prevents gh and post hooks; hooks above show match selection only.")
+		fmt.Fprintln(&output, "Enforce denial prevents git and post hooks; hooks above show match selection only.")
 	}
-	fmt.Fprintln(&output, "Explain exits 0. gthok is not a security boundary; direct gh/API calls bypass it.")
+	fmt.Fprintln(&output, "Explain exits 0. gthok is not a security boundary; direct git/API calls bypass it.")
 	text := output.String()
 	if a.envEdited {
 		text = r.String(text)

@@ -26,7 +26,7 @@ func TestHookInputSchema(t *testing.T) {
 	input := protocol.Input{
 		SchemaVersion: model.SchemaVersion, Event: protocol.EventPre,
 		Invocation:     protocol.InvocationInfo{Via: "shim"},
-		Classification: model.Classification{Level: model.LevelL1, Confidence: model.ConfidenceExact, Resolution: model.ResolutionComplete},
+		Classification: model.Classification{Level: model.LevelL1, Confidence: model.ConfidenceExact, Resolution: model.ResolutionComplete, Coverage: model.CoverageSemantic},
 	}
 	for _, operations := range [][]model.Operation{nil, {}} {
 		input.Operations = operations
@@ -67,8 +67,8 @@ func TestHookInputSchema(t *testing.T) {
 	}
 	input.Invocation.EnvChanged = []string{"GH_TOKEN", "GITHUB_TOKEN"}
 	input.Operations = []model.Operation{{
-		Family: "pr.merge", Action: "pr.merge.direct", Effect: model.EffectWrite, Execution: model.ExecutionWillRun,
-		Target:     model.Target{Kind: "pullRequest", Number: model.IntPtr(7)},
+		Family: "pr.merge", Action: "pr.merge.direct", Effect: model.EffectWrite, Coverage: model.CoverageSemantic, Execution: model.ExecutionWillRun,
+		Target:     model.Target{Refs: model.Exact("refs/heads/main")},
 		Parameters: map[string]any{"custom": map[string]any{"values": []any{nil, "text", 1, true}}},
 	}}
 	doc := hookDocument(t, input)

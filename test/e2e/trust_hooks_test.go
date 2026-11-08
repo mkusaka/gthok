@@ -17,7 +17,7 @@ func writePerHookProject(t *testing.T, s *sandbox, gate bool) string {
 	path, _ := warningProject(t, s, func(c *config.Config) {
 		c.Hooks = c.Hooks[:2]
 		for i := range c.Hooks {
-			c.Hooks[i].Match.Commands = []string{"pr view"}
+			c.Hooks[i].Match.Commands = []string{"show"}
 			c.Hooks[i].Files = []string{c.Hooks[i].ID + ".txt"}
 		}
 		if gate {
@@ -39,7 +39,7 @@ func TestSelectiveTrustPreservesUnchangedSibling(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(s.cwd, "first.txt"), []byte("changed\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	s.gh(nil, "pr", "view", "1", "-R", "acme/repo").code(t, 0)
+	s.git(nil, "show", "HEAD", "1", "-R", "acme/repo").code(t, 0)
 	s.hookInput("second")
 	if _, err := os.Stat(filepath.Join(s.root, "first.json")); !os.IsNotExist(err) {
 		t.Fatalf("changed hook executed: %v", err)
@@ -57,12 +57,12 @@ func TestSelectiveTrustPreservesUnchangedSibling(t *testing.T) {
 	}
 	// Re-approving an unchanged sibling must not approve the changed hook.
 	s.management(nil, "config", "trust", "--hook", "second", project).code(t, 0)
-	s.gh(nil, "pr", "view", "1", "-R", "acme/repo").code(t, 0)
+	s.git(nil, "show", "HEAD", "1", "-R", "acme/repo").code(t, 0)
 	if _, err := os.Stat(filepath.Join(s.root, "first.json")); !os.IsNotExist(err) {
 		t.Fatalf("selective trust approved changed sibling: %v", err)
 	}
 	s.management(nil, "config", "trust", "--hook", "first").code(t, 0)
-	s.gh(nil, "pr", "view", "1", "-R", "acme/repo").code(t, 0)
+	s.git(nil, "show", "HEAD", "1", "-R", "acme/repo").code(t, 0)
 	s.hookInput("first")
 	s.hookInput("second")
 	s.management(nil, "config", "trust", "--hook", "missing").code(t, 1)
@@ -81,16 +81,16 @@ func TestChangedGateEnforceAndObserve(t *testing.T) {
 				c.Logging.Path = logPath
 			})
 			writePerHookProject(t, s, true)
-			args := []string{"pr", "view", "1", "-R", "acme/repo"}
+			args := []string{"show", "HEAD", "1", "-R", "acme/repo"}
 			// A never-trusted project remains inactive without introducing denial.
-			s.gh(nil, args...).code(t, 0)
+			s.git(nil, args...).code(t, 0)
 			s.management(nil, "config", "trust").code(t, 0)
 			if err := os.WriteFile(filepath.Join(s.cwd, "first.txt"), []byte("changed\n"), 0600); err != nil {
 				t.Fatal(err)
 			}
 			before := len(s.records())
 			for range 2 {
-				result := s.gh(nil, args...)
+				result := s.git(nil, args...)
 				if mode == config.ModeEnforce {
 					result.code(t, 78)
 					for _, want := range []string{"denied by config first", "hook first is not trusted (changed since trust); run 'gthok config trust'"} {
@@ -112,7 +112,7 @@ func TestChangedGateEnforceAndObserve(t *testing.T) {
 			if _, err := os.Stat(filepath.Join(s.root, "first.json")); !os.IsNotExist(err) {
 				t.Fatalf("inactive gate executed: %v", err)
 			}
-			for _, command := range [][]string{{"explain", "--", "pr", "view", "1", "-R", "acme/repo"}, {"hooks", "test", "--json", "--", "pr", "view", "1", "-R", "acme/repo"}} {
+			for _, command := range [][]string{{"explain", "--", "show", "HEAD", "1", "-R", "acme/repo"}, {"hooks", "test", "--json", "--", "show", "HEAD", "1", "-R", "acme/repo"}} {
 				result := s.management(nil, command...)
 				wantCode := 0
 				if command[0] == "hooks" && mode == config.ModeEnforce {
@@ -130,7 +130,7 @@ func TestChangedGateEnforceAndObserve(t *testing.T) {
 				}
 			}
 			// A constraint mismatch never activates the inactive gate.
-			s.gh(nil, "pr", "list", "-R", "acme/repo").code(t, 0)
+			s.git(nil, "pr", "list", "-R", "acme/repo").code(t, 0)
 		})
 	}
 }
@@ -159,14 +159,14 @@ func TestSelectiveTrustLeavesUnapprovedGateBlocked(t *testing.T) {
 	s.configure(func(c *config.Config) { c.Policy.Mode = config.ModeEnforce })
 	writePerHookProject(t, s, true)
 	s.management(nil, "config", "trust", "--hook", "second").code(t, 0)
-	result := s.gh(nil, "pr", "view", "1", "-R", "acme/repo")
+	result := s.git(nil, "show", "HEAD", "1", "-R", "acme/repo")
 	result.code(t, 78)
 	if !bytes.Contains(result.stderr, []byte("denied by config first")) {
 		t.Fatalf("unapproved gate missing config denial: %s", result.stderr)
 	}
 	s.absentRecord()
 	s.management(nil, "config", "trust", "--hook", "first").code(t, 0)
-	s.gh(nil, "pr", "view", "1", "-R", "acme/repo").code(t, 0)
+	s.git(nil, "show", "HEAD", "1", "-R", "acme/repo").code(t, 0)
 	s.hookInput("first")
 	s.hookInput("second")
 }

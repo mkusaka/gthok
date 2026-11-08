@@ -269,10 +269,10 @@ func TestRedactionDoesNotMutateRecord(t *testing.T) {
 		Operations: []model.Operation{{
 			Family: secret, Action: secret, Effect: model.Effect(secret), Execution: model.Execution(secret),
 			UnknownReason: model.UnknownReason(secret), Evidence: secret, Detail: secret,
-			Target:     model.Target{Host: secret, Owner: secret, Repository: secret, NodeID: secret, Branch: secret, BaseBranch: secret, HeadBranch: secret, SHA: secret, Ref: secret, URL: "https://user:password@example.com/"},
+			Target:     model.Target{RepoRoot: secret, GitDir: secret, CommonDir: secret, Worktree: secret, Remote: secret, RemoteURL: "https://user:password@example.com/", Refs: model.Exact(secret)},
 			Parameters: map[string]any{"password": "short-value", "nested": []any{map[string]any{"token": "short-value", "normal": secret}}},
 			Unresolved: []model.Unresolved{{Field: secret, Reason: secret, Source: secret}},
-			Origin:     model.Origin{Command: []string{secret}, Method: secret, Route: secret, Field: secret, Alias: secret, Operation: secret, OpType: secret},
+			Origin:     model.Origin{Command: []string{secret}, Mode: secret, Source: secret},
 		}},
 		Errors: []string{secret}, Diagnostics: []string{secret},
 		Policy: &protocol.PolicyInfo{Mode: secret, Decision: protocol.Decision(secret), Reasons: []string{secret}, Rules: []string{secret}},
@@ -293,7 +293,7 @@ func TestRedactionDoesNotMutateRecord(t *testing.T) {
 	if !bytes.Equal(before, after) {
 		t.Fatal("Write mutated the caller's record")
 	}
-	if err := logger.Write(Record{Argv: []string{"secret", "set", "name", "--body", "short-body-secret"}}); err != nil {
+	if err := logger.Write(Record{Argv: []string{"commit", "-m", "short-body-secret"}}); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(path)
@@ -623,7 +623,7 @@ func BenchmarkLoggerWrite(b *testing.B) {
 		Time:         time.Date(2026, 10, 14, 1, 2, 3, 0, time.UTC),
 		InvocationID: "0123456789abcdef0123456789abcdef", Mode: "wrapper",
 		Argv: []string{"pr", "merge", "123", "--squash"}, Decision: "allow",
-		Operations: []model.Operation{{Family: "pr.merge", Action: "pr.merge.request", Effect: model.EffectWrite, Target: model.Target{Repository: "org/repo"}, Parameters: map[string]any{"method": "squash"}}},
+		Operations: []model.Operation{{Family: "pr.merge", Action: "pr.merge.request", Effect: model.EffectWrite, Target: model.Target{RepoRoot: "/repo"}, Parameters: map[string]any{"method": "squash"}}},
 	}
 	b.ReportAllocs()
 	for b.Loop() {
@@ -656,51 +656,6 @@ func TestEncodingFailureDoesNotAppend(t *testing.T) {
 	records := readRecords(t, path)
 	if len(records) != 1 || records[0].InvocationID != "valid" {
 		t.Fatal("encoding failure left partial data")
-	}
-}
-
-func TestWriteWithholdsOrdinaryContent(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "log")
-	logger := testLogger(t, path, "info")
-	prose := "ordinary private prose"
-	document := `mutation { addComment(input: {subjectId: "ISSUE_12", body: "tiny"}) { id } }`
-	argv := []string{"api", "graphql", "-fquery=" + document, "-finput[body]=tiny"}
-	record := Record{
-		Argv:   argv,
-		Source: &model.Source{Kind: "graphql", GraphQL: document, Argv: argv},
-		Operations: []model.Operation{{
-			Family: "pr.comment", Action: "pr.comment.create",
-			Target:     model.Target{Repository: "owner/repository", NodeID: "ISSUE_12"},
-			Parameters: map[string]any{"body": "tiny", "nested": map[string]any{"unknown": prose}},
-		}},
-	}
-	if err := logger.Write(record); err != nil {
-		t.Fatal(err)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, forbidden := range []string{prose, "tiny", "addComment", document} {
-		if bytes.Contains(data, []byte(forbidden)) {
-			t.Errorf("JSONL contains private content %q", forbidden)
-		}
-	}
-	logged := readRecords(t, path)[0]
-	if logged.Operations[0].Target.Repository != "owner/repository" ||
-		logged.Operations[0].Target.NodeID != "ISSUE_12" ||
-		logged.Operations[0].Action != "pr.comment.create" ||
-		logged.Source.GraphQL != graphQLSummary(document) {
-		t.Errorf("incorrect log metadata: %+v", logged)
-	}
-	if record.Operations[0].Parameters["body"] != "tiny" || record.Source.GraphQL != document {
-		t.Fatal("Write changed hook-visible input")
-	}
-	if err := logger.Write(Record{Decision: "allow"}); err != nil {
-		t.Fatal(err)
-	}
-	if logged := readRecords(t, path)[1]; logged.Source != nil {
-		t.Fatal("absent source did not remain optional")
 	}
 }
 

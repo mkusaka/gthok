@@ -14,7 +14,7 @@ import (
 func TestHookConcurrencyItems(t *testing.T) {
 	s := newSandbox(t)
 	hook := func(id string) string {
-		return fmt.Sprintf("{id: %s, command: [%q], env: {FAKEGH_MODE: hook, FAKEGH_HOOK_RECORD: %q}}", id, fakeBinary, filepath.Join(s.root, id+".json"))
+		return fmt.Sprintf("{id: %s, command: [%q], env: {FAKEGIT_MODE: hook, FAKEGIT_HOOK_RECORD: %q}}", id, fakeBinary, filepath.Join(s.root, id+".json"))
 	}
 	config := "version: 1\nlogging: {enabled: false}\nhooks:\n  pre:\n" +
 		"    - " + hook("first") + "\n" +
@@ -24,7 +24,7 @@ func TestHookConcurrencyItems(t *testing.T) {
 	if err := os.WriteFile(s.cfg, []byte(config), 0600); err != nil {
 		t.Fatal(err)
 	}
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	for _, id := range []string{"first", "b", "c", "last"} {
 		if in := s.hookInput(id); in.HookID != id {
 			t.Fatalf("%s input: %+v", id, in)

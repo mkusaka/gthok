@@ -109,12 +109,7 @@ func redactRecordCopy(r *redact.Redactor, record Record) Record {
 		source.Kind = r.String(minimizeString(source.Kind, "kind"))
 		source.Argv = minimizeArgv(r, source.Argv)
 		source.Alias = r.String(minimizeString(source.Alias, "alias"))
-		source.Method = r.String(minimizeString(source.Method, "method"))
-		source.Path = r.String(source.Path)
-		source.Host = r.String(source.Host)
-		if source.GraphQL != "" {
-			source.GraphQL = r.String(graphQLSummary(source.GraphQL))
-		}
+		source.Global = minimizeArgv(r, source.Global)
 		record.Source = &source
 	}
 	if record.Policy != nil {

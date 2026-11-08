@@ -9,7 +9,7 @@
         "additionalProperties": false,
         "properties": {
           "command": {
-            "description": "Executable and fixed arguments; gh argv is appended unchanged. No shell. Relative executable paths resolve against the config directory.",
+            "description": "Executable and fixed arguments; git argv is appended unchanged. No shell. Relative executable paths resolve against the config directory.",
             "items": {
               "type": "string"
             },
@@ -33,10 +33,10 @@
           },
           "match": {
             "additionalProperties": false,
-            "description": "Must explicitly select effect: read and level: L1 (native) or L2 (REST). L2 also requires method: GET.",
+            "description": "Must explicitly select effect: read and level: L1; runtime also requires retrySafe.",
             "properties": {
               "command": {
-                "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                "description": "Git command path prefixes such as push or config.",
                 "oneOf": [
                   {
                     "type": "string"
@@ -80,33 +80,18 @@
                 "type": "object"
               },
               "exitCode": {
-                "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                "description": "Post hooks only: git exit codes (0-255) to run for.",
                 "items": {
                   "type": "integer"
                 },
                 "type": "array"
               },
-              "hosts": {
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                ]
-              },
               "level": {
-                "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                "description": "Native Git command or unclassified invocation.",
                 "oneOf": [
                   {
                     "enum": [
                       "L1",
-                      "L2",
-                      "L3",
                       "none"
                     ],
                     "type": "string"
@@ -115,8 +100,6 @@
                     "items": {
                       "enum": [
                         "L1",
-                        "L2",
-                        "L3",
                         "none"
                       ],
                       "type": "string"
@@ -125,44 +108,8 @@
                   }
                 ]
               },
-              "method": {
-                "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                "oneOf": [
-                  {
-                    "enum": [
-                      "GET",
-                      "HEAD",
-                      "POST",
-                      "PUT",
-                      "PATCH",
-                      "DELETE",
-                      "OPTIONS",
-                      "TRACE",
-                      "CONNECT"
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "items": {
-                      "enum": [
-                        "GET",
-                        "HEAD",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "OPTIONS",
-                        "TRACE",
-                        "CONNECT"
-                      ],
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                ]
-              },
               "operation": {
-                "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                 "oneOf": [
                   {
                     "type": "string"
@@ -179,25 +126,11 @@
                 "additionalProperties": {
                   "type": "string"
                 },
-                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                 "type": "object"
               },
-              "repositories": {
-                "description": "owner/repo globs (case-insensitive).",
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                ]
-              },
               "result": {
-                "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                 "oneOf": [
                   {
                     "enum": [
@@ -217,38 +150,12 @@
                     "type": "array"
                   }
                 ]
-              },
-              "token": {
-                "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                "oneOf": [
-                  {
-                    "enum": [
-                      "app",
-                      "user",
-                      "unknown",
-                      "none"
-                    ],
-                    "type": "string"
-                  },
-                  {
-                    "items": {
-                      "enum": [
-                        "app",
-                        "user",
-                        "unknown",
-                        "none"
-                      ],
-                      "type": "string"
-                    },
-                    "type": "array"
-                  }
-                ]
               }
             },
             "type": "object"
           },
           "onError": {
-            "description": "Start failure or timeout before output: fallback (default) to real gh, or deny with exit 78. Never retry after output or a signal.",
+            "description": "Start failure or timeout before output: fallback (default) to real git, or deny with exit 78. Never retry after output or a signal.",
             "enum": [
               "fallback",
               "deny"
@@ -265,7 +172,7 @@
               "additionalProperties": false,
               "properties": {
                 "command": {
-                  "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                  "description": "Git command path prefixes such as push or config.",
                   "oneOf": [
                     {
                       "type": "string"
@@ -309,33 +216,18 @@
                   "type": "object"
                 },
                 "exitCode": {
-                  "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                  "description": "Post hooks only: git exit codes (0-255) to run for.",
                   "items": {
                     "type": "integer"
                   },
                   "type": "array"
                 },
-                "hosts": {
-                  "oneOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  ]
-                },
                 "level": {
-                  "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                  "description": "Native Git command or unclassified invocation.",
                   "oneOf": [
                     {
                       "enum": [
                         "L1",
-                        "L2",
-                        "L3",
                         "none"
                       ],
                       "type": "string"
@@ -344,8 +236,6 @@
                       "items": {
                         "enum": [
                           "L1",
-                          "L2",
-                          "L3",
                           "none"
                         ],
                         "type": "string"
@@ -354,44 +244,8 @@
                     }
                   ]
                 },
-                "method": {
-                  "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                  "oneOf": [
-                    {
-                      "enum": [
-                        "GET",
-                        "HEAD",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "OPTIONS",
-                        "TRACE",
-                        "CONNECT"
-                      ],
-                      "type": "string"
-                    },
-                    {
-                      "items": {
-                        "enum": [
-                          "GET",
-                          "HEAD",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE",
-                          "OPTIONS",
-                          "TRACE",
-                          "CONNECT"
-                        ],
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  ]
-                },
                 "operation": {
-                  "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                  "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                   "oneOf": [
                     {
                       "type": "string"
@@ -408,25 +262,11 @@
                   "additionalProperties": {
                     "type": "string"
                   },
-                  "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                  "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                   "type": "object"
                 },
-                "repositories": {
-                  "description": "owner/repo globs (case-insensitive).",
-                  "oneOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  ]
-                },
                 "result": {
-                  "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                  "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                   "oneOf": [
                     {
                       "enum": [
@@ -440,32 +280,6 @@
                         "enum": [
                           "success",
                           "failure"
-                        ],
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  ]
-                },
-                "token": {
-                  "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                  "oneOf": [
-                    {
-                      "enum": [
-                        "app",
-                        "user",
-                        "unknown",
-                        "none"
-                      ],
-                      "type": "string"
-                    },
-                    {
-                      "items": {
-                        "enum": [
-                          "app",
-                          "user",
-                          "unknown",
-                          "none"
                         ],
                         "type": "string"
                       },
@@ -503,7 +317,7 @@
                     "type": "boolean"
                   },
                   "captureOutput": {
-                    "description": "Post hooks only: include gh stdout/stderr (base64, bounded) in the hook input.",
+                    "description": "Post hooks only: include git stdout/stderr (base64, bounded) in the hook input.",
                     "type": "boolean"
                   },
                   "command": {
@@ -547,7 +361,7 @@
                     "additionalProperties": false,
                     "properties": {
                       "command": {
-                        "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                        "description": "Git command path prefixes such as push or config.",
                         "oneOf": [
                           {
                             "type": "string"
@@ -591,33 +405,18 @@
                         "type": "object"
                       },
                       "exitCode": {
-                        "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                        "description": "Post hooks only: git exit codes (0-255) to run for.",
                         "items": {
                           "type": "integer"
                         },
                         "type": "array"
                       },
-                      "hosts": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "level": {
-                        "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                        "description": "Native Git command or unclassified invocation.",
                         "oneOf": [
                           {
                             "enum": [
                               "L1",
-                              "L2",
-                              "L3",
                               "none"
                             ],
                             "type": "string"
@@ -626,8 +425,6 @@
                             "items": {
                               "enum": [
                                 "L1",
-                                "L2",
-                                "L3",
                                 "none"
                               ],
                               "type": "string"
@@ -636,44 +433,8 @@
                           }
                         ]
                       },
-                      "method": {
-                        "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                        "oneOf": [
-                          {
-                            "enum": [
-                              "GET",
-                              "HEAD",
-                              "POST",
-                              "PUT",
-                              "PATCH",
-                              "DELETE",
-                              "OPTIONS",
-                              "TRACE",
-                              "CONNECT"
-                            ],
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "enum": [
-                                "GET",
-                                "HEAD",
-                                "POST",
-                                "PUT",
-                                "PATCH",
-                                "DELETE",
-                                "OPTIONS",
-                                "TRACE",
-                                "CONNECT"
-                              ],
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "operation": {
-                        "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                        "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                         "oneOf": [
                           {
                             "type": "string"
@@ -690,25 +451,11 @@
                         "additionalProperties": {
                           "type": "string"
                         },
-                        "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                        "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                         "type": "object"
                       },
-                      "repositories": {
-                        "description": "owner/repo globs (case-insensitive).",
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "result": {
-                        "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                        "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                         "oneOf": [
                           {
                             "enum": [
@@ -722,32 +469,6 @@
                               "enum": [
                                 "success",
                                 "failure"
-                              ],
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
-                      "token": {
-                        "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                        "oneOf": [
-                          {
-                            "enum": [
-                              "app",
-                              "user",
-                              "unknown",
-                              "none"
-                            ],
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "enum": [
-                                "app",
-                                "user",
-                                "unknown",
-                                "none"
                               ],
                               "type": "string"
                             },
@@ -788,7 +509,7 @@
                       "additionalProperties": false,
                       "properties": {
                         "command": {
-                          "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                          "description": "Git command path prefixes such as push or config.",
                           "oneOf": [
                             {
                               "type": "string"
@@ -832,33 +553,18 @@
                           "type": "object"
                         },
                         "exitCode": {
-                          "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                          "description": "Post hooks only: git exit codes (0-255) to run for.",
                           "items": {
                             "type": "integer"
                           },
                           "type": "array"
                         },
-                        "hosts": {
-                          "oneOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "level": {
-                          "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                          "description": "Native Git command or unclassified invocation.",
                           "oneOf": [
                             {
                               "enum": [
                                 "L1",
-                                "L2",
-                                "L3",
                                 "none"
                               ],
                               "type": "string"
@@ -867,8 +573,6 @@
                               "items": {
                                 "enum": [
                                   "L1",
-                                  "L2",
-                                  "L3",
                                   "none"
                                 ],
                                 "type": "string"
@@ -877,44 +581,8 @@
                             }
                           ]
                         },
-                        "method": {
-                          "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                          "oneOf": [
-                            {
-                              "enum": [
-                                "GET",
-                                "HEAD",
-                                "POST",
-                                "PUT",
-                                "PATCH",
-                                "DELETE",
-                                "OPTIONS",
-                                "TRACE",
-                                "CONNECT"
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "enum": [
-                                  "GET",
-                                  "HEAD",
-                                  "POST",
-                                  "PUT",
-                                  "PATCH",
-                                  "DELETE",
-                                  "OPTIONS",
-                                  "TRACE",
-                                  "CONNECT"
-                                ],
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "operation": {
-                          "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                          "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                           "oneOf": [
                             {
                               "type": "string"
@@ -931,25 +599,11 @@
                           "additionalProperties": {
                             "type": "string"
                           },
-                          "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                          "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                           "type": "object"
                         },
-                        "repositories": {
-                          "description": "owner/repo globs (case-insensitive).",
-                          "oneOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "result": {
-                          "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                          "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                           "oneOf": [
                             {
                               "enum": [
@@ -963,32 +617,6 @@
                                 "enum": [
                                   "success",
                                   "failure"
-                                ],
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
-                        "token": {
-                          "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                          "oneOf": [
-                            {
-                              "enum": [
-                                "app",
-                                "user",
-                                "unknown",
-                                "none"
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "enum": [
-                                  "app",
-                                  "user",
-                                  "unknown",
-                                  "none"
                                 ],
                                 "type": "string"
                               },
@@ -1021,7 +649,7 @@
                           "type": "boolean"
                         },
                         "captureOutput": {
-                          "description": "Post hooks only: include gh stdout/stderr (base64, bounded) in the hook input.",
+                          "description": "Post hooks only: include git stdout/stderr (base64, bounded) in the hook input.",
                           "type": "boolean"
                         },
                         "command": {
@@ -1065,7 +693,7 @@
                           "additionalProperties": false,
                           "properties": {
                             "command": {
-                              "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                              "description": "Git command path prefixes such as push or config.",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -1109,33 +737,18 @@
                               "type": "object"
                             },
                             "exitCode": {
-                              "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                              "description": "Post hooks only: git exit codes (0-255) to run for.",
                               "items": {
                                 "type": "integer"
                               },
                               "type": "array"
                             },
-                            "hosts": {
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "level": {
-                              "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                              "description": "Native Git command or unclassified invocation.",
                               "oneOf": [
                                 {
                                   "enum": [
                                     "L1",
-                                    "L2",
-                                    "L3",
                                     "none"
                                   ],
                                   "type": "string"
@@ -1144,8 +757,6 @@
                                   "items": {
                                     "enum": [
                                       "L1",
-                                      "L2",
-                                      "L3",
                                       "none"
                                     ],
                                     "type": "string"
@@ -1154,44 +765,8 @@
                                 }
                               ]
                             },
-                            "method": {
-                              "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                              "oneOf": [
-                                {
-                                  "enum": [
-                                    "GET",
-                                    "HEAD",
-                                    "POST",
-                                    "PUT",
-                                    "PATCH",
-                                    "DELETE",
-                                    "OPTIONS",
-                                    "TRACE",
-                                    "CONNECT"
-                                  ],
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "enum": [
-                                      "GET",
-                                      "HEAD",
-                                      "POST",
-                                      "PUT",
-                                      "PATCH",
-                                      "DELETE",
-                                      "OPTIONS",
-                                      "TRACE",
-                                      "CONNECT"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "operation": {
-                              "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                              "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -1208,25 +783,11 @@
                               "additionalProperties": {
                                 "type": "string"
                               },
-                              "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                              "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                               "type": "object"
                             },
-                            "repositories": {
-                              "description": "owner/repo globs (case-insensitive).",
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "result": {
-                              "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                              "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                               "oneOf": [
                                 {
                                   "enum": [
@@ -1240,32 +801,6 @@
                                     "enum": [
                                       "success",
                                       "failure"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
-                            "token": {
-                              "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                              "oneOf": [
-                                {
-                                  "enum": [
-                                    "app",
-                                    "user",
-                                    "unknown",
-                                    "none"
-                                  ],
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "enum": [
-                                      "app",
-                                      "user",
-                                      "unknown",
-                                      "none"
                                     ],
                                     "type": "string"
                                   },
@@ -1306,7 +841,7 @@
                             "additionalProperties": false,
                             "properties": {
                               "command": {
-                                "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                                "description": "Git command path prefixes such as push or config.",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -1350,33 +885,18 @@
                                 "type": "object"
                               },
                               "exitCode": {
-                                "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                                "description": "Post hooks only: git exit codes (0-255) to run for.",
                                 "items": {
                                   "type": "integer"
                                 },
                                 "type": "array"
                               },
-                              "hosts": {
-                                "oneOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "level": {
-                                "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                                "description": "Native Git command or unclassified invocation.",
                                 "oneOf": [
                                   {
                                     "enum": [
                                       "L1",
-                                      "L2",
-                                      "L3",
                                       "none"
                                     ],
                                     "type": "string"
@@ -1385,8 +905,6 @@
                                     "items": {
                                       "enum": [
                                         "L1",
-                                        "L2",
-                                        "L3",
                                         "none"
                                       ],
                                       "type": "string"
@@ -1395,44 +913,8 @@
                                   }
                                 ]
                               },
-                              "method": {
-                                "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                                "oneOf": [
-                                  {
-                                    "enum": [
-                                      "GET",
-                                      "HEAD",
-                                      "POST",
-                                      "PUT",
-                                      "PATCH",
-                                      "DELETE",
-                                      "OPTIONS",
-                                      "TRACE",
-                                      "CONNECT"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "enum": [
-                                        "GET",
-                                        "HEAD",
-                                        "POST",
-                                        "PUT",
-                                        "PATCH",
-                                        "DELETE",
-                                        "OPTIONS",
-                                        "TRACE",
-                                        "CONNECT"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "operation": {
-                                "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                                "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -1449,25 +931,11 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 },
-                                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                                 "type": "object"
                               },
-                              "repositories": {
-                                "description": "owner/repo globs (case-insensitive).",
-                                "oneOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "result": {
-                                "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                                "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                                 "oneOf": [
                                   {
                                     "enum": [
@@ -1481,32 +949,6 @@
                                       "enum": [
                                         "success",
                                         "failure"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
-                              "token": {
-                                "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                                "oneOf": [
-                                  {
-                                    "enum": [
-                                      "app",
-                                      "user",
-                                      "unknown",
-                                      "none"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "enum": [
-                                        "app",
-                                        "user",
-                                        "unknown",
-                                        "none"
                                       ],
                                       "type": "string"
                                     },
@@ -1587,7 +1029,7 @@
                     "type": "boolean"
                   },
                   "captureOutput": {
-                    "description": "Post hooks only: include gh stdout/stderr (base64, bounded) in the hook input.",
+                    "description": "Post hooks only: include git stdout/stderr (base64, bounded) in the hook input.",
                     "type": "boolean"
                   },
                   "command": {
@@ -1631,7 +1073,7 @@
                     "additionalProperties": false,
                     "properties": {
                       "command": {
-                        "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                        "description": "Git command path prefixes such as push or config.",
                         "oneOf": [
                           {
                             "type": "string"
@@ -1675,33 +1117,18 @@
                         "type": "object"
                       },
                       "exitCode": {
-                        "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                        "description": "Post hooks only: git exit codes (0-255) to run for.",
                         "items": {
                           "type": "integer"
                         },
                         "type": "array"
                       },
-                      "hosts": {
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "level": {
-                        "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                        "description": "Native Git command or unclassified invocation.",
                         "oneOf": [
                           {
                             "enum": [
                               "L1",
-                              "L2",
-                              "L3",
                               "none"
                             ],
                             "type": "string"
@@ -1710,8 +1137,6 @@
                             "items": {
                               "enum": [
                                 "L1",
-                                "L2",
-                                "L3",
                                 "none"
                               ],
                               "type": "string"
@@ -1720,44 +1145,8 @@
                           }
                         ]
                       },
-                      "method": {
-                        "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                        "oneOf": [
-                          {
-                            "enum": [
-                              "GET",
-                              "HEAD",
-                              "POST",
-                              "PUT",
-                              "PATCH",
-                              "DELETE",
-                              "OPTIONS",
-                              "TRACE",
-                              "CONNECT"
-                            ],
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "enum": [
-                                "GET",
-                                "HEAD",
-                                "POST",
-                                "PUT",
-                                "PATCH",
-                                "DELETE",
-                                "OPTIONS",
-                                "TRACE",
-                                "CONNECT"
-                              ],
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "operation": {
-                        "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                        "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                         "oneOf": [
                           {
                             "type": "string"
@@ -1774,25 +1163,11 @@
                         "additionalProperties": {
                           "type": "string"
                         },
-                        "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                        "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                         "type": "object"
                       },
-                      "repositories": {
-                        "description": "owner/repo globs (case-insensitive).",
-                        "oneOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
                       "result": {
-                        "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                        "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                         "oneOf": [
                           {
                             "enum": [
@@ -1806,32 +1181,6 @@
                               "enum": [
                                 "success",
                                 "failure"
-                              ],
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        ]
-                      },
-                      "token": {
-                        "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                        "oneOf": [
-                          {
-                            "enum": [
-                              "app",
-                              "user",
-                              "unknown",
-                              "none"
-                            ],
-                            "type": "string"
-                          },
-                          {
-                            "items": {
-                              "enum": [
-                                "app",
-                                "user",
-                                "unknown",
-                                "none"
                               ],
                               "type": "string"
                             },
@@ -1872,7 +1221,7 @@
                       "additionalProperties": false,
                       "properties": {
                         "command": {
-                          "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                          "description": "Git command path prefixes such as push or config.",
                           "oneOf": [
                             {
                               "type": "string"
@@ -1916,33 +1265,18 @@
                           "type": "object"
                         },
                         "exitCode": {
-                          "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                          "description": "Post hooks only: git exit codes (0-255) to run for.",
                           "items": {
                             "type": "integer"
                           },
                           "type": "array"
                         },
-                        "hosts": {
-                          "oneOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "level": {
-                          "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                          "description": "Native Git command or unclassified invocation.",
                           "oneOf": [
                             {
                               "enum": [
                                 "L1",
-                                "L2",
-                                "L3",
                                 "none"
                               ],
                               "type": "string"
@@ -1951,8 +1285,6 @@
                               "items": {
                                 "enum": [
                                   "L1",
-                                  "L2",
-                                  "L3",
                                   "none"
                                 ],
                                 "type": "string"
@@ -1961,44 +1293,8 @@
                             }
                           ]
                         },
-                        "method": {
-                          "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                          "oneOf": [
-                            {
-                              "enum": [
-                                "GET",
-                                "HEAD",
-                                "POST",
-                                "PUT",
-                                "PATCH",
-                                "DELETE",
-                                "OPTIONS",
-                                "TRACE",
-                                "CONNECT"
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "enum": [
-                                  "GET",
-                                  "HEAD",
-                                  "POST",
-                                  "PUT",
-                                  "PATCH",
-                                  "DELETE",
-                                  "OPTIONS",
-                                  "TRACE",
-                                  "CONNECT"
-                                ],
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "operation": {
-                          "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                          "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                           "oneOf": [
                             {
                               "type": "string"
@@ -2015,25 +1311,11 @@
                           "additionalProperties": {
                             "type": "string"
                           },
-                          "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                          "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                           "type": "object"
                         },
-                        "repositories": {
-                          "description": "owner/repo globs (case-insensitive).",
-                          "oneOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
                         "result": {
-                          "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                          "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                           "oneOf": [
                             {
                               "enum": [
@@ -2047,32 +1329,6 @@
                                 "enum": [
                                   "success",
                                   "failure"
-                                ],
-                                "type": "string"
-                              },
-                              "type": "array"
-                            }
-                          ]
-                        },
-                        "token": {
-                          "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                          "oneOf": [
-                            {
-                              "enum": [
-                                "app",
-                                "user",
-                                "unknown",
-                                "none"
-                              ],
-                              "type": "string"
-                            },
-                            {
-                              "items": {
-                                "enum": [
-                                  "app",
-                                  "user",
-                                  "unknown",
-                                  "none"
                                 ],
                                 "type": "string"
                               },
@@ -2105,7 +1361,7 @@
                           "type": "boolean"
                         },
                         "captureOutput": {
-                          "description": "Post hooks only: include gh stdout/stderr (base64, bounded) in the hook input.",
+                          "description": "Post hooks only: include git stdout/stderr (base64, bounded) in the hook input.",
                           "type": "boolean"
                         },
                         "command": {
@@ -2149,7 +1405,7 @@
                           "additionalProperties": false,
                           "properties": {
                             "command": {
-                              "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                              "description": "Git command path prefixes such as push or config.",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -2193,33 +1449,18 @@
                               "type": "object"
                             },
                             "exitCode": {
-                              "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                              "description": "Post hooks only: git exit codes (0-255) to run for.",
                               "items": {
                                 "type": "integer"
                               },
                               "type": "array"
                             },
-                            "hosts": {
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "level": {
-                              "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                              "description": "Native Git command or unclassified invocation.",
                               "oneOf": [
                                 {
                                   "enum": [
                                     "L1",
-                                    "L2",
-                                    "L3",
                                     "none"
                                   ],
                                   "type": "string"
@@ -2228,8 +1469,6 @@
                                   "items": {
                                     "enum": [
                                       "L1",
-                                      "L2",
-                                      "L3",
                                       "none"
                                     ],
                                     "type": "string"
@@ -2238,44 +1477,8 @@
                                 }
                               ]
                             },
-                            "method": {
-                              "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                              "oneOf": [
-                                {
-                                  "enum": [
-                                    "GET",
-                                    "HEAD",
-                                    "POST",
-                                    "PUT",
-                                    "PATCH",
-                                    "DELETE",
-                                    "OPTIONS",
-                                    "TRACE",
-                                    "CONNECT"
-                                  ],
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "enum": [
-                                      "GET",
-                                      "HEAD",
-                                      "POST",
-                                      "PUT",
-                                      "PATCH",
-                                      "DELETE",
-                                      "OPTIONS",
-                                      "TRACE",
-                                      "CONNECT"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "operation": {
-                              "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                              "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                               "oneOf": [
                                 {
                                   "type": "string"
@@ -2292,25 +1495,11 @@
                               "additionalProperties": {
                                 "type": "string"
                               },
-                              "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                              "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                               "type": "object"
                             },
-                            "repositories": {
-                              "description": "owner/repo globs (case-insensitive).",
-                              "oneOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
                             "result": {
-                              "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                              "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                               "oneOf": [
                                 {
                                   "enum": [
@@ -2324,32 +1513,6 @@
                                     "enum": [
                                       "success",
                                       "failure"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  "type": "array"
-                                }
-                              ]
-                            },
-                            "token": {
-                              "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                              "oneOf": [
-                                {
-                                  "enum": [
-                                    "app",
-                                    "user",
-                                    "unknown",
-                                    "none"
-                                  ],
-                                  "type": "string"
-                                },
-                                {
-                                  "items": {
-                                    "enum": [
-                                      "app",
-                                      "user",
-                                      "unknown",
-                                      "none"
                                     ],
                                     "type": "string"
                                   },
@@ -2390,7 +1553,7 @@
                             "additionalProperties": false,
                             "properties": {
                               "command": {
-                                "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                                "description": "Git command path prefixes such as push or config.",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -2434,33 +1597,18 @@
                                 "type": "object"
                               },
                               "exitCode": {
-                                "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                                "description": "Post hooks only: git exit codes (0-255) to run for.",
                                 "items": {
                                   "type": "integer"
                                 },
                                 "type": "array"
                               },
-                              "hosts": {
-                                "oneOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "level": {
-                                "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                                "description": "Native Git command or unclassified invocation.",
                                 "oneOf": [
                                   {
                                     "enum": [
                                       "L1",
-                                      "L2",
-                                      "L3",
                                       "none"
                                     ],
                                     "type": "string"
@@ -2469,8 +1617,6 @@
                                     "items": {
                                       "enum": [
                                         "L1",
-                                        "L2",
-                                        "L3",
                                         "none"
                                       ],
                                       "type": "string"
@@ -2479,44 +1625,8 @@
                                   }
                                 ]
                               },
-                              "method": {
-                                "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                                "oneOf": [
-                                  {
-                                    "enum": [
-                                      "GET",
-                                      "HEAD",
-                                      "POST",
-                                      "PUT",
-                                      "PATCH",
-                                      "DELETE",
-                                      "OPTIONS",
-                                      "TRACE",
-                                      "CONNECT"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "enum": [
-                                        "GET",
-                                        "HEAD",
-                                        "POST",
-                                        "PUT",
-                                        "PATCH",
-                                        "DELETE",
-                                        "OPTIONS",
-                                        "TRACE",
-                                        "CONNECT"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "operation": {
-                                "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                                "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                                 "oneOf": [
                                   {
                                     "type": "string"
@@ -2533,25 +1643,11 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 },
-                                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                                "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                                 "type": "object"
                               },
-                              "repositories": {
-                                "description": "owner/repo globs (case-insensitive).",
-                                "oneOf": [
-                                  {
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
                               "result": {
-                                "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                                "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                                 "oneOf": [
                                   {
                                     "enum": [
@@ -2565,32 +1661,6 @@
                                       "enum": [
                                         "success",
                                         "failure"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "type": "array"
-                                  }
-                                ]
-                              },
-                              "token": {
-                                "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                                "oneOf": [
-                                  {
-                                    "enum": [
-                                      "app",
-                                      "user",
-                                      "unknown",
-                                      "none"
-                                    ],
-                                    "type": "string"
-                                  },
-                                  {
-                                    "items": {
-                                      "enum": [
-                                        "app",
-                                        "user",
-                                        "unknown",
-                                        "none"
                                       ],
                                       "type": "string"
                                     },
@@ -2673,22 +1743,6 @@
           ],
           "type": "string"
         },
-        "protectedRepositories": {
-          "description": "owner/repo globs; unclassified or unresolved writes against them use protectedUnknown.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "protectedUnknown": {
-          "description": "Handling of unclassified/unresolved writes that may target a protected repository.",
-          "enum": [
-            "allow",
-            "deny",
-            "audit"
-          ],
-          "type": "string"
-        },
         "rules": {
           "items": {
             "additionalProperties": false,
@@ -2708,7 +1762,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "command": {
-                    "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                    "description": "Git command path prefixes such as push or config.",
                     "oneOf": [
                       {
                         "type": "string"
@@ -2752,33 +1806,18 @@
                     "type": "object"
                   },
                   "exitCode": {
-                    "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                    "description": "Post hooks only: git exit codes (0-255) to run for.",
                     "items": {
                       "type": "integer"
                     },
                     "type": "array"
                   },
-                  "hosts": {
-                    "oneOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "level": {
-                    "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                    "description": "Native Git command or unclassified invocation.",
                     "oneOf": [
                       {
                         "enum": [
                           "L1",
-                          "L2",
-                          "L3",
                           "none"
                         ],
                         "type": "string"
@@ -2787,8 +1826,6 @@
                         "items": {
                           "enum": [
                             "L1",
-                            "L2",
-                            "L3",
                             "none"
                           ],
                           "type": "string"
@@ -2797,44 +1834,8 @@
                       }
                     ]
                   },
-                  "method": {
-                    "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                    "oneOf": [
-                      {
-                        "enum": [
-                          "GET",
-                          "HEAD",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE",
-                          "OPTIONS",
-                          "TRACE",
-                          "CONNECT"
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "enum": [
-                            "GET",
-                            "HEAD",
-                            "POST",
-                            "PUT",
-                            "PATCH",
-                            "DELETE",
-                            "OPTIONS",
-                            "TRACE",
-                            "CONNECT"
-                          ],
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "operation": {
-                    "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                    "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                     "oneOf": [
                       {
                         "type": "string"
@@ -2851,25 +1852,11 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                    "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                     "type": "object"
                   },
-                  "repositories": {
-                    "description": "owner/repo globs (case-insensitive).",
-                    "oneOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "result": {
-                    "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                    "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                     "oneOf": [
                       {
                         "enum": [
@@ -2889,38 +1876,12 @@
                         "type": "array"
                       }
                     ]
-                  },
-                  "token": {
-                    "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                    "oneOf": [
-                      {
-                        "enum": [
-                          "app",
-                          "user",
-                          "unknown",
-                          "none"
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "enum": [
-                            "app",
-                            "user",
-                            "unknown",
-                            "none"
-                          ],
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
                   }
                 },
                 "type": "object"
               },
               "onUnresolved": {
-                "description": "deny (default): conservatively apply this rule when repository/host criteria are unresolved; ignore: skip that maybe-match.",
+                "description": "deny (default): conservatively apply this rule when target criteria are unresolved; ignore: skip that maybe-match.",
                 "enum": [
                   "deny",
                   "ignore"
@@ -2936,7 +1897,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "command": {
-                      "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                      "description": "Git command path prefixes such as push or config.",
                       "oneOf": [
                         {
                           "type": "string"
@@ -2980,33 +1941,18 @@
                       "type": "object"
                     },
                     "exitCode": {
-                      "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                      "description": "Post hooks only: git exit codes (0-255) to run for.",
                       "items": {
                         "type": "integer"
                       },
                       "type": "array"
                     },
-                    "hosts": {
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "level": {
-                      "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                      "description": "Native Git command or unclassified invocation.",
                       "oneOf": [
                         {
                           "enum": [
                             "L1",
-                            "L2",
-                            "L3",
                             "none"
                           ],
                           "type": "string"
@@ -3015,8 +1961,6 @@
                           "items": {
                             "enum": [
                               "L1",
-                              "L2",
-                              "L3",
                               "none"
                             ],
                             "type": "string"
@@ -3025,44 +1969,8 @@
                         }
                       ]
                     },
-                    "method": {
-                      "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                      "oneOf": [
-                        {
-                          "enum": [
-                            "GET",
-                            "HEAD",
-                            "POST",
-                            "PUT",
-                            "PATCH",
-                            "DELETE",
-                            "OPTIONS",
-                            "TRACE",
-                            "CONNECT"
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "enum": [
-                              "GET",
-                              "HEAD",
-                              "POST",
-                              "PUT",
-                              "PATCH",
-                              "DELETE",
-                              "OPTIONS",
-                              "TRACE",
-                              "CONNECT"
-                            ],
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "operation": {
-                      "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                      "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                       "oneOf": [
                         {
                           "type": "string"
@@ -3079,25 +1987,11 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                      "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                       "type": "object"
                     },
-                    "repositories": {
-                      "description": "owner/repo globs (case-insensitive).",
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "result": {
-                      "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                      "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                       "oneOf": [
                         {
                           "enum": [
@@ -3111,32 +2005,6 @@
                             "enum": [
                               "success",
                               "failure"
-                            ],
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
-                    "token": {
-                      "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                      "oneOf": [
-                        {
-                          "enum": [
-                            "app",
-                            "user",
-                            "unknown",
-                            "none"
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "enum": [
-                              "app",
-                              "user",
-                              "unknown",
-                              "none"
                             ],
                             "type": "string"
                           },
@@ -3211,7 +2079,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "command": {
-                    "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                    "description": "Git command path prefixes such as push or config.",
                     "oneOf": [
                       {
                         "type": "string"
@@ -3255,33 +2123,18 @@
                     "type": "object"
                   },
                   "exitCode": {
-                    "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                    "description": "Post hooks only: git exit codes (0-255) to run for.",
                     "items": {
                       "type": "integer"
                     },
                     "type": "array"
                   },
-                  "hosts": {
-                    "oneOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "level": {
-                    "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                    "description": "Native Git command or unclassified invocation.",
                     "oneOf": [
                       {
                         "enum": [
                           "L1",
-                          "L2",
-                          "L3",
                           "none"
                         ],
                         "type": "string"
@@ -3290,8 +2143,6 @@
                         "items": {
                           "enum": [
                             "L1",
-                            "L2",
-                            "L3",
                             "none"
                           ],
                           "type": "string"
@@ -3300,44 +2151,8 @@
                       }
                     ]
                   },
-                  "method": {
-                    "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                    "oneOf": [
-                      {
-                        "enum": [
-                          "GET",
-                          "HEAD",
-                          "POST",
-                          "PUT",
-                          "PATCH",
-                          "DELETE",
-                          "OPTIONS",
-                          "TRACE",
-                          "CONNECT"
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "enum": [
-                            "GET",
-                            "HEAD",
-                            "POST",
-                            "PUT",
-                            "PATCH",
-                            "DELETE",
-                            "OPTIONS",
-                            "TRACE",
-                            "CONNECT"
-                          ],
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "operation": {
-                    "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                    "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                     "oneOf": [
                       {
                         "type": "string"
@@ -3354,25 +2169,11 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                    "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                     "type": "object"
                   },
-                  "repositories": {
-                    "description": "owner/repo globs (case-insensitive).",
-                    "oneOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
                   "result": {
-                    "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                    "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                     "oneOf": [
                       {
                         "enum": [
@@ -3386,32 +2187,6 @@
                           "enum": [
                             "success",
                             "failure"
-                          ],
-                          "type": "string"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  },
-                  "token": {
-                    "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                    "oneOf": [
-                      {
-                        "enum": [
-                          "app",
-                          "user",
-                          "unknown",
-                          "none"
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "items": {
-                          "enum": [
-                            "app",
-                            "user",
-                            "unknown",
-                            "none"
                           ],
                           "type": "string"
                         },
@@ -3442,7 +2217,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "command": {
-                      "description": "gh command path prefixes such as \"pr merge\" or \"api\".",
+                      "description": "Git command path prefixes such as push or config.",
                       "oneOf": [
                         {
                           "type": "string"
@@ -3486,33 +2261,18 @@
                       "type": "object"
                     },
                     "exitCode": {
-                      "description": "Post hooks only: gh exit codes (0-255) to run for.",
+                      "description": "Post hooks only: git exit codes (0-255) to run for.",
                       "items": {
                         "type": "integer"
                       },
                       "type": "array"
                     },
-                    "hosts": {
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "level": {
-                      "description": "L1 native gh command, L2 gh api REST call, L3 gh api graphql call.",
+                      "description": "Native Git command or unclassified invocation.",
                       "oneOf": [
                         {
                           "enum": [
                             "L1",
-                            "L2",
-                            "L3",
                             "none"
                           ],
                           "type": "string"
@@ -3521,8 +2281,6 @@
                           "items": {
                             "enum": [
                               "L1",
-                              "L2",
-                              "L3",
                               "none"
                             ],
                             "type": "string"
@@ -3531,44 +2289,8 @@
                         }
                       ]
                     },
-                    "method": {
-                      "description": "HTTP method on the same normalized REST operation, e.g. GET. Does not match native commands or GraphQL.",
-                      "oneOf": [
-                        {
-                          "enum": [
-                            "GET",
-                            "HEAD",
-                            "POST",
-                            "PUT",
-                            "PATCH",
-                            "DELETE",
-                            "OPTIONS",
-                            "TRACE",
-                            "CONNECT"
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "enum": [
-                              "GET",
-                              "HEAD",
-                              "POST",
-                              "PUT",
-                              "PATCH",
-                              "DELETE",
-                              "OPTIONS",
-                              "TRACE",
-                              "CONNECT"
-                            ],
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "operation": {
-                      "description": "Action globs such as pr.merge.* (see docs/normalization.md).",
+                      "description": "Action globs such as remote.push.* (see docs/normalization.md).",
                       "oneOf": [
                         {
                           "type": "string"
@@ -3585,25 +2307,11 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Normalized operation parameters (see docs/normalization.md), e.g. {watch: \"true\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
+                      "description": "Normalized operation parameters (see docs/normalization.md), e.g. {forceMode: \"unconditional\"}; all entries must match on the same operation. Values use path.Match globs over the scalar's text; * means present and non-empty; an empty value means absent or empty.",
                       "type": "object"
                     },
-                    "repositories": {
-                      "description": "owner/repo globs (case-insensitive).",
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
                     "result": {
-                      "description": "Post hooks only: success = gh exited 0; failure = non-zero exit, killed by a signal, or gh could not be started.",
+                      "description": "Post hooks only: success = git exited 0; failure = non-zero exit, killed by a signal, or git could not be started.",
                       "oneOf": [
                         {
                           "enum": [
@@ -3617,32 +2325,6 @@
                             "enum": [
                               "success",
                               "failure"
-                            ],
-                            "type": "string"
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
-                    "token": {
-                      "description": "Kind of token in GH_TOKEN/GITHUB_TOKEN: app (ghs_, GitHub App installation, e.g. gain or Actions), user (ghp_/gho_/ghu_/github_pat_), unknown (other value), none (not set: gh's stored login).",
-                      "oneOf": [
-                        {
-                          "enum": [
-                            "app",
-                            "user",
-                            "unknown",
-                            "none"
-                          ],
-                          "type": "string"
-                        },
-                        {
-                          "items": {
-                            "enum": [
-                              "app",
-                              "user",
-                              "unknown",
-                              "none"
                             ],
                             "type": "string"
                           },

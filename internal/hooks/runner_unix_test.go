@@ -255,11 +255,11 @@ func TestInputEnvironmentAndResolution(t *testing.T) {
 	capture := filepath.Join(dir, "input.json")
 	vars := filepath.Join(dir, "env")
 	path := script(t, `cat > "$CAPTURE"
-printf '%s\n' "$GTHOK_EVENT" "$GTHOK_EVENT_ID" "$GTHOK_HOOK_ID" "$GTHOK_NESTED" "$GTHOK_REAL_GH" "$CUSTOM" > "$VARS"
+printf '%s\n' "$GTHOK_EVENT" "$GTHOK_EVENT_ID" "$GTHOK_HOOK_ID" "$GTHOK_NESTED" "$GTHOK_REAL_GIT" "$CUSTOM" > "$VARS"
 printf '{"decision":"allow"}'`)
 	h := hook("environment", "./hook")
 	h.Env = map[string]string{"CAPTURE": capture, "VARS": vars, "CUSTOM": "custom", "GTHOK_NESTED": "wrong"}
-	r := &Runner{BaseDir: filepath.Dir(path), Env: hermetic(t), RealGh: "/fake/gh"}
+	r := &Runner{BaseDir: filepath.Dir(path), Env: hermetic(t), RealGit: "/fake/git"}
 	got := one(t, h, r)
 	if got.Decision != protocol.DecisionAllow {
 		t.Fatalf("%+v", got)
@@ -279,7 +279,7 @@ printf '{"decision":"allow"}'`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(data) != "pre\ntest-event\nenvironment\n1\n/fake/gh\ncustom\n" {
+	if string(data) != "pre\ntest-event\nenvironment\n1\n/fake/git\ncustom\n" {
 		t.Fatalf("env %q", data)
 	}
 	// The runner's supplied PATH, not the test process PATH, resolves bare names.
@@ -298,10 +298,10 @@ func TestSelectStableDependencies(t *testing.T) {
 		{ID: "dependent", Phase: "pre", DependsOn: []string{"base"}},
 		{ID: "disabled", Phase: "pre", Enabled: &disabled}, {ID: "post", Phase: "post"},
 		{ID: "mismatch", Phase: "pre", Match: config.Match{Effects: config.StringList{"read"}}},
-		{ID: "maybe", Phase: "pre", Match: config.Match{Repositories: config.StringList{"org/*"}}},
+		{ID: "maybe", Phase: "pre", Match: config.Match{}},
 	}}
 	s := policy.Subject{Result: model.Result{Operations: input().Operations}}
-	// As normalized for `pr merge 1` outside a repository.
+	// An unresolved target does not exclude a generic hook.
 	s.Result.Operations[0].Unresolved = []model.Unresolved{{Field: "target.repository", Reason: "repository from local git context", Source: "git"}}
 	selected := r.Select("pre", s)
 	var ids []string

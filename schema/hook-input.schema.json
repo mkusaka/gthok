@@ -15,13 +15,20 @@
           ],
           "type": "string"
         },
+        "coverage": {
+          "description": "Depth of understanding; opaque always carries a named cause.",
+          "enum": [
+            "semantic",
+            "conservative",
+            "opaque"
+          ],
+          "type": "string"
+        },
         "level": {
-          "description": "Normalization layer: native command, REST, GraphQL, or none.",
+          "description": "Normalization layer: native git command or none.",
           "enum": [
             "none",
-            "L1",
-            "L2",
-            "L3"
+            "L1"
           ],
           "type": "string"
         },
@@ -37,20 +44,31 @@
             "unresolved"
           ],
           "type": "string"
+        },
+        "retrySafe": {
+          "type": "boolean"
         }
       },
       "required": [
         "level",
         "confidence",
         "resolution",
-        "mutationFree"
+        "mutationFree",
+        "coverage",
+        "retrySafe"
       ],
       "type": "object"
     },
     "context": {
       "additionalProperties": false,
       "properties": {
+        "bare": {
+          "type": "boolean"
+        },
         "branch": {
+          "type": "string"
+        },
+        "commonDir": {
           "type": "string"
         },
         "gitDir": {
@@ -59,13 +77,25 @@
         "headSha": {
           "type": "string"
         },
-        "host": {
-          "type": "string"
+        "remotes": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "pushUrls": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "object"
         },
-        "owner": {
-          "type": "string"
-        },
-        "repository": {
+        "repoRoot": {
           "type": "string"
         },
         "sources": {
@@ -154,21 +184,11 @@
         "isTTY": {
           "type": "boolean"
         },
-        "realGh": {
+        "realGit": {
           "type": "string"
         },
         "stdinTTY": {
           "type": "boolean"
-        },
-        "tokenKind": {
-          "description": "Credential kind from the environment token prefix; never the token itself.",
-          "enum": [
-            "app",
-            "user",
-            "unknown",
-            "none"
-          ],
-          "type": "string"
         },
         "via": {
           "description": "Wrapper entry point: shim or explicit gthok exec; both enforce the same policy.",
@@ -193,6 +213,22 @@
         "additionalProperties": false,
         "properties": {
           "action": {
+            "type": "string"
+          },
+          "capabilities": {
+            "description": "Side channels the request may use.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "coverage": {
+            "description": "Depth of understanding of this operation.",
+            "enum": [
+              "semantic",
+              "conservative",
+              "opaque"
+            ],
             "type": "string"
           },
           "detail": {
@@ -226,34 +262,16 @@
           "origin": {
             "additionalProperties": false,
             "properties": {
-              "alias": {
-                "type": "string"
-              },
               "command": {
                 "items": {
                   "type": "string"
                 },
                 "type": "array"
               },
-              "field": {
+              "mode": {
                 "type": "string"
               },
-              "method": {
-                "type": "string"
-              },
-              "opType": {
-                "description": "GraphQL operation type.",
-                "enum": [
-                  "query",
-                  "mutation",
-                  "subscription"
-                ],
-                "type": "string"
-              },
-              "operation": {
-                "type": "string"
-              },
-              "route": {
+              "source": {
                 "type": "string"
               }
             },
@@ -264,84 +282,162 @@
             "description": "Action- and layer-specific JSON values; keys are documented in docs/normalization.md.",
             "type": "object"
           },
+          "scopes": {
+            "description": "Git data areas touched.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "target": {
             "additionalProperties": false,
             "properties": {
-              "baseBranch": {
+              "commonDir": {
                 "type": "string"
               },
-              "branch": {
-                "type": "string"
-              },
-              "headBranch": {
-                "type": "string"
-              },
-              "host": {
-                "type": "string"
-              },
-              "kind": {
-                "description": "Selected resource kind, not necessarily the created result; unknown marks an unresolved polymorphic subject.",
-                "enum": [
-                  "unknown",
-                  "pullRequest",
-                  "issue",
-                  "repository",
-                  "ref",
-                  "comment",
-                  "release",
-                  "gist",
-                  "branchProtectionRule",
-                  "checkRun",
-                  "checkSuite",
-                  "deployment",
-                  "discussion",
-                  "draftIssue",
-                  "enterprise",
-                  "environment",
-                  "ipAllowListEntry",
-                  "issueType",
-                  "linkedBranch",
-                  "migration",
-                  "milestone",
-                  "organization",
-                  "packageVersion",
-                  "project",
-                  "projectCard",
-                  "projectColumn",
-                  "pullRequestReview",
-                  "pullRequestReviewThread",
-                  "repositoryCustomProperty",
-                  "repositoryRuleset",
-                  "repositoryVulnerabilityAlert",
-                  "sponsor",
-                  "sponsorable",
-                  "team",
-                  "user",
-                  "workflow",
-                  "workflowRun"
+              "configKeys": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
                 ],
+                "type": "object"
+              },
+              "gitDir": {
                 "type": "string"
               },
-              "nodeId": {
+              "paths": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
+              },
+              "pushUrl": {
                 "type": "string"
               },
-              "number": {
-                "description": "Known PR or issue number; omitted when unknown.",
-                "type": "integer"
+              "refs": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
               },
-              "owner": {
+              "remote": {
+                "description": "Remote name, or the URL given in place of a name.",
                 "type": "string"
               },
-              "ref": {
+              "remoteUrl": {
+                "description": "Effective (rewritten) URL, credentials removed.",
                 "type": "string"
               },
-              "repository": {
+              "repoRoot": {
+                "description": "Top-level worktree directory; empty for bare or unknown.",
                 "type": "string"
               },
-              "sha": {
-                "type": "string"
+              "revisions": {
+                "additionalProperties": false,
+                "properties": {
+                  "complete": {
+                    "description": "True when Values lists every affected item.",
+                    "type": "boolean"
+                  },
+                  "kind": {
+                    "description": "Shape of the set; unknown never means empty.",
+                    "enum": [
+                      "exact",
+                      "set",
+                      "pattern",
+                      "unknown",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "values": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "complete"
+                ],
+                "type": "object"
               },
-              "url": {
+              "worktree": {
                 "type": "string"
               }
             },
@@ -507,20 +603,20 @@
             "type": "object"
           },
           "unknownReason": {
-            "description": "Machine-readable reason for an unknown classification.",
+            "description": "Machine-readable reason for an unknown or opaque classification.",
             "enum": [
               "unknown-command",
               "unknown-flag",
-              "extension",
+              "external-command",
               "shell-alias",
               "alias-loop",
-              "unknown-endpoint",
-              "unknown-mutation",
               "parse-error",
               "input-unavailable",
               "input-too-large",
-              "operation-ambiguous",
-              "malformed-request"
+              "malformed-request",
+              "interactive",
+              "remote-state",
+              "unverified-version"
             ],
             "type": "string"
           },
@@ -551,6 +647,7 @@
           "family",
           "action",
           "effect",
+          "coverage",
           "target",
           "execution",
           "origin"

@@ -4,20 +4,18 @@ package e2e
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
-	"slices"
 	"strings"
 	"testing"
 )
 
 func TestManagementDocs(t *testing.T) {
 	s := newSandbox(t)
-	// Discovery must not depend on valid configuration or an installed gh.
+	// Discovery must not depend on valid configuration or an installed git.
 	if err := os.WriteFile(s.cfg, []byte("invalid: ["), 0600); err != nil {
 		t.Fatal(err)
 	}
-	s.env["GTHOK_REAL_GH"] = "/no-such-gh"
+	s.env["GTHOK_REAL_GIT"] = "/no-such-git"
 	text := s.management(nil, "docs")
 	text.code(t, 0)
 	if !bytes.Contains(text.stdout, []byte("  security/project-configuration-trust  Project configuration trust — ")) || len(text.stderr) != 0 {
@@ -102,54 +100,6 @@ func TestManagementDocsSearchAndUnknown(t *testing.T) {
 			t.Fatalf("usage %q stdout=%q stderr=%q", args, bad.stdout, bad.stderr)
 		}
 	}
-	s.absentRecord()
-}
-
-func TestManagementActions(t *testing.T) {
-	s := newSandbox(t)
-	text := s.management(nil, "actions", "pr.merge")
-	text.code(t, 0)
-	for _, expected := range []string{"pr.merge.request", "pr.merge.direct", "write", "gh pr merge", "PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", "mergePullRequest"} {
-		if !bytes.Contains(text.stdout, []byte(expected)) {
-			t.Fatalf("actions missing %q: %s", expected, text.stdout)
-		}
-	}
-	result := s.management(nil, "actions", "pr.merge", "--json")
-	result.code(t, 0)
-	var families []struct {
-		Family  string `json:"family"`
-		Actions []struct {
-			Action, Effect        string
-			Native, REST, GraphQL []string
-		} `json:"actions"`
-	}
-	decodeJSON(t, result.stdout, &families)
-	found := map[string]bool{}
-	for _, family := range families {
-		if family.Family == "" {
-			t.Fatalf("missing action family: %+v", family)
-		}
-		for _, action := range family.Actions {
-			if !strings.HasPrefix(action.Action, "pr.merge") || (action.Effect != "write" && action.Effect != "read") {
-				t.Fatalf("action prefix/effect mismatch: %+v", action)
-			}
-			found[action.Action] = true
-			if action.Action == "pr.merge.direct" && (!slices.Contains(action.REST, "PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge") || !slices.Contains(action.GraphQL, "mergePullRequest")) {
-				t.Fatalf("missing direct merge routes: %+v", action)
-			}
-		}
-	}
-	if !found["pr.merge.request"] || !found["pr.merge.direct"] || !found["pr.merge.queue.enqueue"] {
-		t.Fatalf("missing merge intents: %+v", families)
-	}
-	empty := s.management(nil, "actions", "no-such-action", "--json")
-	empty.code(t, 0)
-	var emptyArray []json.RawMessage
-	decodeJSON(t, empty.stdout, &emptyArray)
-	if emptyArray == nil || len(emptyArray) != 0 {
-		t.Fatalf("no actions must be an empty array: %s", empty.stdout)
-	}
-	s.management(nil, "actions", "pr.merge", "extra").code(t, 2)
 	s.absentRecord()
 }
 

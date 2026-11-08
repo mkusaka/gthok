@@ -21,7 +21,7 @@ func warningHook(s *sandbox, id, phase string, decision protocol.Decision, text 
 	if err != nil {
 		s.t.Fatal(err)
 	}
-	h.Env["FAKEGH_HOOK_RESPONSE"] = string(response)
+	h.Env["FAKEGIT_HOOK_RESPONSE"] = string(response)
 	return h
 }
 
@@ -32,7 +32,7 @@ func warningTransform(s *sandbox, id, text string, set map[string]any) config.Tr
 	if err != nil {
 		s.t.Fatal(err)
 	}
-	t.Env["FAKEGH_HOOK_RESPONSE"] = string(response)
+	t.Env["FAKEGIT_HOOK_RESPONSE"] = string(response)
 	return t
 }
 
@@ -46,9 +46,9 @@ func TestWarningsRunGhInOrderAndKeepDecisionLogs(t *testing.T) {
 			s := newSandbox(t)
 			secret := "ghp_" + strings.Repeat("w", 36)
 			s.env["GH_TOKEN"] = secret
-			s.env["FAKEGH_EXIT"] = strconv.Itoa(tc.exit)
-			setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh output\n"))
-			setBytes(s.env, "FAKEGH_STDERR_B64", []byte("gh diagnostic\n"))
+			s.env["FAKEGIT_EXIT"] = strconv.Itoa(tc.exit)
+			setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git output\n"))
+			setBytes(s.env, "FAKEGIT_STDERR_B64", []byte("git diagnostic\n"))
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = tc.mode
 				yes := true
@@ -58,7 +58,7 @@ func TestWarningsRunGhInOrderAndKeepDecisionLogs(t *testing.T) {
 					{ID: "second", Decision: "warn", Reason: "whole operation"},
 				}
 				c.Transforms = []config.Transform{
-					warningTransform(s, "rewrite", "added session id", map[string]any{"/operations/0/texts/body/value": "changed"}),
+					warningTransform(s, "rewrite", "added session id", nil),
 					warningTransform(s, "unchanged", "checked request", nil),
 				}
 				c.Hooks = []config.Hook{
@@ -71,15 +71,14 @@ func TestWarningsRunGhInOrderAndKeepDecisionLogs(t *testing.T) {
 				}
 				if tc.supervised {
 					c.Hooks = append(c.Hooks,
-						warningHook(s, "post-allow", config.PhasePost, protocol.DecisionAllow, "after gh"),
+						warningHook(s, "post-allow", config.PhasePost, protocol.DecisionAllow, "after git"),
 						warningHook(s, "post-deny", config.PhasePost, protocol.DecisionDeny, "ignored post deny warning"),
 					)
 				}
 			})
-			args := []string{"issue", "comment", "1", "-R", "o/r", "--body", "original"}
-			got := s.gh(nil, args...)
+			args := []string{"notes", "add", "1", "-R", "o/r", "--body", "original"}
+			got := s.git(nil, args...)
 			got.code(t, tc.exit)
-			args[len(args)-1] = "changed"
 			s.onlyRecord(args, nil)
 			want := "gthok: warning from rule first\n  review [REDACTED]\n  carefully\\x1b[31m\n" +
 				"gthok: warning from rule second\n  whole operation\n" +
@@ -87,7 +86,7 @@ func TestWarningsRunGhInOrderAndKeepDecisionLogs(t *testing.T) {
 				"gthok: warning from transform unchanged\n  checked request\n" +
 				"gthok: warning from hook allow\n  allowed advice\n" +
 				"gthok: warning from hook abstain\n  abstaining advice\n" +
-				"gh diagnostic\n"
+				"git diagnostic\n"
 			warnings := []protocol.Warning{
 				{Source: "rule", ID: "first", Text: "review [REDACTED]\ncarefully\x1b[31m"},
 				{Source: "rule", ID: "second", Text: "whole operation"},
@@ -97,10 +96,10 @@ func TestWarningsRunGhInOrderAndKeepDecisionLogs(t *testing.T) {
 				{Source: "hook", ID: "abstain", Text: "abstaining advice"},
 			}
 			if tc.supervised {
-				want += "gthok: warning from hook post-allow\n  after gh\n"
-				warnings = append(warnings, protocol.Warning{Source: "hook", ID: "post-allow", Text: "after gh"})
+				want += "gthok: warning from hook post-allow\n  after git\n"
+				warnings = append(warnings, protocol.Warning{Source: "hook", ID: "post-allow", Text: "after git"})
 			}
-			if string(got.stderr) != want || string(got.stdout) != "gh output\n" {
+			if string(got.stderr) != want || string(got.stdout) != "git output\n" {
 				t.Fatalf("stdout=%q stderr=%q; want stderr=%q", got.stdout, got.stderr, want)
 			}
 			logs := s.logs()
@@ -132,10 +131,10 @@ func TestWarningsDoNotChangeDenialBytes(t *testing.T) {
 		})
 	}
 	configure(false)
-	baseline := s.gh(nil, "version")
+	baseline := s.git(nil, "version")
 	baseline.code(t, 77)
 	configure(true)
-	warned := s.gh(nil, "version")
+	warned := s.git(nil, "version")
 	warned.code(t, 77)
 	if !bytes.Equal(baseline.stderr, warned.stderr) || !bytes.Equal(baseline.stdout, warned.stdout) {
 		t.Fatalf("denial changed: baseline=%q warned=%q", baseline.stderr, warned.stderr)
@@ -149,7 +148,7 @@ func TestDenyResponseWarningIgnored(t *testing.T) {
 		c.Policy.Mode = config.ModeEnforce
 		c.Hooks = []config.Hook{warningHook(s, "gate", config.PhasePre, protocol.DecisionDeny, "not denial text")}
 	})
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 77)
 	if want := "gthok: denied by hook gate\n  - hook gate: blocked\n"; string(got.stderr) != want {
 		t.Fatalf("stderr=%q, want=%q", got.stderr, want)
@@ -217,7 +216,7 @@ func TestContinuedWarningKeepsDecisionLog(t *testing.T) {
 		h.ContinueOnError = true
 		c.Hooks = []config.Hook{h}
 	})
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 0)
 	if want := "gthok: warning from hook advice (continue-on-error)\n  blocked\n"; string(got.stderr) != want {
 		t.Fatalf("stderr=%q, want=%q", got.stderr, want)

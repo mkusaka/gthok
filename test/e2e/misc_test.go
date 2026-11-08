@@ -27,9 +27,9 @@ func TestMiscEnvironmentRule(t *testing.T) {
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = config.ModeEnforce
 				c.Policy.Rules = []config.Rule{{ID: "no-worker-merges", Decision: "deny", Reason: "worker merges disabled",
-					Match: config.Match{Env: map[string]string{"MALL_GH_WORKER": "1"}, Operations: config.StringList{"pr.merge.*"}}}}
+					Match: config.Match{Env: map[string]string{"MALL_GH_WORKER": "1"}, Commands: config.StringList{"push"}}}}
 			})
-			args := []string{"pr", "merge", "7", "--admin", "-R", "acme/project"}
+			args := []string{"push", "origin", "7", "--admin", "-R", "acme/project"}
 			explained := s.management(nil, append([]string{"explain", "--no-resolve", "--"}, args...)...)
 			explained.code(t, 0)
 			want, exit := "allow", 0
@@ -39,7 +39,7 @@ func TestMiscEnvironmentRule(t *testing.T) {
 			if !bytes.HasPrefix(explained.stdout, []byte("Decision: "+want+" (mode=enforce)")) {
 				t.Fatalf("environment rule explanation=%s", explained.stdout)
 			}
-			result := s.gh(nil, args...)
+			result := s.git(nil, args...)
 			result.code(t, exit)
 			if exit == 77 {
 				s.absentRecord()
@@ -66,8 +66,8 @@ func TestMiscEnvironmentHookSelection(t *testing.T) {
 					h.Env["MALL_GH_WORKER"] = "0"
 					c.Hooks = []config.Hook{h}
 				})
-				args := []string{"pr", "merge", "7", "--admin", "-R", "acme/project"}
-				s.gh(nil, args...).code(t, 0)
+				args := []string{"push", "origin", "7", "--admin", "-R", "acme/project"}
+				s.git(nil, args...).code(t, 0)
 				s.onlyRecord(args, nil)
 				if worker == "1" {
 					input := s.hookInput("worker")
@@ -103,11 +103,11 @@ func TestMiscEnvironmentStdinPolicy(t *testing.T) {
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = config.ModeEnforce
 				c.Policy.Rules = []config.Rule{{ID: "no-worker-merges", Decision: "deny",
-					Match: config.Match{Env: map[string]string{"MALL_GH_WORKER": "1"}, Operations: config.StringList{"pr.merge.*"}}}}
+					Match: config.Match{Env: map[string]string{"MALL_GH_WORKER": "1"}, Commands: config.StringList{"push"}}}}
 			})
 			input := []byte(`{"query":"mutation { mergePullRequest(input:{pullRequestId:\"PR_test_node\"}) { clientMutationId } }"}`)
-			args := []string{"api", "graphql", "--input", "-"}
-			result := s.gh(input, args...)
+			args := []string{"push", "origin", "main"}
+			result := s.git(input, args...)
 			if worker == "1" {
 				result.code(t, 77)
 				s.absentRecord()
@@ -137,7 +137,7 @@ func TestMiscHooksExpect(t *testing.T) {
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = tc.mode
 				h := s.hook("pre", config.PhasePre)
-				h.Env["FAKEGH_HOOK_DECISION"] = tc.hookDecision
+				h.Env["FAKEGIT_HOOK_DECISION"] = tc.hookDecision
 				c.Hooks = []config.Hook{h}
 				if tc.ruleDecision != "" {
 					c.Policy.Rules = []config.Rule{{ID: "audit", Decision: tc.ruleDecision}}
@@ -214,7 +214,7 @@ func TestMiscDevelopmentVersionAndDoctor(t *testing.T) {
 			if !bytes.HasPrefix(result.stdout, []byte("gthok "+tc.version+"\n")) {
 				t.Fatalf("version=%s", result.stdout)
 			}
-			setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+			setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 			result = s.run(tc.path, nil, "doctor", "--json")
 			result.code(t, 0)
 			var checks []install.Check

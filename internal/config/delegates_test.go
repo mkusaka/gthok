@@ -43,10 +43,7 @@ func TestDelegateConfig(t *testing.T) {
 			t.Fatalf("accepted duplicate ID: %s", extra)
 		}
 	}
-	api := strings.Replace(valid, "level: L1, operation: pr.view", "level: L2, command: api, method: GET", 1)
-	if _, err := Parse([]byte(api), ""); err != nil {
-		t.Fatal(err)
-	}
+
 }
 
 func TestDelegateTrustAndLayers(t *testing.T) {

@@ -29,7 +29,6 @@ func Generate(name string) (map[string]any, error) {
 		if name != "config" {
 			delete(props, "runtime")
 			delete(props, "logging")
-			delete(props, "extensions")
 		}
 		trustProps := props["trust"].(map[string]any)["properties"].(map[string]any)
 		if name == "project-config" {

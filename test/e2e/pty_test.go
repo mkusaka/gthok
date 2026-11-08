@@ -35,8 +35,8 @@ func TestPTYResizeAndCtrlCExactlyOnce(t *testing.T) {
 			if supervised {
 				s.configure(func(c *config.Config) { c.Hooks = []config.Hook{s.hook("post", "post")} })
 			}
-			s.env["FAKEGH_MODE"] = "pty"
-			cmd, cancel := s.command(filepath.Join(s.bin, "gh"), nil, "version")
+			s.env["FAKEGIT_MODE"] = "pty"
+			cmd, cancel := s.command(filepath.Join(s.bin, "git"), nil, "version")
 			defer cancel()
 			cmd.Stdin = nil
 			cmd.SysProcAttr = nil

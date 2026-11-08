@@ -28,7 +28,7 @@ type Runner struct {
 	BaseDir     string
 	Concurrency int
 	Env         []string
-	RealGh      string
+	RealGit     string
 	Now         func() time.Time
 	Redact      func(string) string
 	// Redactor is shared across serial transforms, hook input and diagnostics.

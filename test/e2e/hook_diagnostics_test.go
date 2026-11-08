@@ -20,11 +20,11 @@ func TestHookMalfunctionShowsStderrTail(t *testing.T) {
 		c.Policy.Mode = config.ModeEnforce
 		h := s.hook("gate", "pre")
 		h.OnError = config.OnErrorDeny
-		h.Env["FAKEGH_HOOK_EXIT"] = "127"
-		setBytes(h.Env, "FAKEGH_HOOK_STDERR_B64", []byte("booting\nenv: bun: No such file or directory\n"))
+		h.Env["FAKEGIT_HOOK_EXIT"] = "127"
+		setBytes(h.Env, "FAKEGIT_HOOK_STDERR_B64", []byte("booting\nenv: bun: No such file or directory\n"))
 		c.Hooks = []config.Hook{h}
 	})
-	result := s.gh(nil, "pr", "close", "1", "-R", "o/r")
+	result := s.git(nil, "branch", "-D", "topic")
 	result.code(t, 78)
 	s.absentRecord()
 	out := string(result.stderr)
@@ -45,13 +45,13 @@ func TestEventSourceAndPrintInputStreams(t *testing.T) {
 	s.configure(func(c *config.Config) {
 		c.Hooks = []config.Hook{{ID: "source", Phase: config.PhasePre, Command: []string{script}}}
 	})
-	s.gh(nil, "pr", "view", "1", "-R", "o/r").code(t, 0)
-	s.management(nil, "hooks", "test", "--", "pr", "view", "1", "-R", "o/r").code(t, 0)
+	s.git(nil, "show", "HEAD", "1", "-R", "o/r").code(t, 0)
+	s.management(nil, "hooks", "test", "--", "show", "HEAD", "1", "-R", "o/r").code(t, 0)
 	data, err := os.ReadFile(record)
 	if err != nil || strings.TrimSpace(string(data)) != "shim test" {
 		t.Fatalf("GTHOK_EVENT_SOURCE values = %q, %v", data, err)
 	}
-	result := s.management(nil, "hooks", "test", "--print-input", "--", "pr", "view", "1", "-R", "o/r")
+	result := s.management(nil, "hooks", "test", "--print-input", "--", "show", "HEAD", "1", "-R", "o/r")
 	result.code(t, 0)
 	var input map[string]any
 	if err := json.Unmarshal(result.stdout, &input); err != nil {

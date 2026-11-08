@@ -28,7 +28,7 @@ func NextDepth(env []string) (newEnv []string, depth int, err error) {
 		}
 	}
 	if depth >= MaxDepth {
-		return nil, MaxDepth + 1, fmt.Errorf("%s recursion limit %d exceeded; check real gh discovery", DepthEnv, MaxDepth)
+		return nil, MaxDepth + 1, fmt.Errorf("%s recursion limit %d exceeded; check real git discovery", DepthEnv, MaxDepth)
 	}
 	depth++
 	newEnv = make([]string, 0, len(env)+1)

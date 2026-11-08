@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -22,7 +21,6 @@ import (
 	"github.com/mkusaka/gthok/internal/logging"
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize"
-	"github.com/mkusaka/gthok/internal/normalize/apiargs"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/process"
 	"github.com/mkusaka/gthok/internal/protocol"
@@ -30,20 +28,20 @@ import (
 	"github.com/mkusaka/gthok/internal/resolve"
 )
 
-// Wrapper executes args as real gh, enforcing configured pre-decisions. It
+// Wrapper executes args as real git, enforcing configured pre-decisions. It
 // returns only on denial/error; successful Exec replaces the process, and Run
 // terminates through Result.Exit to preserve the child's exact wait status.
 func Wrapper(args []string) int {
 	return wrapper(args, os.Args[0], "shim")
 }
 
-// Version is the gthok version reported under `gh --version`; set by main.
+// Version is the gthok version reported under `git --version`; set by main.
 var Version = "dev"
 
-// execGh replaces the process with gh, except for `gh --version` / `gh version`
-// on a terminal, which runs gh and then reports gthok below gh's own version.
+// execGit replaces the process with git, except for `git --version` / `git version`
+// on a terminal, which runs git and then reports gthok below git's own version.
 // Piped output stays byte-identical for scripts and hooks that parse it.
-func execGh(opts process.Options, args []string) error {
+func execGit(opts process.Options, args []string) error {
 	if len(args) != 1 || args[0] != "--version" && args[0] != "version" || !install.IsTTY(os.Stdout) {
 		return process.Exec(opts)
 	}
@@ -79,8 +77,10 @@ func wrapper(args []string, argv0, via string) int {
 	if err != nil {
 		return fatal(err, 1)
 	}
-	if !config.HasConfig(cwd, env) {
-		real, err := realGh(nil, env)
+	configCwd := effectiveConfigDir(args, cwd, env)
+	_, configEnv := effectiveContext(args, cwd, env)
+	if !config.HasConfig(configCwd, configEnv) {
+		real, err := realGit(nil, env)
 		if err != nil {
 			return fatal(err, 127)
 		}
@@ -88,7 +88,7 @@ func wrapper(args []string, argv0, via string) int {
 		if err != nil {
 			return fatal(err, 1)
 		}
-		err = execGh(process.Options{Path: real, Args: append([]string{argv0}, args...), Env: childEnv}, args)
+		err = execGit(process.Options{Path: real, Args: append([]string{argv0}, args...), Env: childEnv}, args)
 		return fatal(err, process.StartErrorExitCode(err))
 	}
 	started := time.Now()
@@ -100,13 +100,13 @@ func wrapper(args []string, argv0, via string) int {
 		}
 	}
 	redactor = redact.New(env)
-	cfg, notes, configErr := config.LoadEffective(config.DefaultPath(env), cwd, env)
+	cfg, notes, configErr := config.LoadEffective(config.DefaultPath(env), configCwd, configEnv)
 	failClosed := config.FailClosed(configErr, env)
 	var real string
 	var childEnv []string
 	var opts process.Options
 	if !failClosed {
-		real, err = realGh(cfg, env)
+		real, err = realGit(cfg, env)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "gthok: %s.\n", redactor.String(err.Error()))
 			return 127
@@ -132,7 +132,7 @@ func wrapper(args []string, argv0, via string) int {
 	}
 	if configErr == nil && cfg.Logging.Enabled != nil && !*cfg.Logging.Enabled && len(cfg.Hooks) == 0 && len(cfg.Transforms) == 0 && len(cfg.Delegates) == 0 && len(cfg.IgnoredHooks) == 0 && len(cfg.Policy.Rules) == 0 && cfg.Policy.Mode == config.ModeObserve {
 		warnIgnoredHooks()
-		err = execGh(opts, args)
+		err = execGit(opts, args)
 		return fatal(err, process.StartErrorExitCode(err))
 	}
 	eventID := logging.NewInvocationID()
@@ -153,7 +153,7 @@ func wrapper(args []string, argv0, via string) int {
 		logOpenErr = nil
 		record.DurationMs = time.Since(started).Milliseconds()
 		// Config failures are errors, not routine diagnostics: retain them at
-		// decision log level even when the requested gh operation is allowed.
+		// decision log level even when the requested git operation is allowed.
 		record.Errors = append(record.Errors, cfg.Diagnostics...)
 		if logger != nil {
 			debug(logger.Write(record))
@@ -169,7 +169,7 @@ func wrapper(args []string, argv0, via string) int {
 		warnIgnoredHooks()
 		logRecord()
 		execStarted := time.Now()
-		execErr := execGh(opts, args)
+		execErr := execGit(opts, args)
 		code := process.StartErrorExitCode(execErr)
 		record.Decision = "exec-error"
 		record.Exec = execInfo(process.Result{ExitCode: code, StartErr: execErr, Duration: time.Since(execStarted)})
@@ -178,7 +178,7 @@ func wrapper(args []string, argv0, via string) int {
 	}
 	if configErr != nil {
 		if failClosed {
-			printDenials(os.Stderr, []denial{{Source: "config", Message: configErr.Error() + "\nfail-closed: not running gh — run 'gthok config validate'"}}, redactor.String)
+			printDenials(os.Stderr, []denial{{Source: "config", Message: configErr.Error() + "\nfail-closed: not running git — run 'gthok config validate'"}}, redactor.String)
 			record.Decision = "deny-invalid-config"
 			record.Diagnostics = []string{"invalid config: " + configErr.Error()}
 			logRecord()
@@ -186,7 +186,7 @@ func wrapper(args []string, argv0, via string) int {
 		}
 		if warnInvalidConfig(config.Dir(env), configFailurePath(config.DefaultPath(env), notes), configErr, started) {
 			warning := strings.Join(strings.Fields(redactor.String(configErr.Error())), " ")
-			fmt.Fprintf(os.Stderr, "gthok: invalid config (%s); running gh without hooks — run 'gthok config validate'\n", warning)
+			fmt.Fprintf(os.Stderr, "gthok: invalid config (%s); running git without hooks — run 'gthok config validate'\n", warning)
 		}
 		record.Decision = "passthrough-invalid-config"
 		record.Diagnostics = []string{"invalid config: " + configErr.Error()}
@@ -196,7 +196,7 @@ func wrapper(args []string, argv0, via string) int {
 		record.Decision = "passthrough-nested"
 		return execLogged()
 	}
-	inv := invocation(cfg, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured})
+	inv := invocation(cfg, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured}, true)
 	result := normalize.Normalize(inv)
 	spoolNeeded, stdinSkipped := shouldSpool(cfg, result, env)
 	if spoolNeeded {
@@ -209,12 +209,10 @@ func wrapper(args []string, argv0, via string) int {
 		result = normalize.Normalize(inv)
 	}
 	fillTextSizes(&result, cwd)
-	subject := policy.Subject{Result: result, Argv: result.Source.Argv, Token: policy.TokenKind(env), Env: env}
 	var resolved *model.ResolvedContext
-	localNeeded := needsLocal(cfg, subject)
 	helperEnv, hookEnv := env, childEnv
 	releaseNested := func() {}
-	if len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0 || localNeeded && cfg.Runtime.ResolveAPI != "never" {
+	if len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0 {
 		helperEnv, releaseNested, err = nestedEnvironment(env)
 		if err != nil {
 			return fatal(err, 1)
@@ -222,8 +220,8 @@ func wrapper(args []string, argv0, via string) int {
 		hookEnv = append(childEnv, "GTHOK_NESTED_TOKEN="+helperEnv["GTHOK_NESTED_TOKEN"])
 	}
 	defer releaseNested()
-	runner := &hooks.Runner{Hooks: cfg.Hooks, BaseDir: cfg.Dir, Concurrency: cfg.Runtime.HookConcurrency, Env: hookEnv, RealGh: real, Redact: redactor.String, Redactor: redactor, Source: via}
-	ctx, stopHelpers := watchHelpers(helperSignals, len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0 || localNeeded && cfg.Runtime.ResolveAPI != "never")
+	runner := &hooks.Runner{Hooks: cfg.Hooks, BaseDir: cfg.Dir, Concurrency: cfg.Runtime.HookConcurrency, Env: hookEnv, RealGit: real, Redact: redactor.String, Redactor: redactor, Source: via}
+	ctx, stopHelpers := watchHelpers(helperSignals, len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0)
 	transformed := runTransforms(ctx, cfg, runner, inv, result, real, eventID, via)
 	defer transformed.cleanup()
 	if transformed.denial != nil {
@@ -274,30 +272,14 @@ func wrapper(args []string, argv0, via string) int {
 			helperEnv["GTHOK_NESTED"], helperEnv["GTHOK_NESTED_TOKEN"] = "1", token
 		}
 	}
-	subject.Env, subject.Token = inv.Env, policy.TokenKind(inv.Env)
-	subject.Result, subject.Argv = result, result.Source.Argv
-	localNeeded = needsLocal(cfg, subject)
-	if localNeeded {
-		resolver := &resolve.Resolver{Env: helperEnv, Cwd: cwd, RealGh: real, Timeout: cfg.Runtime.ResolveTimeout.D()}
+	subject := policy.Subject{Result: result, Argv: result.Source.Argv, Env: inv.Env}
+	if cfg.Runtime.ResolveAPI != "never" {
+		resolveCwd, resolveEnv := effectiveContext(inv.Argv, cwd, helperEnv)
+		resolver := &resolve.Resolver{Env: resolveEnv, Cwd: resolveCwd, RealGit: real, Timeout: cfg.Runtime.ResolveTimeout.D()}
 		local := resolver.Local()
 		resolved = &local
 		record.Diagnostics = append(record.Diagnostics, resolver.Fill(ctx, &result, nil, false)...)
 		subject.Result, subject.Context = result, resolved
-		if cfg.Runtime.ResolveAPI != "never" {
-			// Fill only the operation whose unresolved repository/host could
-			// affect this invocation's rules or enabled pre/post hooks.
-			for i, op := range result.Operations {
-				need := resolutionNeeds(cfg, subject, i)
-				if len(need) == 0 {
-					continue
-				}
-				one := model.Result{SchemaVersion: result.SchemaVersion, Classification: result.Classification, Source: result.Source, Operations: []model.Operation{op}}
-				record.Diagnostics = append(record.Diagnostics, resolver.Fill(ctx, &one, need, true)...)
-				result.Operations[i] = one.Operations[0]
-			}
-			resolver.Fill(ctx, &result, nil, false)
-			subject.Result = result
-		}
 	}
 	evaluation := evaluateConfig(cfg, subject)
 	input := hookInput(inv, real, result, resolved, evaluation, eventID)
@@ -386,7 +368,7 @@ func wrapper(args []string, argv0, via string) int {
 		debug(execution.WaitErr)
 	}
 	input.Result = execInfo(execution)
-	// Candidates were selected before gh ran; apply match.result/exitCode now.
+	// Candidates were selected before git ran; apply match.result/exitCode now.
 	subject.Outcome = input.Result
 	post = runner.Select(config.PhasePost, subject)
 	runner.Env = opts.Env
@@ -410,39 +392,24 @@ func wrapper(args []string, argv0, via string) int {
 	return 0
 }
 
-// API body-dependent matches remain conservative. Native text provenance uses
-// the existing flag parse, including bundled shorthands and interactive flows.
+// Capture input only when a configured pre-decision can act on it.
 func shouldSpool(c *config.Config, result model.Result, env map[string]string) (spool, skipped bool) {
 	argv := result.Source.Argv
-	needed, which := normalize.NeedsStdin(argv)
+	needed, _ := normalize.NeedsStdin(argv)
 	if !needed {
 		return false, false
 	}
-	api := which == "api"
-	s := policy.Subject{Result: result, Argv: argv, Token: policy.TokenKind(env), Env: env}
-	if api {
-		req, _ := apiargs.Parse(argv[1:])
-		level := model.LevelL2
-		if apiargs.IsGraphQL(req) {
-			level = model.LevelL3
-		}
-		s.Result = model.NewUnknown(level, model.UnknownInputUnavailable, "stdin not captured")
-	}
-	// unless is ignored here: excluding by an unknown api request's operations
-	// could skip the full pipeline, so the fast path stays conservative.
+	s := policy.Subject{Result: result, Argv: argv, Env: env}
+	// Unknown input cannot safely justify an unless exclusion.
 	couldMatch := func(m config.Match) bool {
-		if api {
-			m.Operations, m.Effects, m.Parameters, m.Methods = nil, nil, nil, nil
-		}
 		yes, _ := policy.Matches(m, nil, s)
 		if !yes {
 			yes, _ = policy.MatchMaybe(m, nil, s)
 		}
 		return yes
 	}
-	if api && c.Policy.Mode == config.ModeEnforce {
-		if c.Policy.UnknownInput == config.UnknownDeny || c.Policy.UnknownMutation == config.UnknownDeny ||
-			len(c.Policy.ProtectedRepositories) > 0 && c.Policy.ProtectedUnknown == config.UnknownDeny {
+	if c.Policy.Mode == config.ModeEnforce {
+		if c.Policy.UnknownInput == config.UnknownDeny || c.Policy.UnknownMutation == config.UnknownDeny {
 			return true, false
 		}
 		for _, rule := range c.Policy.Rules {
@@ -510,113 +477,6 @@ func fillTextSizes(result *model.Result, cwd string) {
 			}
 		}
 	}
-}
-
-func needsLocal(c *config.Config, s policy.Subject) bool {
-	if c.Policy.Mode == config.ModeEnforce && len(c.Policy.ProtectedRepositories) > 0 {
-		for _, op := range s.Result.Operations {
-			if consideredOperation(op) && op.Effect != model.EffectRead && unresolvedTarget(s.Result.Classification.Level, op, "target.repository") {
-				return true
-			}
-		}
-	}
-	// Resolving also matters when only an unless entry is unresolved for a
-	// selected operation: the resolved target could exclude it.
-	relevant := func(m config.Match, unless []config.Match) bool {
-		if maybe, _ := policy.MatchMaybe(m, unless, s); maybe {
-			return true
-		}
-		_, indexes := policy.Matches(m, unless, s)
-		for _, i := range indexes {
-			if repo, host := policy.UnlessMaybe(unless, s, i); repo || host {
-				return true
-			}
-		}
-		return false
-	}
-	for _, rule := range c.Policy.Rules {
-		if relevant(rule.Match, rule.Unless) {
-			return true
-		}
-	}
-	for _, h := range c.Hooks {
-		if (h.Enabled == nil || *h.Enabled) && relevant(h.Match, h.Unless) {
-			return true
-		}
-	}
-	for _, d := range c.Delegates {
-		if relevant(d.Match, d.Unless) {
-			return true
-		}
-	}
-	for _, h := range c.IgnoredHooks {
-		if h.GateBlocked && relevant(h.Match, h.Unless) {
-			return true
-		}
-	}
-	return false
-}
-
-func consideredOperation(op model.Operation) bool {
-	return op.Execution != model.ExecutionSkipped && op.Execution != model.ExecutionNotSelected
-}
-
-func resolutionNeeds(c *config.Config, s policy.Subject, index int) []string {
-	op := s.Result.Operations[index]
-	if !consideredOperation(op) {
-		return nil
-	}
-	repo, host := false, false
-	if c.Policy.Mode == config.ModeEnforce && len(c.Policy.ProtectedRepositories) > 0 && op.Effect != model.EffectRead && unresolvedTarget(s.Result.Classification.Level, op, "target.repository") {
-		repo = true
-	}
-	match := func(m config.Match, unless []config.Match) {
-		if _, indexes := policy.MatchMaybe(m, unless, s); slices.Contains(indexes, index) {
-			repo = repo || len(m.Repositories) > 0 && unresolvedTarget(s.Result.Classification.Level, op, "target.repository")
-			host = host || len(m.Hosts) > 0 && unresolvedTarget(s.Result.Classification.Level, op, "target.host")
-		} else if _, indexes = policy.Matches(m, unless, s); !slices.Contains(indexes, index) {
-			return
-		}
-		unlessRepo, unlessHost := policy.UnlessMaybe(unless, s, index)
-		repo = repo || unlessRepo && unresolvedTarget(s.Result.Classification.Level, op, "target.repository")
-		host = host || unlessHost && unresolvedTarget(s.Result.Classification.Level, op, "target.host")
-	}
-	for _, rule := range c.Policy.Rules {
-		match(rule.Match, rule.Unless)
-	}
-	for _, h := range c.Hooks {
-		if h.Enabled == nil || *h.Enabled {
-			match(h.Match, h.Unless)
-		}
-	}
-	for _, h := range c.IgnoredHooks {
-		if h.GateBlocked {
-			match(h.Match, h.Unless)
-		}
-	}
-	var need []string
-	if repo {
-		need = append(need, "target.repository")
-	}
-	if host {
-		need = append(need, "target.host")
-	}
-	return need
-}
-
-func unresolvedTarget(level model.Level, op model.Operation, field string) bool {
-	if field == "target.repository" && op.Target.Repository == "" {
-		return !policy.RepositoryLess(level, op)
-	}
-	if field == "target.host" && op.Target.Host == "" {
-		return true
-	}
-	for _, u := range op.Unresolved {
-		if u.Field == field {
-			return true
-		}
-	}
-	return false
 }
 
 // watchHelpers owns signals only outside Exec/Run. The returned stop function

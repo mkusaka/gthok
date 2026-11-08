@@ -33,10 +33,10 @@ func TestHookTerminalOutput(t *testing.T) {
 				yes := true
 				c.Logging.Enabled = &yes
 				h := s.hook("review", config.PhasePre)
-				h.Env["FAKEGH_HOOK_RESPONSE"] = string(response)
+				h.Env["FAKEGIT_HOOK_RESPONSE"] = string(response)
 				c.Hooks = []config.Hook{h}
 			})
-			got := s.gh(nil, "version")
+			got := s.git(nil, "version")
 			got.code(t, 77)
 			s.absentRecord()
 			entry := bytes.TrimPrefix(got.stderr, []byte("gthok: denied by hook review\n"))
@@ -126,11 +126,11 @@ func TestManagementTerminalDiagnostics(t *testing.T) {
 	t.Run("print-input", func(t *testing.T) {
 		s := newSandbox(t)
 		body := "\x1b[31m\r\n\t" + strings.Repeat("body\n", 100) + strings.Repeat("x", 10<<10)
-		got := s.management(nil, "hooks", "test", "--print-input", "--", "pr", "create", "-R", "acme/project", "-t", "title", "-b", body)
+		got := s.management(nil, "hooks", "test", "--print-input", "--", "commit", "--allow-empty", "-R", "acme/project", "-t", "title", "-b", body)
 		got.code(t, 0)
 		var input protocol.Input
 		decodeJSON(t, got.stdout, &input)
-		if len(input.Operations) != 1 || input.Operations[0].Texts == nil || input.Operations[0].Texts.Body == nil || input.Operations[0].Texts.Body.Value != body {
+		if len(input.Operations) != 1 || input.Invocation.Argv[len(input.Invocation.Argv)-1] != body {
 			t.Fatalf("terminal formatting altered print-input JSON: %s", got.stdout)
 		}
 	})

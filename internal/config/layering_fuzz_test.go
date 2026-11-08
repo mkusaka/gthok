@@ -103,7 +103,6 @@ func checkLayeredConfig(t *testing.T, user, project, local string) (base, eff *C
 		{base.Policy.Mode, eff.Policy.Mode},
 		{base.Policy.UnknownMutation, eff.Policy.UnknownMutation},
 		{base.Policy.UnknownInput, eff.Policy.UnknownInput},
-		{base.Policy.ProtectedUnknown, eff.Policy.ProtectedUnknown},
 	} {
 		if rank[pair[1]] < rank[pair[0]] {
 			t.Fatalf("overlay weakened policy %q -> %q", pair[0], pair[1])
@@ -111,9 +110,6 @@ func checkLayeredConfig(t *testing.T, user, project, local string) (base, eff *C
 	}
 	if !hasPrefix(eff.Policy.Rules, base.Policy.Rules) {
 		t.Fatalf("overlay dropped or changed user rules: %+v", eff.Policy.Rules)
-	}
-	if !hasPrefix(eff.Policy.ProtectedRepositories, base.Policy.ProtectedRepositories) {
-		t.Fatalf("overlay dropped protected repositories: %v", eff.Policy.ProtectedRepositories)
 	}
 	if !reflect.DeepEqual(eff.Trust, base.Trust) || !reflect.DeepEqual(eff.Runtime, base.Runtime) || !reflect.DeepEqual(eff.Logging, base.Logging) {
 		t.Fatalf("overlay changed user-only settings: trust %+v runtime %+v logging %+v", eff.Trust, eff.Runtime, eff.Logging)

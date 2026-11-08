@@ -45,13 +45,23 @@ type managementAnalysis struct {
 	cleanup          func()
 }
 
-func managementAnalyze(args []string, resolveTargets, allowAPI, transform bool) (*managementAnalysis, error) {
+func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offlineNormalize bool) (*managementAnalysis, error) {
 	env := environment()
-	c, notes, cwd, err := managementLoad(env)
+	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	inv := invocation(c, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured})
+	c := &config.Config{Dir: config.Dir(env)}
+	c.ApplyDefaults()
+	var notes []string
+	if !offlineNormalize {
+		_, configEnv := effectiveContext(args, cwd, env)
+		c, notes, err = config.LoadEffective(config.DefaultPath(env), effectiveConfigDir(args, cwd, env), configEnv)
+		if err != nil {
+			return nil, err
+		}
+	}
+	inv := invocation(c, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured}, resolveTargets)
 	if needed, _ := normalize.NeedsStdin(expandedArgv(inv)); needed {
 		if install.IsTTY(os.Stdin) {
 			inv.Stdin.Status = model.StdinTTY
@@ -69,12 +79,12 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform bool) 
 	a := &managementAnalysis{config: c, notes: notes, cwd: cwd, env: env, invocation: inv, result: normalize.Normalize(inv), redactor: redact.New(env)}
 	a.cleanup = func() {}
 	if transform && len(c.Transforms) > 0 {
-		a.real, _ = realGh(c, env)
+		a.real, _ = realGit(c, env)
 		helperEnv, release, err := nestedEnvironment(env)
 		if err != nil {
 			return nil, err
 		}
-		runner := &hooks.Runner{BaseDir: c.Dir, Env: append(os.Environ(), "GTHOK_NESTED_TOKEN="+helperEnv["GTHOK_NESTED_TOKEN"]), RealGh: a.real, Redact: a.redactor.String, Redactor: a.redactor, Source: "test"}
+		runner := &hooks.Runner{BaseDir: c.Dir, Env: append(os.Environ(), "GTHOK_NESTED_TOKEN="+helperEnv["GTHOK_NESTED_TOKEN"]), RealGit: a.real, Redact: a.redactor.String, Redactor: a.redactor, Source: "test"}
 		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 		applied := runTransforms(ctx, c, runner, inv, a.result, a.real, logging.NewInvocationID(), "shim")
 		cancel()
@@ -92,7 +102,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform bool) 
 	if resolveTargets {
 		helperEnv := env
 		if allowAPI {
-			a.real, err = realGh(c, env)
+			a.real, err = realGit(c, env)
 			if err != nil {
 				a.cleanup()
 				return nil, err
@@ -105,7 +115,8 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform bool) 
 			}
 			defer cleanup()
 		}
-		r := &resolve.Resolver{Env: helperEnv, Cwd: cwd, RealGh: a.real, Timeout: c.Runtime.ResolveTimeout.D()}
+		resolveCwd, resolveEnv := effectiveContext(a.invocation.Argv, cwd, helperEnv)
+		r := &resolve.Resolver{Env: resolveEnv, Cwd: resolveCwd, RealGit: a.real, Timeout: c.Runtime.ResolveTimeout.D()}
 		local := r.Local()
 		a.context = &local
 		var need []string
@@ -127,7 +138,7 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform bool) 
 }
 
 func (a *managementAnalysis) subject(phase string) policy.Subject {
-	return policy.Subject{Result: a.result, Argv: a.result.Source.Argv, Context: a.context, Phase: phase, Token: policy.TokenKind(a.env), Env: a.env}
+	return policy.Subject{Result: a.result, Argv: a.result.Source.Argv, Context: a.context, Phase: phase, Env: a.env}
 }
 
 func (a *managementAnalysis) delegate() *delegates.Selection {
@@ -144,19 +155,20 @@ func (a *managementAnalysis) warnings() []protocol.Warning {
 }
 
 type managementInspectOptions struct {
-	noResolve   bool
-	asJSON      bool
-	allowAPI    bool
-	showSecrets bool
-	printInput  bool
-	hookID      string
+	noTransforms bool
+	noResolve    bool
+	asJSON       bool
+	allowAPI     bool
+	showSecrets  bool
+	printInput   bool
+	hookID       string
 }
 
 func managementInspect(command string, args []string, options managementInspectOptions) int {
 	if options.allowAPI && options.noResolve {
 		return managementUsageError("--allow-api cannot be combined with --no-resolve")
 	}
-	a, err := managementAnalyze(args, !options.noResolve, options.allowAPI, command != "normalize")
+	a, err := managementAnalyze(args, !options.noResolve, options.allowAPI, command != "normalize" && !options.noTransforms, command == "normalize" && options.noResolve)
 	if err != nil {
 		return managementFailure(err)
 	}
@@ -247,20 +259,20 @@ func managementHooksTest(args []string, phase string, exitCode int, asJSON bool,
 	if options.hookID != "" && !options.printInput {
 		return managementUsageError("--hook requires --print-input")
 	}
-	a, err := managementAnalyze(args, !options.noResolve, options.allowAPI, true)
+	a, err := managementAnalyze(args, !options.noResolve, options.allowAPI, true, false)
 	if err != nil {
 		return managementFailure(err)
 	}
 	defer a.cleanup()
-	// Discovery supplies hook helpers a real-gh path when available, but a pure
-	// hook test remains usable on machines without gh. No original gh is started.
-	a.real, _ = realGh(a.config, a.env)
+	// Discovery supplies hook helpers a real-git path when available, but a pure
+	// hook test remains usable on machines without git. No original git is started.
+	a.real, _ = realGit(a.config, a.env)
 	r := a.redactor
 	hookEnv := os.Environ()
 	if phase == config.PhasePost {
 		hookEnv = environmentList(a.env)
 	}
-	runner := hooks.Runner{Hooks: a.config.Hooks, BaseDir: a.config.Dir, Concurrency: a.config.Runtime.HookConcurrency, Env: hookEnv, RealGh: a.real, Redact: r.String, Redactor: r, Source: "test"}
+	runner := hooks.Runner{Hooks: a.config.Hooks, BaseDir: a.config.Dir, Concurrency: a.config.Runtime.HookConcurrency, Env: hookEnv, RealGit: a.real, Redact: r.String, Redactor: r, Source: "test"}
 	if exitCode < 0 || exitCode > 255 {
 		return managementUsageError("--exit-code must be 0-255")
 	}
@@ -294,7 +306,7 @@ func managementHooksTest(args []string, phase string, exitCode int, asJSON bool,
 		if options.hookID != "" {
 			target = "hook " + options.hookID
 		}
-		fmt.Fprintf(os.Stderr, "gthok: %s input for %s (source: test; hooks and gh not executed; invocation.via shows the real entry point)\n", phase, target)
+		fmt.Fprintf(os.Stderr, "gthok: %s input for %s (source: test; hooks and git not executed; invocation.via shows the real entry point)\n", phase, target)
 		if !options.showSecrets || a.envEdited {
 			masked := r.WithCount(func(display *redact.Redactor) {
 				input = display.HookInput(input)
@@ -366,7 +378,7 @@ func managementHooksTest(args []string, phase string, exitCode int, asJSON bool,
 			return code
 		}
 	} else {
-		_, _ = fmt.Fprintln(os.Stdout, "Synthetic hook test: original gh command is not executed.")
+		_, _ = fmt.Fprintln(os.Stdout, "Synthetic hook test: original git command is not executed.")
 		managementPrintTransformed(os.Stdout, a, false)
 		managementPrintWarnings(os.Stdout, warnings, r.String)
 		if phase == config.PhasePost {

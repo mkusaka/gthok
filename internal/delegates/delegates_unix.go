@@ -19,7 +19,7 @@ import (
 	"github.com/mkusaka/gthok/internal/process"
 )
 
-// NotHandled is reserved by the delegate protocol, not a normal gh exit code.
+// NotHandled is reserved by the delegate protocol, not a normal git exit code.
 const NotHandled = 125
 
 // Selection is safe for diagnostics: never include delegate env values.
@@ -29,7 +29,7 @@ type Selection struct {
 	Timeout config.Duration `json:"timeout"`
 	OnError string          `json:"onError"`
 	Action  string          `json:"action"`
-	Repo    string          `json:"repository,omitempty"`
+	Repo    string          `json:"repoRoot,omitempty"`
 }
 
 // Select returns only the first definite match, and only when the whole
@@ -43,23 +43,19 @@ func Select(c *config.Config, s policy.Subject) *Selection {
 			op := s.Result.Operations[indexes[0]]
 			command := append([]string(nil), d.Command...)
 			command[0] = c.DelegateCommandPath(d)
-			return &Selection{ID: d.ID, Command: command, Timeout: d.Timeout, OnError: d.OnError, Action: op.Action, Repo: op.Target.Repository}
+			return &Selection{ID: d.ID, Command: command, Timeout: d.Timeout, OnError: d.OnError, Action: op.Action, Repo: op.Target.RepoRoot}
 		}
 	}
 	return nil
 }
 
 func safe(r model.Result) bool {
-	if !r.Classification.MutationFree || len(r.Errors) > 0 || len(r.Operations) == 0 {
+	if !r.Classification.RetrySafe || !r.Classification.MutationFree || len(r.Errors) > 0 || len(r.Operations) == 0 {
 		return false
 	}
 	switch r.Classification.Level {
 	case model.LevelL1:
 		if r.Classification.Confidence != model.ConfidenceExact {
-			return false
-		}
-	case model.LevelL2:
-		if r.Source.Kind != "rest" || r.Source.Method != "GET" {
 			return false
 		}
 	default:
@@ -120,7 +116,7 @@ func Environment(base []string, overrides map[string]string, selected *Selection
 	values["GTHOK_DELEGATE_ID"] = selected.ID
 	values["GTHOK_ACTION"] = selected.Action
 	values["GTHOK_REPO"] = selected.Repo
-	values["GTHOK_REAL_GH"] = real
+	values["GTHOK_REAL_GIT"] = real
 	env := make([]string, 0, len(values))
 	for name, value := range values {
 		env = append(env, name+"="+value)
@@ -128,18 +124,18 @@ func Environment(base []string, overrides map[string]string, selected *Selection
 	return env
 }
 
-// Run supervises the delegate and, when safe, real gh once (never the next
-// delegate). A warning is returned to the caller before real gh starts.
+// Run supervises the delegate and, when safe, real git once (never the next
+// delegate). A warning is returned to the caller before real git starts.
 func Run(selected *Selection, overrides map[string]string, real process.Options, warn func(string)) process.Result {
 	started := time.Now()
 	fail := func(message string) process.Result {
-		warn(message + "; not running gh")
+		warn(message + "; not running git")
 		return process.Result{ExitCode: 78, Duration: time.Since(started)}
 	}
 	source := os.Stdin
 	if real.Stdin != nil {
 		// Analysis with an incomplete live spool cannot safely be read by two
-		// pumps. Such requests retain the ordinary real-gh execution path.
+		// pumps. Such requests retain the ordinary real-git execution path.
 		if real.Stdin.RequiresSupervision() {
 			return process.Run(context.Background(), real)
 		}
@@ -204,7 +200,7 @@ func Run(selected *Selection, overrides map[string]string, real process.Options,
 	if err != nil {
 		return fail(err.Error())
 	}
-	warn(fmt.Sprintf("%s; falling back to real gh", reason))
+	warn(fmt.Sprintf("%s; falling back to real git", reason))
 	result = process.Run(context.Background(), real)
 	result.Duration = time.Since(started)
 	return result

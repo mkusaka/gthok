@@ -8,6 +8,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/mkusaka/gthok/internal/gitmeta"
+	"github.com/mkusaka/gthok/internal/install"
 )
 
 // LocalName is the personal, uncommitted project config (like CLAUDE.local.md).
@@ -58,7 +61,7 @@ func mergeLocal(c *Config, notes []string, cwd string, env map[string]string) (*
 		return c, notes, nil
 	}
 	// A committed file would let any clone run hooks without trust.
-	if gitTracked(filepath.Dir(local), LocalName) {
+	if gitTracked(filepath.Dir(local), LocalName, c.Runtime.RealGit, env) {
 		notes = append(notes, fmt.Sprintf("Local config: %s (ignored: tracked by git; keep it uncommitted, e.g. in .git/info/exclude)", local))
 		return c, notes, nil
 	}
@@ -88,11 +91,50 @@ func mergeLocal(c *Config, notes []string, cwd string, env map[string]string) (*
 	return &merged, notes, nil
 }
 
-// gitTracked reports whether git tracks name in dir. Without git (or outside a
-// work tree) nothing is tracked.
-func gitTracked(dir, name string) bool {
+// A missing index proves untracked; failed queries must never grant local trust.
+func gitTracked(dir, name, override string, env map[string]string) bool {
+	gitdir, err := gitmeta.Directory(dir, env)
+	if err != nil {
+		return true
+	}
+	index := env["GIT_INDEX_FILE"]
+	if index == "" {
+		index = filepath.Join(gitdir, "index")
+	} else {
+		index = gitmeta.Absolute(dir, index)
+	}
+	if _, err := os.Stat(index); os.IsNotExist(err) {
+		return false
+	}
+	self, err := os.Executable()
+	if err != nil {
+		return true
+	}
+	if env["GTHOK_REAL_GIT"] != "" {
+		override = env["GTHOK_REAL_GIT"]
+	}
+	real, _, err := install.FindRealGit(install.DiscoverOptions{Self: self, PathEnv: env["PATH"], Override: override})
+	if err != nil {
+		return true
+	}
+	values := make(map[string]string, len(env)+3)
+	for k, v := range env {
+		values[k] = v
+	}
+	values["GIT_TERMINAL_PROMPT"], values["GIT_PAGER"], values["GIT_OPTIONAL_LOCKS"] = "0", "cat", "0"
+	var entries []string
+	for k, v := range values {
+		entries = append(entries, k+"="+v)
+	}
+	entries, _, err = install.NextDepth(entries)
+	if err != nil {
+		return true
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "git", "-C", dir, "ls-files", "--error-unmatch", "--", name)
-	return cmd.Run() == nil
+	cmd := exec.CommandContext(ctx, real, "-C", dir, "-c", "core.fsmonitor=false", "ls-files", "--error-unmatch", "--", name)
+	cmd.Env, cmd.WaitDelay = entries, 100*time.Millisecond
+	err = cmd.Run()
+	var exit *exec.ExitError
+	return err == nil || !errors.As(err, &exit) || exit.ExitCode() != 1 || ctx.Err() != nil
 }

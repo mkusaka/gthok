@@ -88,12 +88,12 @@ func secretEnvName(name string) bool {
 }
 
 var (
-	githubToken = regexp.MustCompile(`\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,}|v1\.[A-Fa-f0-9]{40})\b`)
-	jwtToken    = regexp.MustCompile(`\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
-	authValue   = regexp.MustCompile(`(?i)\b(bearer|token|basic)([ \t]+)([^\s,;"'<>]+)`)
-	authHeader  = regexp.MustCompile(`(?i)\b((?:proxy-)?authorization[ \t]*:[ \t]*)([^\s"'{}\[\]]+[^\r\n"'{}\[\]]*)`)
-	urlPassword = regexp.MustCompile(`(?i)([a-z][a-z0-9+.-]*://[^\s/@:]+:)[^\s/@]*@`)
-	privateKey  = regexp.MustCompile(`(?s)-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----.*?(?:-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----|\z)`)
+	githubToken    = regexp.MustCompile(`\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,}|v1\.[A-Fa-f0-9]{40})\b`)
+	jwtToken       = regexp.MustCompile(`\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
+	authValue      = regexp.MustCompile(`(?i)\b(bearer|token|basic)([ \t]+)([^\s,;"'<>]+)`)
+	authHeader     = regexp.MustCompile(`(?i)\b((?:proxy-)?authorization[ \t]*:[ \t]*)([^\s"'{}\[\]]+[^\r\n"'{}\[\]]*)`)
+	urlCredentials = regexp.MustCompile(`(?i)([a-z][a-z0-9+.-]*://)[^\s/@]+@`)
+	privateKey     = regexp.MustCompile(`(?s)-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----.*?(?:-----END (?:[A-Z0-9]+ )*PRIVATE KEY-----|\z)`)
 )
 
 func (r *Redactor) mark() string {
@@ -170,7 +170,7 @@ func (r *Redactor) replaceLearned(s string) string {
 }
 
 // String removes learned values wherever they occur, GitHub tokens, JWTs,
-// authorization values, URL passwords, and PEM private-key blocks. Unfinished
+// authorization values, URL credentials, and PEM private-key blocks. Unfinished
 // private-key blocks are redacted through the end of the string.
 func (r *Redactor) String(s string) string {
 	m := r.mark()
@@ -179,7 +179,7 @@ func (r *Redactor) String(s string) string {
 	s = r.replacePattern(s, jwtToken, m)
 	s = r.replacePattern(s, authHeader, "${1}"+m)
 	s = r.replacePattern(s, authValue, "${1}${2}"+m)
-	s = r.replacePattern(s, urlPassword, "${1}"+m+"@")
+	s = r.replacePattern(s, urlCredentials, "${1}"+m+"@")
 	if r != nil && r.replacer != nil {
 		s = r.replaceLearned(s)
 		// Replacements can join previously separated text into a learned value
@@ -253,8 +253,6 @@ func (r *Redactor) Value(v any) any {
 			key := r.String(k)
 			if sensitivePath(k) {
 				out[key] = r.mask(value)
-			} else if s, ok := value.(string); ok && k == "query" && looksGraphQL(s) {
-				out[key] = r.graphQL(s)
 			} else {
 				out[key] = r.Value(value)
 			}
@@ -268,8 +266,6 @@ func (r *Redactor) Value(v any) any {
 		for k, value := range v {
 			if sensitivePath(k) {
 				out[r.String(k)] = r.mask(value)
-			} else if k == "query" && looksGraphQL(value) {
-				out[r.String(k)] = r.graphQL(value)
 			} else {
 				out[r.String(k)] = r.String(value)
 			}
@@ -321,8 +317,6 @@ func (r *Redactor) Value(v any) any {
 				key, item := iter.Key().String(), iter.Value()
 				if sensitivePath(key) {
 					out[r.String(key)] = r.mask(item.Interface())
-				} else if key == "query" && item.Kind() == reflect.String && looksGraphQL(item.String()) {
-					out[r.String(key)] = r.graphQL(item.String())
 				} else {
 					out[r.String(key)] = r.Value(item.Interface())
 				}
@@ -367,9 +361,6 @@ func (r *Redactor) body(in []byte) []byte {
 	}
 	if bytes.HasPrefix(bytes.TrimSpace(in), []byte("[")) {
 		return []byte(r.mask(string(in)))
-	}
-	if looksGraphQL(string(in)) {
-		return []byte(r.graphQL(string(in)))
 	}
 	return []byte(r.String(string(in)))
 }

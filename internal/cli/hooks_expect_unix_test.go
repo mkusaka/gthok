@@ -18,7 +18,7 @@ func hooksExpectConfig(t *testing.T, mode, phase, body string) {
 	t.Setenv("HOME", home)
 	t.Setenv("GTHOK_CONFIG_DIR", home)
 	t.Setenv("PATH", "/usr/bin:/bin")
-	text := fmt.Sprintf("version: 1\npolicy:\n  mode: %s\nhooks:\n  %s:\n    - id: expectation-test\n      command: [\"/bin/sh\", \"-c\", %q]\n", mode, phase, body)
+	text := fmt.Sprintf("version: 1\npolicy:\n  mode: %s\n  unknownMutation: allow\nhooks:\n  %s:\n    - id: expectation-test\n      command: [\"/bin/sh\", \"-c\", %q]\n", mode, phase, body)
 	if err := os.WriteFile(filepath.Join(home, "config.yaml"), []byte(text), 0600); err != nil {
 		t.Fatal(err)
 	}

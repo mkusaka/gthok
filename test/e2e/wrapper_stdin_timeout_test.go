@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mkusaka/gthok/internal/config"
-	"github.com/mkusaka/gthok/internal/model"
 )
 
 func TestBodyFileDefaultStdinTimeoutReplaysLiveBinaryRemainder(t *testing.T) {
@@ -22,13 +21,13 @@ func TestBodyFileDefaultStdinTimeoutReplaysLiveBinaryRemainder(t *testing.T) {
 		h := s.hook("pre", "pre")
 		h.Enabled = &yes
 		// The marker is written only after the complete hook-input file is closed.
-		h.Env["FAKEGH_HOOK_READY"] = hookReady
+		h.Env["FAKEGIT_HOOK_READY"] = hookReady
 		c.Hooks = []config.Hook{h}
 		// Leave runtime.stdinTimeout at its default of three seconds.
 	})
 
-	args := []string{"pr", "create", "-R", "acme/project", "-t", "T", "--body-file", "-"}
-	cmd, cancel := s.command(filepath.Join(s.bin, "gh"), nil, args...)
+	args := []string{"commit", "-F", "-"}
+	cmd, cancel := s.command(filepath.Join(s.bin, "git"), nil, args...)
 	defer cancel()
 	reader, writer, err := os.Pipe()
 	if err != nil {
@@ -75,18 +74,8 @@ func TestBodyFileDefaultStdinTimeoutReplaysLiveBinaryRemainder(t *testing.T) {
 	if input.Event != "pre" || !reflect.DeepEqual(input.Invocation.Argv, args) {
 		t.Fatalf("unexpected pre-hook invocation: event=%q argv=%q", input.Event, input.Invocation.Argv)
 	}
-	if len(input.Operations) != 1 || input.Operations[0].Texts == nil {
-		t.Fatalf("missing pre-hook texts: %+v", input.Operations)
-	}
-	want := model.Texts{
-		Title: &model.Text{Value: "T", Source: "inline", Bytes: 1},
-		Body:  &model.Text{Source: "stdin", Status: model.StdinTimeout},
-	}
-	if got := input.Operations[0].Texts; !reflect.DeepEqual(*got, want) {
-		t.Fatalf("pre-hook texts=%+v / %+v / %+v, want title=%+v body=%+v and no notes", got.Title, got.Body, got.Notes, want.Title, want.Body)
-	}
-	if input.Operations[0].Parameters["bodyFile"] != true {
-		t.Fatal("pre-hook lost bodyFile parameter")
+	if len(input.Operations) != 1 || input.Classification.MutationFree {
+		t.Fatal("incomplete input claimed safe")
 	}
 
 	// Release the producer only after the recorded hook input proves timeout.

@@ -1,19 +1,5 @@
 package normalize
 
-import (
-	"github.com/mkusaka/gthok/internal/normalize/apiargs"
-	"github.com/mkusaka/gthok/internal/normalize/native"
-)
+import gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
 
-// NeedsStdin reports whether alias-expanded arguments request stdin for
-// normalization. Which is "api", "body", or "notes" when needed, otherwise "".
-// Invalid arguments and help requests do not require input.
-func NeedsStdin(expandedArgv []string) (needed bool, which string) {
-	if len(expandedArgv) > 0 && expandedArgv[0] == "api" {
-		if apiargs.NeedsStdinArgv(expandedArgv) {
-			return true, "api"
-		}
-		return false, ""
-	}
-	return native.NeedsStdin(expandedArgv)
-}
+func NeedsStdin(argv []string) (bool, string) { return gitnormalize.NeedsStdin(argv) }

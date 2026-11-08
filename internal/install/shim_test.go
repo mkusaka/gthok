@@ -23,7 +23,7 @@ func enableFixture(t *testing.T, name string) EnableOptions {
 	t.Helper()
 	root := t.TempDir()
 	self := testSelf(t, root, name)
-	real := executable(t, filepath.Join(root, "real", "gh"), "printf 'gh version 2.103.3 (2026-10-26)\\n'")
+	real := executable(t, filepath.Join(root, "real", "git"), "printf 'git version 2.56.0 (2026-10-26)\\n'")
 	bin := filepath.Join(root, "local", "bin")
 	return EnableOptions{BinDir: bin, Self: self, StateDir: filepath.Join(root, "state"), PathEnv: bin + ":" + filepath.Dir(real)}
 }
@@ -33,7 +33,7 @@ func TestEnableDisableLifecycle(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			o := enableFixture(t, name)
 			r, err := Enable(o)
-			if err != nil || !r.Created || !r.OnPath || r.FixHint != "" || r.RealGh != filepath.Join(filepath.Dir(o.Self), "real", "gh") {
+			if err != nil || !r.Created || !r.OnPath || r.FixHint != "" || r.RealGit != filepath.Join(filepath.Dir(o.Self), "real", "git") {
 				t.Fatalf("enable=%+v err=%v", r, err)
 			}
 			info, err := os.Stat(filepath.Join(o.StateDir, "shims.json"))
@@ -56,8 +56,8 @@ func TestEnableDisableLifecycle(t *testing.T) {
 			if err != nil || len(removed) != 0 {
 				t.Fatalf("repeat disable=%v err=%v", removed, err)
 			}
-			if _, err := os.Stat(again.RealGh); err != nil {
-				t.Fatalf("real gh touched: %v", err)
+			if _, err := os.Stat(again.RealGit); err != nil {
+				t.Fatalf("real git touched: %v", err)
 			}
 		})
 	}
@@ -72,9 +72,9 @@ func TestEnableUpgradeAndMovedExecutable(t *testing.T) {
 	old := o.Self
 	o.Self = testSelf(t, filepath.Dir(old), "gthok-1.3")
 	// The old target is still executable and renamed: state must exclude it
-	// from real-gh discovery during the upgrade.
+	// from real-git discovery during the upgrade.
 	updated, err := Enable(o)
-	if err != nil || updated.Created || updated.RealGh != first.RealGh {
+	if err != nil || updated.Created || updated.RealGit != first.RealGit {
 		t.Fatalf("update=%+v err=%v", updated, err)
 	}
 	target, err := os.Readlink(first.ShimPath)
@@ -99,7 +99,7 @@ func TestForeignCollisionAndDisablePreservesReplacement(t *testing.T) {
 	for _, kind := range []string{"file", "symlink", "broken-symlink", "directory"} {
 		t.Run(kind, func(t *testing.T) {
 			o := enableFixture(t, "gthok")
-			shim := filepath.Join(o.BinDir, "gh")
+			shim := filepath.Join(o.BinDir, "git")
 			switch kind {
 			case "file":
 				executable(t, shim, "printf foreign")
@@ -158,7 +158,7 @@ func TestForeignCollisionAndDisablePreservesReplacement(t *testing.T) {
 func TestOwnershipWithoutState(t *testing.T) {
 	root := t.TempDir()
 	self := testSelf(t, root, "renamed")
-	shim := filepath.Join(root, "gh")
+	shim := filepath.Join(root, "git")
 	link(t, "renamed", shim)
 	if owned, err := IsOwnedShim(shim, self, ""); err != nil || !owned {
 		t.Fatalf("SameFile ownership: %t %v", owned, err)
@@ -208,9 +208,9 @@ func TestEnableFailureDoesNotInstall(t *testing.T) {
 	o := enableFixture(t, "gthok")
 	o.PathEnv = o.BinDir
 	if _, err := Enable(o); err == nil {
-		t.Fatal("enabled without real gh")
+		t.Fatal("enabled without real git")
 	}
-	if _, err := os.Lstat(filepath.Join(o.BinDir, "gh")); !os.IsNotExist(err) {
+	if _, err := os.Lstat(filepath.Join(o.BinDir, "git")); !os.IsNotExist(err) {
 		t.Fatalf("shim installed despite failed discovery: %v", err)
 	}
 	o.PathEnv = filepath.Join(filepath.Dir(o.Self), "real")
@@ -223,7 +223,7 @@ func TestEnableFailureDoesNotInstall(t *testing.T) {
 	if _, err := Enable(o); err == nil {
 		t.Fatal("corrupt ownership ignored")
 	}
-	if _, err := os.Lstat(filepath.Join(o.BinDir, "gh")); !os.IsNotExist(err) {
+	if _, err := os.Lstat(filepath.Join(o.BinDir, "git")); !os.IsNotExist(err) {
 		t.Fatalf("shim installed despite invalid state: %v", err)
 	}
 }
@@ -231,7 +231,7 @@ func TestEnableFailureDoesNotInstall(t *testing.T) {
 func TestProbeRejectsWrongOutputAndExit(t *testing.T) {
 	root := t.TempDir()
 	for _, body := range []string{"printf 'gthok-probe'", "printf 'gthok-probe\\n'; exit 1", "printf 'foreign\\n'"} {
-		path := executable(t, filepath.Join(root, "gh"), body)
+		path := executable(t, filepath.Join(root, "git"), body)
 		if err := ProbeShim(path, []string{"HOME=" + root, "PATH=/nonexistent"}); err == nil {
 			t.Errorf("accepted %q", body)
 		}
@@ -265,7 +265,7 @@ func TestEnableHomebrewShimSurvivesUpgrade(t *testing.T) {
 		return self
 	}
 	self := install("1.0.0")
-	real := executable(t, filepath.Join(root, "real", "gh"), "true")
+	real := executable(t, filepath.Join(root, "real", "git"), "true")
 	bin := filepath.Join(root, "local", "bin")
 	o := EnableOptions{BinDir: bin, Self: self, StateDir: filepath.Join(root, "state"), PathEnv: bin + ":" + filepath.Dir(real)}
 	r, err := Enable(o)
@@ -297,7 +297,7 @@ func TestEnableHomebrewShimSurvivesUpgrade(t *testing.T) {
 	}
 }
 
-// A mise install points the gh shim at installs/<tool>/latest so upgrades and
+// A mise install points the git shim at installs/<tool>/latest so upgrades and
 // `mise prune` keep working; a Homebrew Cellar install points at opt.
 func TestStableTargetMiseAndHomebrew(t *testing.T) {
 	root := t.TempDir()

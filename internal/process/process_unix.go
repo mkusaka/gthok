@@ -159,7 +159,7 @@ func Run(ctx context.Context, opts Options) (result Result) {
 		finishPump, err = opts.Stdin.startPump()
 		if err != nil {
 			// Spawn succeeded: kill/reap, and report the input delivery failure
-			// separately rather than falsely claiming that gh was never started.
+			// separately rather than falsely claiming that git was never started.
 			result.WaitErr = err
 			_ = syscall.Kill(pid, syscall.SIGKILL)
 		}

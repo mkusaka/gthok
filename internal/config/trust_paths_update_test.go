@@ -60,7 +60,7 @@ func TestUpdatePathTrustRefusals(t *testing.T) {
 		"version: 1\nlogging: &trust {}\ntrust: *trust\n",
 		"version: 1\ntrust: {<<: {directories: []}}\n",
 		"version: 1\n<<: {trust: {directories: []}}\n",
-		"version: 1\npolicy: {protectedRepositories: &paths []}\ntrust: {directories: *paths}\n",
+		"version: 1\npolicy: {rules: &paths []}\ntrust: {directories: *paths}\n",
 		// Editing an anchor used elsewhere would silently modify raw semantics.
 		"version: 1\ntrust: &trust {}\nlogging: *trust\n",
 	} {
@@ -91,7 +91,7 @@ func TestUpdatePathTrustRefusals(t *testing.T) {
 func TestUpdatePathTrustPreservesConfig(t *testing.T) {
 	repo, _, _, env := pathTrustFixture(t)
 	target := filepath.Join(t.TempDir(), "real.yaml")
-	before := "# user heading\nversion: 1 # version comment\npolicy:\n  protectedRepositories: [org/repo] # policy comment\nhooks:\n  pre:\n    - id: user-hook\n      command: [echo, ok] # hook comment\nlogging: {enabled: false}\ntrust: # trust comment\n  directories: [] # directories comment\n"
+	before := "# user heading\nversion: 1 # version comment\npolicy:\n  unknownInput: audit # policy comment\nhooks:\n  pre:\n    - id: user-hook\n      command: [echo, ok] # hook comment\nlogging: {enabled: false}\ntrust: # trust comment\n  directories: [] # directories comment\n"
 	writeFixture(t, target, before)
 	if err := os.Chmod(target, 0o640); err != nil {
 		t.Fatal(err)

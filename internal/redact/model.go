@@ -9,7 +9,7 @@ import (
 
 // Result deep-copies every mutable field and redacts all strings, not only the
 // usual credential locations. Classification and operation meaning are
-// otherwise preserved; redacted GraphQL is a display copy, never replay input.
+// otherwise preserved; this display copy is never execution input.
 func (r *Redactor) Result(res model.Result) model.Result {
 	out := res
 	out.Classification = r.classification(res.Classification)
@@ -18,10 +18,7 @@ func (r *Redactor) Result(res model.Result) model.Result {
 	out.Source.Kind = r.String(res.Source.Kind)
 	out.Source.Argv = r.Argv(res.Source.Argv)
 	out.Source.Alias = r.String(res.Source.Alias)
-	out.Source.Method = r.String(res.Source.Method)
-	out.Source.Path = r.String(res.Source.Path)
-	out.Source.Host = r.String(res.Source.Host)
-	out.Source.GraphQL = r.graphQL(res.Source.GraphQL)
+	out.Source.Global = r.Argv(res.Source.Global)
 	return out
 }
 
@@ -53,12 +50,11 @@ func (r *Redactor) operations(in []model.Operation) []model.Operation {
 		out[i].UnknownReason = model.UnknownReason(r.String(string(op.UnknownReason)))
 		out[i].Detail = r.String(op.Detail)
 		out[i].Origin.Command = r.strings(op.Origin.Command)
-		out[i].Origin.Method = r.String(op.Origin.Method)
-		out[i].Origin.Route = r.String(op.Origin.Route)
-		out[i].Origin.Field = r.String(op.Origin.Field)
-		out[i].Origin.Alias = r.String(op.Origin.Alias)
-		out[i].Origin.Operation = r.String(op.Origin.Operation)
-		out[i].Origin.OpType = r.String(op.Origin.OpType)
+		out[i].Origin.Mode = r.String(op.Origin.Mode)
+		out[i].Origin.Source = r.String(op.Origin.Source)
+		out[i].Scopes = append([]model.Scope(nil), op.Scopes...)
+		out[i].Capabilities = append([]model.Capability(nil), op.Capabilities...)
+		out[i].Editable = nil
 	}
 	return out
 }
@@ -86,22 +82,27 @@ func (r *Redactor) text(in *model.Text) *model.Text {
 
 func (r *Redactor) target(in model.Target) model.Target {
 	out := in
-	out.Kind = r.String(in.Kind)
-	out.Host = r.String(in.Host)
-	out.Owner = r.String(in.Owner)
-	out.Repository = r.String(in.Repository)
-	if in.Number != nil {
-		n := *in.Number
-		out.Number = &n
-	}
-	out.NodeID = r.String(in.NodeID)
-	out.Branch = r.String(in.Branch)
-	out.BaseBranch = r.String(in.BaseBranch)
-	out.HeadBranch = r.String(in.HeadBranch)
-	out.SHA = r.String(in.SHA)
-	out.Ref = r.String(in.Ref)
-	out.URL = r.String(in.URL)
+	out.RepoRoot = r.String(in.RepoRoot)
+	out.GitDir = r.String(in.GitDir)
+	out.CommonDir = r.String(in.CommonDir)
+	out.Worktree = r.String(in.Worktree)
+	out.Remote = r.String(in.Remote)
+	out.RemoteURL = r.String(in.RemoteURL)
+	out.PushURL = r.String(in.PushURL)
+	out.Refs = r.targetSet(in.Refs)
+	out.Paths = r.targetSet(in.Paths)
+	out.Revisions = r.targetSet(in.Revisions)
+	out.ConfigKeys = r.targetSet(in.ConfigKeys)
 	return out
+}
+
+func (r *Redactor) targetSet(in *model.TargetSet) *model.TargetSet {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	out.Values = r.strings(in.Values)
+	return &out
 }
 
 func (r *Redactor) unresolved(in []model.Unresolved) []model.Unresolved {
@@ -136,7 +137,7 @@ func (r *Redactor) HookInput(in protocol.Input) protocol.Input {
 }
 
 // Input makes a redacted deep copy of an entire hook payload. Captured output
-// is decoded, redacted (including JSON keys/GraphQL literals), then re-encoded;
+// is decoded, redacted (including JSON keys), then re-encoded;
 // original byte counts and truncation metadata continue to describe execution.
 func (r *Redactor) Input(in protocol.Input) protocol.Input {
 	var out protocol.Input
@@ -156,8 +157,7 @@ func (r *Redactor) input(in protocol.Input) protocol.Input {
 	out.Invocation.Alias = r.String(in.Invocation.Alias)
 	out.Invocation.Expanded = r.Argv(in.Invocation.Expanded)
 	out.Invocation.Cwd = r.String(in.Invocation.Cwd)
-	out.Invocation.RealGh = r.String(in.Invocation.RealGh)
-	out.Invocation.TokenKind = r.String(in.Invocation.TokenKind)
+	out.Invocation.RealGit = r.String(in.Invocation.RealGit)
 	out.Invocation.EnvChanged = r.strings(in.Invocation.EnvChanged)
 	out.Classification = r.classification(in.Classification)
 	out.Operations = r.operations(in.Operations)
@@ -165,9 +165,14 @@ func (r *Redactor) input(in protocol.Input) protocol.Input {
 	if in.Context != nil {
 		context := *in.Context
 		out.Context = &context
-		context.Host = r.String(context.Host)
-		context.Owner = r.String(context.Owner)
-		context.Repository = r.String(context.Repository)
+		context.RepoRoot = r.String(context.RepoRoot)
+		context.CommonDir = r.String(context.CommonDir)
+		if context.Remotes != nil {
+			context.Remotes = make(map[string]model.RemoteInfo, len(in.Context.Remotes))
+			for name, remote := range in.Context.Remotes {
+				context.Remotes[r.String(name)] = model.RemoteInfo{URL: r.String(remote.URL), PushURLs: r.strings(remote.PushURLs)}
+			}
+		}
 		context.Branch = r.String(context.Branch)
 		context.HeadSHA = r.String(context.HeadSHA)
 		context.GitDir = r.String(context.GitDir)

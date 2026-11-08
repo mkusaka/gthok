@@ -82,22 +82,18 @@ func TestDoctorBuildVersion(t *testing.T) {
 func TestDoctorHealthyAndRecursionRisks(t *testing.T) {
 	o := doctorFixture(t)
 	checks := Checks(o)
-	for _, name := range []string{"gthok", "real-gh", "path-precedence", "shim-ownership", "recursion-risk"} {
+	for _, name := range []string{"gthok", "real-git", "path-precedence", "shim-ownership", "recursion-risk"} {
 		if c := checkNamed(t, checks, name); c.Status != StatusOK {
 			t.Errorf("%+v", c)
 		}
 	}
-	if c := checkNamed(t, checks, "gh-version"); c.Status != StatusInfo || !strings.Contains(c.Detail, "2.103.3") {
+	if c := checkNamed(t, checks, "git-version"); c.Status != StatusInfo || !strings.Contains(c.Detail, "2.56.0") {
 		t.Errorf("%+v", c)
 	}
 	if c := checkNamed(t, checks, "platform-process"); !strings.Contains(c.Detail, "stdin tty=false") || !strings.Contains(c.Detail, "foreground process group") {
 		t.Errorf("%+v", c)
 	}
-	shim := filepath.Join(o.BinDir, "gh")
-	o.Env = append(o.Env, "GH_PATH="+shim)
-	if c := checkNamed(t, Checks(o), "recursion-risk"); c.Status != StatusFail || !strings.Contains(c.Detail, "GH_PATH") {
-		t.Errorf("%+v", c)
-	}
+	shim := filepath.Join(o.BinDir, "git")
 	o.Env = []string{"GTHOK_DEPTH=4"}
 	if c := checkNamed(t, Checks(o), "recursion-risk"); c.Status != StatusFail || !strings.Contains(c.Detail, "recursion limit") {
 		t.Errorf("%+v", c)
@@ -108,7 +104,7 @@ func TestDoctorHealthyAndRecursionRisks(t *testing.T) {
 	}
 	o.Override = shim
 	checks = Checks(o)
-	if c := checkNamed(t, checks, "real-gh"); c.Status != StatusFail {
+	if c := checkNamed(t, checks, "real-git"); c.Status != StatusFail {
 		t.Errorf("%+v", c)
 	}
 	if c := checkNamed(t, checks, "recursion-risk"); c.Status != StatusFail || !strings.Contains(c.Detail, "override") {
@@ -120,7 +116,7 @@ func TestDoctorRecordedCustomShim(t *testing.T) {
 	for _, kind := range []string{"owned", "absent", "foreign-file", "foreign-symlink"} {
 		t.Run(kind, func(t *testing.T) {
 			o := doctorFixture(t)
-			shim := filepath.Join(o.BinDir, "gh")
+			shim := filepath.Join(o.BinDir, "git")
 			// The caller supplies the default directory, not the custom install.
 			o.BinDir = filepath.Join(filepath.Dir(o.Self), ".local", "bin")
 			if kind != "owned" {
@@ -131,7 +127,7 @@ func TestDoctorRecordedCustomShim(t *testing.T) {
 				case "foreign-file":
 					executable(t, shim, "exit 0")
 				case "foreign-symlink":
-					link(t, filepath.Join(filepath.Dir(o.Self), "real", "gh"), shim)
+					link(t, filepath.Join(filepath.Dir(o.Self), "real", "git"), shim)
 				}
 			}
 			checks := Checks(o)
@@ -153,7 +149,7 @@ func TestDoctorRecordedCustomShim(t *testing.T) {
 			}
 			if kind == "foreign-symlink" {
 				target, err := os.Readlink(shim)
-				if err != nil || target != filepath.Join(filepath.Dir(o.Self), "real", "gh") {
+				if err != nil || target != filepath.Join(filepath.Dir(o.Self), "real", "git") {
 					t.Fatalf("doctor changed foreign shim: target=%q err=%v", target, err)
 				}
 			}
@@ -178,7 +174,7 @@ func TestDoctorRecordedShimPrecedence(t *testing.T) {
 				alias := filepath.Join(filepath.Dir(o.Self), "alias-bin")
 				link(t, bin, alias)
 				o.PathEnv = alias + ":" + realDir
-				want, detail = StatusOK, "first executable gh"
+				want, detail = StatusOK, "first executable git"
 			}
 			o.BinDir = ""
 			c := checkNamed(t, Checks(o), "path-precedence")
@@ -191,8 +187,8 @@ func TestDoctorRecordedShimPrecedence(t *testing.T) {
 
 func TestDoctorMultipleRecordedShims(t *testing.T) {
 	o := doctorFixture(t)
-	first := filepath.Join(o.BinDir, "gh")
-	second := filepath.Join(filepath.Dir(o.Self), "other-bin", "gh")
+	first := filepath.Join(o.BinDir, "git")
+	second := filepath.Join(filepath.Dir(o.Self), "other-bin", "git")
 	link(t, o.Self, second)
 	if err := saveState(o.StateDir, shimState{second: o.Self, first: o.Self}); err != nil {
 		t.Fatal(err)
@@ -243,7 +239,7 @@ func TestDoctorUnrecordedShimFallback(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"path-precedence", "shim-ownership"} {
-		if c := checkNamed(t, Checks(o), name); c.Status != StatusOK || !strings.Contains(c.Detail, filepath.Join(o.BinDir, "gh")) {
+		if c := checkNamed(t, Checks(o), name); c.Status != StatusOK || !strings.Contains(c.Detail, filepath.Join(o.BinDir, "git")) {
 			t.Fatalf("%+v", c)
 		}
 	}
@@ -254,7 +250,7 @@ func TestDoctorNeverExecutesKnownRenamedShim(t *testing.T) {
 	root := filepath.Dir(o.Self)
 	marker := filepath.Join(root, "executed")
 	foreignSelf := executable(t, filepath.Join(root, "gthok-old-renamed"), "printf executed > '"+marker+"'")
-	otherShim := filepath.Join(root, "other-bin", "gh")
+	otherShim := filepath.Join(root, "other-bin", "git")
 	link(t, foreignSelf, otherShim)
 	state, err := loadState(o.StateDir)
 	if err != nil {
@@ -277,13 +273,13 @@ func TestDoctorNeverExecutesKnownRenamedShim(t *testing.T) {
 func TestDoctorVersionTimeoutAndFailure(t *testing.T) {
 	o := doctorFixture(t)
 	defer func(d time.Duration) { diagnosticTimeout = d }(diagnosticTimeout)
-	real := filepath.Join(filepath.Dir(o.Self), "real", "gh")
+	real := filepath.Join(filepath.Dir(o.Self), "real", "git")
 	for _, tc := range []struct {
 		body, detail string
 		status       Status
 	}{
-		{"printf 'gh version 2.39.0 (2023-01-01)\\n'", "predates", StatusWarn},
-		{"printf 'gh version 2.103.3 (2026-01-01)\\n'", "2.103.3", StatusInfo},
+		{"printf 'git version 2.39.0 (2023-01-01)\\n'", "differs", StatusWarn},
+		{"printf 'git version 2.56.0 (2026-01-01)\\n'", "2.56.0", StatusInfo},
 		{"printf unexpected", "Unrecognized", StatusWarn},
 		{"exit 42", "exit status 42", StatusWarn},
 		{"exec /bin/sleep 20", "timed out", StatusWarn},
@@ -295,7 +291,7 @@ func TestDoctorVersionTimeoutAndFailure(t *testing.T) {
 				diagnosticTimeout = 2 * time.Second // only the sleeping fake needs a short bound
 			}
 			start := time.Now()
-			c := checkNamed(t, Checks(o), "gh-version")
+			c := checkNamed(t, Checks(o), "git-version")
 			if c.Status != tc.status || !strings.Contains(c.Detail, tc.detail) {
 				t.Errorf("%+v", c)
 			}
@@ -306,14 +302,14 @@ func TestDoctorVersionTimeoutAndFailure(t *testing.T) {
 	}
 }
 
-func TestDoctorMissingBinaryAndRealGh(t *testing.T) {
+func TestDoctorMissingBinaryAndRealGit(t *testing.T) {
 	o := doctorFixture(t)
 	o.Self = filepath.Join(filepath.Dir(o.Self), "missing")
 	checks := Checks(o)
 	if c := checkNamed(t, checks, "gthok"); c.Status != StatusFail {
 		t.Errorf("%+v", c)
 	}
-	if c := checkNamed(t, checks, "real-gh"); c.Status != StatusFail {
+	if c := checkNamed(t, checks, "real-git"); c.Status != StatusFail {
 		t.Errorf("%+v", c)
 	}
 }
@@ -343,13 +339,13 @@ func TestVersionBoundaries(t *testing.T) {
 		version string
 		status  Status
 	}{
-		{"gh version 1.999.0 (date)\n", StatusWarn},
-		{"gh version 2.102.999 (date)\n", StatusWarn},
-		{"gh version 2.103.0 (date)\n", StatusInfo},
-		{"gh version 3.0.0 (date)\n", StatusInfo},
-		{"gh version 999999999999999999999999999.0.0\n", StatusWarn},
+		{"git version 1.999.0 (date)\n", StatusWarn},
+		{"git version 2.102.999 (date)\n", StatusWarn},
+		{"git version 2.56.0 (date)\n", StatusInfo},
+		{"git version 3.0.0 (date)\n", StatusWarn},
+		{"git version 999999999999999999999999999.0.0\n", StatusWarn},
 	} {
-		if got, detail := ghVersionStatus(tc.version); got != tc.status {
+		if got, detail := gitVersionStatus(tc.version); got != tc.status {
 			t.Errorf("%q: %s %s", tc.version, got, detail)
 		}
 	}

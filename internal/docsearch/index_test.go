@@ -11,7 +11,7 @@ import (
 
 func fixture(readme string) fstest.MapFS {
 	return fstest.MapFS{
-		"README.md":            {Data: []byte(readme)},
+		"README.md":             {Data: []byte(readme)},
 		"skills/gthok/SKILL.md": {Data: []byte("---\nname: gthok\n---\n# Agent skill\nUse gthok.\n")},
 	}
 }

@@ -32,16 +32,16 @@ var gthokBinary, fakeBinary string
 
 func TestMain(m *testing.M) {
 	gthokPath, gthokSet := os.LookupEnv("GTHOK_E2E_GTHOK_BINARY")
-	fakePath, fakeSet := os.LookupEnv("GTHOK_E2E_FAKEGH_BINARY")
+	fakePath, fakeSet := os.LookupEnv("GTHOK_E2E_FAKEGIT_BINARY")
 	if gthokSet || fakeSet {
 		if !gthokSet || !fakeSet || gthokPath == "" || fakePath == "" {
-			fmt.Fprintln(os.Stderr, "GTHOK_E2E_GTHOK_BINARY and GTHOK_E2E_FAKEGH_BINARY must both name prebuilt executable files")
+			fmt.Fprintln(os.Stderr, "GTHOK_E2E_GTHOK_BINARY and GTHOK_E2E_FAKEGIT_BINARY must both name prebuilt executable files")
 			os.Exit(1)
 		}
 		for _, target := range []struct {
 			name, path string
 			binary     *string
-		}{{"GTHOK_E2E_GTHOK_BINARY", gthokPath, &gthokBinary}, {"GTHOK_E2E_FAKEGH_BINARY", fakePath, &fakeBinary}} {
+		}{{"GTHOK_E2E_GTHOK_BINARY", gthokPath, &gthokBinary}, {"GTHOK_E2E_FAKEGIT_BINARY", fakePath, &fakeBinary}} {
 			path, err := filepath.Abs(target.path)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%s: %v\n", target.name, err)
@@ -67,8 +67,8 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	gthokBinary, fakeBinary = filepath.Join(dir, "gthok"), filepath.Join(dir, "fakegh")
-	for _, target := range []struct{ path, pkg string }{{gthokBinary, "./cmd/gthok"}, {fakeBinary, "./test/fakegh"}} {
+	gthokBinary, fakeBinary = filepath.Join(dir, "gthok"), filepath.Join(dir, "fakegit")
+	for _, target := range []struct{ path, pkg string }{{gthokBinary, "./cmd/gthok"}, {fakeBinary, "./test/fakegit"}} {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		// Avoid competing with concurrently running package/race suites for
 		// compiler workers; fixture builds are setup, not a performance test.
@@ -118,8 +118,8 @@ type outcome struct {
 func newSandbox(t *testing.T) *sandbox {
 	t.Helper()
 	root := t.TempDir()
-	s := &sandbox{t: t, root: root, cwd: filepath.Join(root, "work"), bin: filepath.Join(root, "bin"), real: filepath.Join(root, "real", "gh"), record: filepath.Join(root, "gh.jsonl"), cfg: filepath.Join(root, "config", "config.yaml")}
-	for _, dir := range []string{s.cwd, s.bin, filepath.Dir(s.real), filepath.Dir(s.cfg), filepath.Join(root, "home"), filepath.Join(root, "gh-config"), filepath.Join(root, "tmp")} {
+	s := &sandbox{t: t, root: root, cwd: filepath.Join(root, "work"), bin: filepath.Join(root, "bin"), real: filepath.Join(root, "real", "git"), record: filepath.Join(root, "git.jsonl"), cfg: filepath.Join(root, "config", "config.yaml")}
+	for _, dir := range []string{s.cwd, s.bin, filepath.Dir(s.real), filepath.Dir(s.cfg), filepath.Join(root, "home"), filepath.Join(root, "git-config"), filepath.Join(root, "tmp")} {
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			t.Fatal(err)
 		}
@@ -131,11 +131,11 @@ func newSandbox(t *testing.T) *sandbox {
 	if err = os.WriteFile(s.real, body, 0700); err != nil {
 		t.Fatal(err)
 	}
-	s.env = map[string]string{"HOME": filepath.Join(root, "home"), "XDG_CONFIG_HOME": filepath.Join(root, "xdg"), "GH_CONFIG_DIR": filepath.Join(root, "gh-config"), "GTHOK_CONFIG_DIR": filepath.Dir(s.cfg), "PATH": s.bin + string(os.PathListSeparator) + filepath.Dir(s.real), "TMPDIR": filepath.Join(root, "tmp"), "FAKEGH_RECORD": s.record, "LANG": "C", "TERM": "xterm"}
+	s.env = map[string]string{"HOME": filepath.Join(root, "home"), "XDG_CONFIG_HOME": filepath.Join(root, "xdg"), "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "GTHOK_CONFIG_DIR": filepath.Dir(s.cfg), "PATH": s.bin + string(os.PathListSeparator) + filepath.Dir(s.real), "TMPDIR": filepath.Join(root, "tmp"), "FAKEGIT_RECORD": s.record, "LANG": "C", "TERM": "xterm"}
 	s.configure(nil)
 	result := s.management(nil, "shim", "install", "--bin-dir", s.bin)
 	result.code(t, 0)
-	info, err := os.Lstat(filepath.Join(s.bin, "gh"))
+	info, err := os.Lstat(filepath.Join(s.bin, "git"))
 	if err != nil || info.Mode()&os.ModeSymlink == 0 {
 		t.Fatalf("enable did not install symlink: %v", err)
 	}
@@ -153,6 +153,7 @@ func (s *sandbox) configure(change func(*config.Config)) {
 	}
 	no := false
 	c.Logging.Enabled = &no
+	c.Policy.UnknownMutation = config.UnknownAllow
 	if change != nil {
 		change(c)
 	}
@@ -197,8 +198,8 @@ func (s *sandbox) run(path string, input []byte, args ...string) outcome {
 	return outcome{stdout.Bytes(), stderr.Bytes(), err}
 }
 
-func (s *sandbox) gh(input []byte, args ...string) outcome {
-	return s.run(filepath.Join(s.bin, "gh"), input, args...)
+func (s *sandbox) git(input []byte, args ...string) outcome {
+	return s.run(filepath.Join(s.bin, "git"), input, args...)
 }
 func (s *sandbox) management(input []byte, args ...string) outcome {
 	return s.run(gthokBinary, input, args...)
@@ -258,7 +259,7 @@ func (s *sandbox) onlyRecord(args []string, input []byte) invocationRecord {
 	s.t.Helper()
 	records := s.records()
 	if len(records) != 1 {
-		s.t.Fatalf("real gh invocations=%d, want 1", len(records))
+		s.t.Fatalf("real git invocations=%d, want 1", len(records))
 	}
 	r := records[0]
 	if !reflect.DeepEqual(r.Argv, args) {
@@ -282,12 +283,12 @@ func (s *sandbox) onlyRecord(args []string, input []byte) invocationRecord {
 func (s *sandbox) absentRecord() {
 	s.t.Helper()
 	if records := s.records(); len(records) != 0 {
-		s.t.Fatalf("real gh unexpectedly executed %d times", len(records))
+		s.t.Fatalf("real git unexpectedly executed %d times", len(records))
 	}
 }
 
 func (s *sandbox) hook(id, phase string) config.Hook {
-	return config.Hook{ID: id, Phase: phase, Command: []string{fakeBinary}, Env: map[string]string{"FAKEGH_MODE": "hook", "FAKEGH_HOOK_RECORD": filepath.Join(s.root, id+".json")}}
+	return config.Hook{ID: id, Phase: phase, Command: []string{fakeBinary}, Env: map[string]string{"FAKEGIT_MODE": "hook", "FAKEGIT_HOOK_RECORD": filepath.Join(s.root, id+".json")}}
 }
 
 func (s *sandbox) hookInput(id string) protocol.Input {
@@ -330,11 +331,11 @@ func TestTransparentExecution(t *testing.T) {
 					}
 					args := []string{"version", "", "white space", "tab\tline\n", "π雪", "-leading", "*?[x]", "--", "quote\"'\\"}
 					out, errout := []byte{0, 'o', 255, '\n'}, []byte{'e', 0, 254, '\n'}
-					setBytes(s.env, "FAKEGH_STDOUT_B64", out)
-					setBytes(s.env, "FAKEGH_STDERR_B64", errout)
-					s.env["FAKEGH_EXIT"] = strconv.Itoa(exit)
+					setBytes(s.env, "FAKEGIT_STDOUT_B64", out)
+					setBytes(s.env, "FAKEGIT_STDERR_B64", errout)
+					s.env["FAKEGIT_EXIT"] = strconv.Itoa(exit)
 					s.env["CUSTOM_INHERITED"] = "spaces=and\nnewlines π"
-					result := s.gh(input, args...)
+					result := s.git(input, args...)
 					result.code(t, exit)
 					if !bytes.Equal(result.stdout, out) || !bytes.Equal(result.stderr, errout) {
 						t.Fatal("stdout/stderr changed")
@@ -373,14 +374,14 @@ func TestLargeBinaryOutput(t *testing.T) {
 			// Files avoid platform ARG_MAX limits for environment values.
 			out := bytes.Repeat([]byte{0, 1, 2, 255, '\n'}, 400000)
 			errout := bytes.Repeat([]byte{'e', 0, 254}, 400000)
-			for key, body := range map[string][]byte{"FAKEGH_STDOUT_FILE": out, "FAKEGH_STDERR_FILE": errout} {
+			for key, body := range map[string][]byte{"FAKEGIT_STDOUT_FILE": out, "FAKEGIT_STDERR_FILE": errout} {
 				path := filepath.Join(s.root, key)
 				if err := os.WriteFile(path, body, 0600); err != nil {
 					t.Fatal(err)
 				}
 				s.env[key] = path
 			}
-			result := s.gh(nil, "version")
+			result := s.git(nil, "version")
 			result.code(t, 0)
 			if !bytes.Equal(result.stdout, out) || !bytes.Equal(result.stderr, errout) {
 				t.Fatal("large output changed")
@@ -420,8 +421,8 @@ func TestMixedCaptureHooksAndLimit(t *testing.T) {
 		c.Runtime.CaptureLimit = 8
 	})
 	body := []byte("0123456789abcdef")
-	setBytes(s.env, "FAKEGH_STDOUT_B64", body)
-	result := s.gh(nil, "version")
+	setBytes(s.env, "FAKEGIT_STDOUT_B64", body)
+	result := s.git(nil, "version")
 	result.code(t, 0)
 	if !bytes.Equal(result.stdout, body) {
 		t.Fatal("capture truncated caller output")
@@ -445,8 +446,8 @@ func TestSignalExitStatus(t *testing.T) {
 				if supervised {
 					s.configure(func(c *config.Config) { c.Hooks = []config.Hook{s.hook("post", "post")} })
 				}
-				s.env["FAKEGH_SIGNAL"] = strconv.Itoa(int(sig))
-				result := s.gh(nil, "version")
+				s.env["FAKEGIT_SIGNAL"] = strconv.Itoa(int(sig))
+				result := s.git(nil, "version")
 				result.signaled(t, sig)
 				s.onlyRecord([]string{"version"}, nil)
 				if supervised {
@@ -472,7 +473,7 @@ func TestStartErrors(t *testing.T) {
 				if supervised {
 					s.configure(func(c *config.Config) { c.Hooks = []config.Hook{s.hook("post", "post")} })
 				}
-				path := filepath.Join(s.root, "bad-gh")
+				path := filepath.Join(s.root, "bad-git")
 				want := 127
 				body := []byte("#!/no/such/gthok-e2e-interpreter\n")
 				if kind == "invalid-image" {
@@ -482,8 +483,8 @@ func TestStartErrors(t *testing.T) {
 				if err := os.WriteFile(path, body, 0700); err != nil {
 					t.Fatal(err)
 				}
-				s.env["GTHOK_REAL_GH"] = path
-				result := s.gh(nil, "version")
+				s.env["GTHOK_REAL_GIT"] = path
+				result := s.git(nil, "version")
 				result.code(t, want)
 				s.absentRecord()
 				if !bytes.HasPrefix(result.stderr, []byte("gthok:")) {
@@ -500,17 +501,17 @@ func TestStartErrors(t *testing.T) {
 	}
 }
 
-func TestMissingRealGhConciseWrapperAndDetailedDoctor(t *testing.T) {
+func TestMissingRealGitConciseWrapperAndDetailedDoctor(t *testing.T) {
 	s := newSandbox(t)
 	missingDir := filepath.Join(s.root, "missing-bin")
-	shim := filepath.Join(s.bin, "gh")
-	missing := filepath.Join(missingDir, "gh")
+	shim := filepath.Join(s.bin, "git")
+	missing := filepath.Join(missingDir, "git")
 	s.env["PATH"] = missingDir + string(os.PathListSeparator) + s.bin
-	result := s.gh(nil, "version")
+	result := s.git(nil, "version")
 	result.code(t, 127)
 	s.absentRecord()
 	if !bytes.HasPrefix(result.stderr, []byte("gthok:")) || !bytes.Contains(result.stderr, []byte(shim)) || bytes.Count(result.stderr, []byte("\n")) != 1 {
-		t.Fatalf("missing-gh diagnostic=%q", result.stderr)
+		t.Fatalf("missing-git diagnostic=%q", result.stderr)
 	}
 	for _, noisy := range []string{missingDir, "lstat", "no such file or directory"} {
 		if bytes.Contains(result.stderr, []byte(noisy)) {
@@ -527,14 +528,14 @@ func TestMissingRealGhConciseWrapperAndDetailedDoctor(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, check := range checks {
-		if check.Name == "real-gh" {
+		if check.Name == "real-git" {
 			if !strings.Contains(check.Detail, missing) || !strings.Contains(check.Detail, shim) || !strings.Contains(check.Detail, "no such file or directory") {
 				t.Fatalf("doctor lost candidate diagnostics: %+v", check)
 			}
 			return
 		}
 	}
-	t.Fatalf("doctor omitted real-gh check: %+v", checks)
+	t.Fatalf("doctor omitted real-git check: %+v", checks)
 }
 
 // The suite exercises the binary releases ship: built without cgo.

@@ -5,7 +5,6 @@ import (
 
 	"github.com/mkusaka/gthok/internal/config"
 	"github.com/mkusaka/gthok/internal/model"
-	"github.com/mkusaka/gthok/internal/protocol"
 )
 
 func TestMatchInvocationEnvironment(t *testing.T) {
@@ -39,33 +38,9 @@ func TestMatchInvocationEnvironment(t *testing.T) {
 			if got, _ := Matches(m, nil, s); got != tc.want {
 				t.Fatalf("Matches=%t, want %t", got, tc.want)
 			}
-			// Unknown targets must not bypass invocation-level criteria.
-			m.Repositories = config.StringList{"org/*"}
-			s.Result.Operations[0].Target.Repository = ""
-			if got, _ := MatchMaybe(m, nil, s); got != tc.want {
-				t.Fatalf("MatchMaybe=%t, want %t", got, tc.want)
+			if got, _ := MatchMaybe(m, nil, s); got {
+				t.Fatal("generic criteria cannot be unresolved")
 			}
 		})
-	}
-}
-
-func TestEnvironmentConstrainedRule(t *testing.T) {
-	p := config.Policy{Mode: config.ModeEnforce, Rules: []config.Rule{{
-		ID: "no-worker-merges", Decision: "deny",
-		Match: config.Match{Env: map[string]string{"MALL_GH_WORKER": "1"}, Operations: config.StringList{"pr.merge.*"}},
-	}}}
-	for _, tc := range []struct {
-		worker, action string
-		want           protocol.Decision
-	}{
-		{"1", "pr.merge.direct", protocol.DecisionDeny},
-		{"", "pr.merge.direct", protocol.DecisionAllow},
-		{"1", "pr.review.approve", protocol.DecisionAllow},
-	} {
-		s := subject(operation(tc.action, "org/repo", model.EffectWrite))
-		s.Env = map[string]string{"MALL_GH_WORKER": tc.worker}
-		if got := Evaluate(p, s); got.Decision != tc.want {
-			t.Fatalf("worker=%q action=%s: decision=%s, want %s", tc.worker, tc.action, got.Decision, tc.want)
-		}
 	}
 }

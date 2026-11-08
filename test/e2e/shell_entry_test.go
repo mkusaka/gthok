@@ -16,7 +16,7 @@ import (
 
 func TestShellInit(t *testing.T) {
 	s := newSandbox(t)
-	for shell, fn := range map[string]string{"zsh": `function gh { gthok exec -- "$@"; }`, "bash": `function gh { gthok exec -- "$@"; }`, "fish": "function gh; gthok exec -- $argv; end"} {
+	for shell, fn := range map[string]string{"zsh": `function git { gthok exec -- "$@"; }`, "bash": `function git { gthok exec -- "$@"; }`, "fish": "function git; gthok exec -- $argv; end"} {
 		result := s.management(nil, "shell-init", shell)
 		result.code(t, 0)
 		if !bytes.HasPrefix(result.stdout, []byte("# gthok:")) || !bytes.Contains(result.stdout, []byte("gthok shim install")) || !bytes.HasSuffix(result.stdout, []byte(fn+"\n")) {
@@ -28,7 +28,7 @@ func TestShellInit(t *testing.T) {
 }
 
 // The function and the shim may coexist: gthok exec skips the shim during
-// discovery, so real gh runs exactly once and policy runs once.
+// discovery, so real git runs exactly once and policy runs once.
 func TestShellFunctionWithShim(t *testing.T) {
 	for _, shell := range []string{"bash", "zsh"} {
 		t.Run(shell, func(t *testing.T) {
@@ -42,9 +42,9 @@ func TestShellFunctionWithShim(t *testing.T) {
 				yes := true
 				c.Logging.Enabled = &yes
 			})
-			s.run(path, nil, "-c", `eval "$(gthok shell-init `+shell+`)"; gh version`).code(t, 0)
-			if records := s.records(); len(records) != 1 || records[0].Argv0 != "gh" {
-				t.Fatalf("real gh records=%+v", records)
+			s.run(path, nil, "-c", `eval "$(gthok shell-init `+shell+`)"; git version`).code(t, 0)
+			if records := s.records(); len(records) != 1 || records[0].Argv0 != "git" {
+				t.Fatalf("real git records=%+v", records)
 			}
 			if logs := s.logs(); len(logs) != 1 || logs[0].Invocation.Via != "exec" {
 				t.Fatalf("logs=%+v", logs)
@@ -57,7 +57,7 @@ func TestDoctorShellEntry(t *testing.T) {
 	s := newSandbox(t)
 	s.management(nil, "shim", "uninstall", "--bin-dir", s.bin).code(t, 0)
 	s.env["PATH"] = filepath.Dir(s.real)
-	setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+	setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 	doctor := func() map[string]install.Check {
 		t.Helper()
 		result := s.management(nil, "doctor", "--json")

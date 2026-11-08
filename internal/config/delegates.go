@@ -17,12 +17,12 @@ const (
 // Delegate replaces only the final execution step, never policy or hooks.
 type Delegate struct {
 	ID      string            `yaml:"id" json:"id" required:"true"`
-	Match   Match             `yaml:"match" json:"match" required:"true" doc:"Must explicitly select effect: read and level: L1 (native) or L2 (REST). L2 also requires method: GET."`
+	Match   Match             `yaml:"match" json:"match" required:"true" doc:"Must explicitly select effect: read and level: L1; runtime also requires retrySafe."`
 	Unless  []Match           `yaml:"unless" json:"unless,omitempty"`
-	Command []string          `yaml:"command" json:"command" required:"true" doc:"Executable and fixed arguments; gh argv is appended unchanged. No shell. Relative executable paths resolve against the config directory."`
+	Command []string          `yaml:"command" json:"command" required:"true" doc:"Executable and fixed arguments; git argv is appended unchanged. No shell. Relative executable paths resolve against the config directory."`
 	Env     map[string]string `yaml:"env" json:"env,omitempty"`
 	Timeout Duration          `yaml:"timeout" json:"timeout" doc:"Positive Go duration, default 10s, maximum 10m."`
-	OnError string            `yaml:"onError" json:"onError" enum:"fallback,deny" doc:"Start failure or timeout before output: fallback (default) to real gh, or deny with exit 78. Never retry after output or a signal."`
+	OnError string            `yaml:"onError" json:"onError" enum:"fallback,deny" doc:"Start failure or timeout before output: fallback (default) to real git, or deny with exit 78. Never retry after output or a signal."`
 	Files   []string          `yaml:"files,omitempty" json:"files,omitempty" doc:"Project only: repository-relative dependency files included in this delegate's trust digest."`
 	Source  string            `yaml:"-" json:"source,omitempty"`
 }
@@ -50,16 +50,8 @@ func validateDelegateReadOnly(m Match) error {
 	if !slices.Equal([]string(m.Effects), []string{"read"}) {
 		return fmt.Errorf("must explicitly set effect: read; delegates cannot include mutations")
 	}
-	if len(m.Levels) == 0 {
-		return fmt.Errorf("must explicitly select level: L1 or L2; GraphQL is not delegatable")
-	}
-	for _, level := range m.Levels {
-		if level != "L1" && level != "L2" {
-			return fmt.Errorf("only level L1 and L2 are delegatable; GraphQL is not delegatable")
-		}
-	}
-	if slices.Contains(m.Levels, "L2") && !slices.Equal([]string(m.Methods), []string{"GET"}) {
-		return fmt.Errorf("REST delegates must explicitly set method: GET; non-GET API requests are not delegatable")
+	if !slices.Equal([]string(m.Levels), []string{"L1"}) {
+		return fmt.Errorf("must explicitly select level: L1")
 	}
 	return nil
 }

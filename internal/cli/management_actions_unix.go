@@ -10,10 +10,9 @@ import (
 
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize/actions"
-	"github.com/mkusaka/gthok/internal/normalize/graphql"
-	"github.com/mkusaka/gthok/internal/normalize/native"
-	"github.com/mkusaka/gthok/internal/normalize/rest"
+	gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
 	"github.com/spf13/cobra"
+	"path"
 )
 
 type managementActionFamily struct {
@@ -22,11 +21,9 @@ type managementActionFamily struct {
 }
 
 type managementActionEntry struct {
-	Action  string       `json:"action"`
-	Effect  model.Effect `json:"effect"`
-	Native  []string     `json:"native"`
-	REST    []string     `json:"rest"`
-	GraphQL []string     `json:"graphql"`
+	Action string       `json:"action"`
+	Effect model.Effect `json:"effect"`
+	Git    []string     `json:"git"`
 }
 
 func managementActionsCommand(code *int) *cobra.Command {
@@ -51,17 +48,16 @@ func managementActionsCommand(code *int) *cobra.Command {
 }
 
 func managementActionsCatalogue(prefix string) []managementActionFamily {
-	nativeRoutes, restRoutes, graphqlRoutes := native.ActionRoutes(), rest.ActionRoutes(), graphql.ActionRoutes()
+	routes := gitnormalize.ActionRoutes()
 	byFamily := make(map[string][]managementActionEntry)
 	for _, spec := range actions.All() {
-		if !strings.HasPrefix(spec.Action, prefix) {
+		glob, _ := path.Match(prefix, spec.Action)
+		if !strings.HasPrefix(spec.Action, prefix) && !glob {
 			continue
 		}
 		byFamily[spec.Family] = append(byFamily[spec.Family], managementActionEntry{
 			Action: spec.Action, Effect: spec.Effect,
-			Native:  managementActionRoutes(nativeRoutes[spec.Action]),
-			REST:    managementActionRoutes(restRoutes[spec.Action]),
-			GraphQL: managementActionRoutes(graphqlRoutes[spec.Action]),
+			Git: managementActionRoutes(routes[spec.Action]),
 		})
 	}
 	families := make([]string, 0, len(byFamily))
@@ -90,14 +86,8 @@ func managementActionsText(families []managementActionFamily) string {
 		fmt.Fprintln(&text, family.Family)
 		for _, action := range family.Actions {
 			fmt.Fprintf(&text, "  %s (%s)\n", action.Action, action.Effect)
-			for _, route := range action.Native {
-				fmt.Fprintf(&text, "    native: %s\n", route)
-			}
-			for _, route := range action.REST {
-				fmt.Fprintf(&text, "    rest: %s\n", route)
-			}
-			for _, route := range action.GraphQL {
-				fmt.Fprintf(&text, "    graphql: %s\n", route)
+			for _, route := range action.Git {
+				fmt.Fprintf(&text, "    git: %s\n", route)
 			}
 		}
 	}

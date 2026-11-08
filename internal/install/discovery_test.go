@@ -52,37 +52,37 @@ func testSelf(t testing.TB, root, name string) string {
 	return resolved
 }
 
-func TestFindRealGhCandidates(t *testing.T) {
+func TestFindRealGitCandidates(t *testing.T) {
 	root := t.TempDir()
 	self := testSelf(t, root, "gthok-renamed")
-	shim := filepath.Join(root, "shim", "gh")
+	shim := filepath.Join(root, "shim", "git")
 	link(t, self, shim)
 	other := executable(t, filepath.Join(root, "other", "gthok"), "exit 0")
-	otherShim := filepath.Join(root, "other-shim", "gh")
+	otherShim := filepath.Join(root, "other-shim", "git")
 	link(t, other, otherShim)
-	broken := filepath.Join(root, "broken", "gh")
+	broken := filepath.Join(root, "broken", "git")
 	link(t, "missing", broken)
-	loop := filepath.Join(root, "loop", "gh")
+	loop := filepath.Join(root, "loop", "git")
 	link(t, "again", loop)
-	link(t, "gh", filepath.Join(root, "loop", "again"))
-	noExec := executable(t, filepath.Join(root, "noexec", "gh"), "exit 0")
+	link(t, "git", filepath.Join(root, "loop", "again"))
+	noExec := executable(t, filepath.Join(root, "noexec", "git"), "exit 0")
 	if err := os.Chmod(noExec, 0644); err != nil {
 		t.Fatal(err)
 	}
-	directory := filepath.Join(root, "directory", "gh")
+	directory := filepath.Join(root, "directory", "git")
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		t.Fatal(err)
 	}
-	first := executable(t, filepath.Join(root, "first", "gh"), "exit 0")
-	duplicate := filepath.Join(root, "duplicate", "gh")
+	first := executable(t, filepath.Join(root, "first", "git"), "exit 0")
+	duplicate := filepath.Join(root, "duplicate", "git")
 	link(t, first, duplicate)
-	last := executable(t, filepath.Join(root, "last", "gh"), "exit 0")
+	last := executable(t, filepath.Join(root, "last", "git"), "exit 0")
 	paths := []string{shim, otherShim, broken, loop, noExec, directory, first, duplicate, last}
 	dirs := []string{"", ".", "relative"}
 	for _, p := range paths {
 		dirs = append(dirs, filepath.Dir(p))
 	}
-	got, candidates, err := FindRealGh(DiscoverOptions{Self: self, PathEnv: strings.Join(dirs, ":")})
+	got, candidates, err := FindRealGit(DiscoverOptions{Self: self, PathEnv: strings.Join(dirs, ":")})
 	if err != nil || got != first {
 		t.Fatalf("path=%q err=%v", got, err)
 	}
@@ -100,28 +100,28 @@ func TestFindRealGhCandidates(t *testing.T) {
 	}
 }
 
-func TestFindRealGhMissingAndOverride(t *testing.T) {
+func TestFindRealGitMissingAndOverride(t *testing.T) {
 	root := t.TempDir()
 	self := testSelf(t, root, "gthok")
-	shim := filepath.Join(root, "shim", "gh")
+	shim := filepath.Join(root, "shim", "git")
 	link(t, self, shim)
 	for _, path := range []string{filepath.Dir(shim), filepath.Join(root, "missing"), ""} {
-		got, candidates, err := FindRealGh(DiscoverOptions{Self: self, PathEnv: path})
-		if err == nil || got != "" || !strings.Contains(err.Error(), "no real gh") || len(candidates) != 1 {
+		got, candidates, err := FindRealGit(DiscoverOptions{Self: self, PathEnv: path})
+		if err == nil || got != "" || !strings.Contains(err.Error(), "no real git") || len(candidates) != 1 {
 			t.Fatalf("path=%q got=%q candidates=%v err=%v", path, got, candidates, err)
 		}
 	}
-	real := executable(t, filepath.Join(root, "real", "gh"), "exit 0")
+	real := executable(t, filepath.Join(root, "real", "git"), "exit 0")
 	for _, tc := range []struct {
 		path  string
 		valid bool
-	}{{real, true}, {shim, false}, {self, false}, {filepath.Join(root, "missing"), false}, {"gh", false}} {
-		got, _, err := FindRealGh(DiscoverOptions{Self: self, Override: tc.path})
+	}{{real, true}, {shim, false}, {self, false}, {filepath.Join(root, "missing"), false}, {"git", false}} {
+		got, _, err := FindRealGit(DiscoverOptions{Self: self, Override: tc.path})
 		if tc.valid && (err != nil || got != real) || !tc.valid && err == nil {
 			t.Errorf("override=%s got=%q err=%v", tc.path, got, err)
 		}
 	}
-	if _, _, err := FindRealGh(DiscoverOptions{Self: filepath.Join(root, "missing"), PathEnv: filepath.Dir(real)}); err == nil {
+	if _, _, err := FindRealGit(DiscoverOptions{Self: filepath.Join(root, "missing"), PathEnv: filepath.Dir(real)}); err == nil {
 		t.Fatal("missing Self accepted")
 	}
 }
@@ -129,23 +129,23 @@ func TestFindRealGhMissingAndOverride(t *testing.T) {
 func TestHomebrewUpgrade(t *testing.T) {
 	root := t.TempDir()
 	self := testSelf(t, root, "gthok")
-	old := executable(t, filepath.Join(root, "Cellar", "gh", "2.101.0", "bin", "gh"), "exit 0")
-	shim := filepath.Join(root, "bin", "gh")
-	link(t, "../Cellar/gh/2.101.0/bin/gh", shim)
+	old := executable(t, filepath.Join(root, "Cellar", "git", "2.101.0", "bin", "git"), "exit 0")
+	shim := filepath.Join(root, "bin", "git")
+	link(t, "../Cellar/git/2.101.0/bin/git", shim)
 	options := DiscoverOptions{Self: self, PathEnv: filepath.Dir(shim)}
-	got, candidates, err := FindRealGh(options)
+	got, candidates, err := FindRealGit(options)
 	if err != nil || got != shim || candidates[0].Resolved != old {
 		t.Fatalf("before: %q %+v %v", got, candidates, err)
 	}
-	new := executable(t, filepath.Join(root, "Cellar", "gh", "2.102.0", "bin", "gh"), "exit 0")
+	new := executable(t, filepath.Join(root, "Cellar", "git", "2.102.0", "bin", "git"), "exit 0")
 	if err := os.Remove(shim); err != nil {
 		t.Fatal(err)
 	}
-	link(t, "../Cellar/gh/2.102.0/bin/gh", shim)
+	link(t, "../Cellar/git/2.102.0/bin/git", shim)
 	if err := os.RemoveAll(filepath.Dir(filepath.Dir(old))); err != nil {
 		t.Fatal(err)
 	}
-	got, candidates, err = FindRealGh(options)
+	got, candidates, err = FindRealGit(options)
 	if err != nil || got != shim || candidates[0].Resolved != new {
 		t.Fatalf("after: %q %+v %v", got, candidates, err)
 	}
@@ -153,7 +153,7 @@ func TestHomebrewUpgrade(t *testing.T) {
 
 func TestNextDepth(t *testing.T) {
 	for initial := range MaxDepth {
-		env := []string{"PATH=/fake", DepthEnv + "=" + string(rune('0'+initial)), "GH_PATH=/real/gh"}
+		env := []string{"PATH=/fake", DepthEnv + "=" + string(rune('0'+initial)), "GH_PATH=/real/git"}
 		before := append([]string(nil), env...)
 		got, depth, err := NextDepth(env)
 		if err != nil || depth != initial+1 || !reflect.DeepEqual(env, before) {
@@ -163,8 +163,8 @@ func TestNextDepth(t *testing.T) {
 			t.Fatalf("wrong environment %v", got)
 		}
 	}
-	got, depth, err := NextDepth([]string{"GH_PATH=/real/gh"})
-	if err != nil || depth != 1 || !reflect.DeepEqual(got, []string{"GH_PATH=/real/gh", "GTHOK_DEPTH=1"}) {
+	got, depth, err := NextDepth([]string{"GH_PATH=/real/git"})
+	if err != nil || depth != 1 || !reflect.DeepEqual(got, []string{"GH_PATH=/real/git", "GTHOK_DEPTH=1"}) {
 		t.Fatalf("%v %d %v", got, depth, err)
 	}
 	for _, env := range [][]string{{"GTHOK_DEPTH=4"}, {"GTHOK_DEPTH=999999999999999999999"}, {"GTHOK_DEPTH=-1"}, {"GTHOK_DEPTH="}, {"GTHOK_DEPTH=abc"}, {"GTHOK_DEPTH=1", "GTHOK_DEPTH=2"}} {
@@ -174,17 +174,17 @@ func TestNextDepth(t *testing.T) {
 	}
 }
 
-func BenchmarkFindRealGh(b *testing.B) {
+func BenchmarkFindRealGit(b *testing.B) {
 	root := b.TempDir()
 	self := executable(b, filepath.Join(root, "gthok"), "exit 0")
-	shim := filepath.Join(root, "shim", "gh")
+	shim := filepath.Join(root, "shim", "git")
 	link(b, self, shim)
-	real := executable(b, filepath.Join(root, "real", "gh"), "exit 0")
+	real := executable(b, filepath.Join(root, "real", "git"), "exit 0")
 	options := DiscoverOptions{Self: self, PathEnv: filepath.Dir(shim) + ":" + filepath.Join(root, "missing") + ":" + filepath.Dir(real)}
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
-		if _, _, err := FindRealGh(options); err != nil {
+		if _, _, err := FindRealGit(options); err != nil {
 			b.Fatal(err)
 		}
 	}

@@ -31,10 +31,10 @@ func TestNoConfigExecPreservesStreamsWithoutLogs(t *testing.T) {
 			}
 			input := []byte("body\x00\xff\n")
 			out := []byte("output\x00\n")
-			setBytes(s.env, "FAKEGH_STDOUT_B64", out)
-			s.env["FAKEGH_EXIT"] = "42"
-			args := []string{"pr", "create", "--body-file", "-", "--", "unchanged argument"}
-			result := s.gh(input, args...)
+			setBytes(s.env, "FAKEGIT_STDOUT_B64", out)
+			s.env["FAKEGIT_EXIT"] = "42"
+			args := []string{"commit", "--allow-empty", "--body-file", "-", "--", "unchanged argument"}
+			result := s.git(input, args...)
 			result.code(t, 42)
 			if !bytes.Equal(result.stdout, out) || len(result.stderr) != 0 {
 				t.Fatalf("streams changed: stdout=%q stderr=%q", result.stdout, result.stderr)
@@ -64,9 +64,9 @@ func TestAnyConfigEnablesDefaultLogging(t *testing.T) {
 			} else if err := os.WriteFile(s.cfg, []byte("version: 1\n"), 0600); err != nil {
 				t.Fatal(err)
 			}
-			s.gh(nil, "version").code(t, 0)
+			s.git(nil, "version").code(t, 0)
 			logs := s.logs()
-			if len(logs) != 1 || logs[0].Decision != "allow" {
+			if len(logs) != 1 || logs[0].Decision != "audit" {
 				t.Fatalf("configured invocation was not logged: %+v", logs)
 			}
 		})
@@ -111,7 +111,7 @@ func TestIgnoredHooksWarningThrottleAndManifestChanges(t *testing.T) {
 	})
 	invoke := func(want bool, reason string) []byte {
 		t.Helper()
-		result := s.gh(nil, "version")
+		result := s.git(nil, "version")
 		result.code(t, 0)
 		if !want {
 			if len(result.stderr) != 0 {
@@ -194,7 +194,7 @@ func TestIgnoredHooksWarningSuppression(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			result := s.gh(nil, "version")
+			result := s.git(nil, "version")
 			result.code(t, wantCode)
 			if strings.Contains(string(result.stderr), "project hooks") {
 				t.Fatalf("ignored-hook warning was not suppressed: %s", result.stderr)

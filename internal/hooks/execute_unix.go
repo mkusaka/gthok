@@ -71,8 +71,8 @@ func (r *Runner) environment(h config.Hook, in protocol.Input) []string {
 	set("GTHOK_HOOK_ID", h.ID)
 	set("GTHOK_NESTED", "1")
 	set("GTHOK_NESTED_TOKEN", nestedToken)
-	if r.RealGh != "" {
-		set("GTHOK_REAL_GH", r.RealGh)
+	if r.RealGit != "" {
+		set("GTHOK_REAL_GIT", r.RealGit)
 	}
 	env := make([]string, 0, len(keys))
 	for _, k := range keys {

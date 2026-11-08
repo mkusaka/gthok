@@ -24,27 +24,25 @@ import (
 
 const managementLong = `Agents: start with gthok docs / gthok docs search "<query>" (English queries), and gthok actions for action names.
 
-Manage gthok, a transparent wrapper for the GitHub CLI (gh) that runs
-pre/post hooks and enforces policies on gh commands, gh api REST calls and
-GraphQL mutations. The shim ("gh") and "gthok exec -- <gh args>" use the same
-wrapper pipeline; trusted transforms may rewrite the request before policy/hooks.
+Manage gthok, a transparent Git wrapper that runs pre/post hooks and enforces
+operation policies. The shim ("git") and "gthok exec -- <git args>" use the
+same pipeline; only trusted transforms may rewrite the executed request.
 
-Resolution uses local git metadata and GH_REPO/GH_HOST by default; --no-resolve
-disables it. Read-only API resolution requires explicit --allow-api.
-Explain runs trusted transforms, but never hooks or the original gh command, and exits 0 even on policy deny.
+Resolution uses local Git metadata only; --no-resolve disables it.
+Explain runs trusted transforms, but never hooks or the original git command, and exits 0 even on policy deny.
 Management exit status: 0 success, 1 failure/denial, 2 usage error.
-Exec preserves gh status/signals; denials use 77 (content) or 78 (hook/config error).`
+Exec preserves git status/signals; denials use 77 (content) or 78 (hook/config error).`
 
 // Management runs the CLI, including explicit wrapper execution through exec.
 func Management(args []string, version, commit string) int {
 	Version = version
-	// exec hands everything after it to gh unparsed; a leading -- is optional.
+	// exec hands everything after it to git unparsed; a leading -- is optional.
 	if len(args) > 0 && args[0] == "exec" {
 		rest := args[1:]
 		if len(rest) > 0 && rest[0] == "--" {
 			rest = rest[1:]
 		}
-		return wrapper(rest, "gh", "exec")
+		return wrapper(rest, "git", "exec")
 	}
 	code := 0
 	root := managementRoot(&code, version, commit)
@@ -58,7 +56,7 @@ func Management(args []string, version, commit string) int {
 }
 
 func managementRoot(code *int, version, commit string) *cobra.Command {
-	root := managementGroup("gthok", "Manage the gthok gh wrapper: shim, config, hooks, diagnostics", code)
+	root := managementGroup("gthok", "Manage the gthok git wrapper: shim, config, hooks, diagnostics", code)
 	root.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Help() } // bare "gthok": help, exit 0
 	// Parents are runnable only to validate arguments; don't advertise them
 	// as "gthok config [flags]" usage lines.
@@ -78,29 +76,29 @@ func managementRoot(code *int, version, commit string) *cobra.Command {
 		defaultHelp(cmd, args)
 	})
 
-	execCmd := managementCommand("exec -- <gh args>", "Run gh through the wrapper pipeline without installing a shim", code, func(_ *cobra.Command, args []string) int {
-		return wrapper(args, "gh", "exec")
+	execCmd := managementCommand("exec -- <git args>", "Run git through the wrapper pipeline without installing a shim", code, func(_ *cobra.Command, args []string) int {
+		return wrapper(args, "git", "exec")
 	})
 	// Listed for help only: Management dispatches exec before cobra parsing.
 	execCmd.Long = `Run exactly the same discovery, recursion checks, policy, hooks, execution and
-logging as the gh shim. Intended for tests, CI and scripts without a shim on PATH.
-This is not a policy bypass. The real gh receives argv[0]="gh"; only trusted transforms rewrite args.
+logging as the git shim. Intended for tests, CI and scripts without a shim on PATH.
+This is not a policy bypass. The real git receives argv[0]="git"; only trusted transforms rewrite args.
 Exit status and signals match the shim: content denial 77, hook/config error denial
-78, internal error 1, missing real gh 127; otherwise gh's original status/signal.`
+78, internal error 1, missing real git 127; otherwise git's original status/signal.`
 	root.AddCommand(execCmd)
 
-	shim := managementGroup("shim", "Install or remove the gh shim (gh -> gthok)", code)
+	shim := managementGroup("shim", "Install or remove the git shim (git -> gthok)", code)
 	defaultBin := filepath.Join(environment()["HOME"], ".local", "bin")
 	for _, name := range []string{"install", "uninstall"} {
 		bin := defaultBin
-		short := "Create the gh shim that routes gh through gthok (shell rc files are not modified)"
+		short := "Create the git shim that routes git through gthok (shell rc files are not modified)"
 		if name == "uninstall" {
-			short = "Remove the gh shim created by gthok (other files are never touched)"
+			short = "Remove the git shim created by gthok (other files are never touched)"
 		}
 		cmd := managementCommand(name, short, code, func(cmd *cobra.Command, _ []string) int {
 			return managementShim(cmd.Name(), bin)
 		})
-		cmd.Flags().StringVar(&bin, "bin-dir", bin, "directory containing the gh shim")
+		cmd.Flags().StringVar(&bin, "bin-dir", bin, "directory containing the git shim")
 		shim.AddCommand(cmd)
 	}
 
@@ -113,7 +111,7 @@ Exit status and signals match the shim: content denial 77, hook/config error den
 		return managementVersion(version, commit)
 	})
 
-	hookCommands := managementGroup("hooks", "List configured hooks or run them against a gh command", code)
+	hookCommands := managementGroup("hooks", "List configured hooks or run them against a git command", code)
 	var listJSON bool
 	list := managementCommand("list", "List configured hooks", code, func(_ *cobra.Command, _ []string) int {
 		return managementHooksList(listJSON)
@@ -124,7 +122,7 @@ Exit status and signals match the shim: content denial 77, hook/config error den
 	var exitCode int
 	var expect, expectHooks, expectPolicy string
 	phase := config.PhasePre
-	test := managementCommand("test [flags] -- <gh args>", "Run the hooks matching a gh command (never runs gh itself)", code, func(cmd *cobra.Command, args []string) int {
+	test := managementCommand("test [flags] -- <git args>", "Run the hooks matching a git command (never runs git itself)", code, func(cmd *cobra.Command, args []string) int {
 		if cmd.Flags().Changed("hook") && testOptions.hookID == "" {
 			return managementUsageError("--hook requires a nonempty hook ID")
 		}
@@ -151,11 +149,11 @@ Exit status and signals match the shim: content denial 77, hook/config error den
 		}
 		return managementHooksTest(args, phase, exitCode, testJSON, testOptions, expect, expectHooks, expectPolicy)
 	})
-	test.Long = `Run trusted transforms and matching trusted hooks for real, but never start the original gh command.
-Local context is resolved by default; --allow-api permits read-only API resolution.
+	test.Long = `Run trusted transforms and matching trusted hooks for real, but never start the original git command.
+Local Git context is resolved by default; no remote queries are made.
 Post hooks receive a synthetic result (exit 0 unless --exit-code).
---print-input runs trusted transforms, then prints one hook input JSON envelope without running hooks or gh,
-including API resolution; it cannot be combined with --allow-api.
+--print-input runs trusted transforms, then prints one hook input JSON envelope without running hooks or git,
+It cannot be combined with the legacy --allow-api flag.
 It masks credentials for display by default;
 --show-secrets shows the bytes the hook receives, still honoring redactInput.
 Use --hook ID to preview a matching configured hook; omit it for a generic input.
@@ -175,14 +173,14 @@ otherwise exit 1 with the failed expectation named.
 Without expectations, exit 1 on FINAL deny or hook execution error (nonzero exit,
 spawn failure, timeout, invalid response, cancellation), otherwise 0.
 Configuration/analysis failures exit 1; usage errors exit 2.`
-	test.Example = "  gthok hooks test -- pr merge 123 --admin\n  gthok hooks test --no-resolve -- pr merge 123\n  gthok hooks test --phase post --exit-code 1 -- pr merge 123 -R org/repo"
+	test.Example = "  gthok hooks test -- push origin main --force\n  gthok hooks test --no-resolve -- push origin main\n  gthok hooks test --phase post --exit-code 1 -- push origin main"
 	test.Args = managementInvocationArgs
 	test.Flags().BoolVar(&testJSON, "json", false, "print JSON")
-	test.Flags().BoolVar(&testOptions.printInput, "print-input", false, "print one hook input JSON envelope without executing hooks or gh")
+	test.Flags().BoolVar(&testOptions.printInput, "print-input", false, "print one hook input JSON envelope without executing hooks or git")
 	test.Flags().StringVar(&testOptions.hookID, "hook", "", "preview the input for a matching configured hook (requires --print-input)")
 	test.Flags().BoolVar(&testOptions.showSecrets, "show-secrets", false, "show the bytes the hook receives in --print-input output; still honors redactInput")
 	test.Flags().StringVar(&phase, "phase", config.PhasePre, "hook phase: pre or post")
-	test.Flags().IntVar(&exitCode, "exit-code", 0, "post phase: synthetic gh exit code (selects match.result/exitCode hooks)")
+	test.Flags().IntVar(&exitCode, "exit-code", 0, "post phase: synthetic git exit code (selects match.result/exitCode hooks)")
 	test.Flags().StringVar(&expect, "expect", "", "expect the FINAL decision: allow, deny, abstain or audit (observe would-deny is audit)")
 	test.Flags().StringVar(&expectHooks, "expect-hooks", "", "expect the hook aggregate: allow, deny or abstain")
 	test.Flags().StringVar(&expectPolicy, "expect-policy", "", "expect the policy decision: allow, audit or deny")
@@ -191,33 +189,34 @@ Configuration/analysis failures exit 1; usage errors exit 2.`
 
 	for _, name := range []string{"normalize", "explain"} {
 		var options managementInspectOptions
-		short := "Print how gthok classifies a gh command (redacted JSON)"
+		short := "Print how gthok classifies a git command (redacted JSON)"
 		if name == "explain" {
-			short = "Explain classification, policy decision and matching hooks for a gh command"
+			short = "Explain classification, policy decision and matching hooks for a git command"
 		}
-		cmd := managementCommand(name+" [flags] -- <gh args>", short, code, func(cmd *cobra.Command, args []string) int {
+		cmd := managementCommand(name+" [flags] -- <git args>", short, code, func(cmd *cobra.Command, args []string) int {
 			return managementInspect(cmd.Name(), args, options)
 		})
-		cmd.Long = short + ".\nLocal context is resolved by default without network access. Use --no-resolve\nto skip resolution, or --allow-api to permit read-only API resolution."
-		cmd.Example = "  gthok " + name + " -- pr merge 123 --squash\n  gthok " + name + " --no-resolve -- pr merge 123\n  gthok " + name + " --allow-api -- pr merge 123\n  gthok " + name + " -- api -X PUT repos/org/repo/pulls/123/merge"
+		cmd.Long = short + ".\nLocal context is resolved by default without network access. Use --no-resolve\nto skip local resolution."
+		cmd.Example = "  gthok " + name + " -- push origin main --force-with-lease\n  gthok " + name + " --no-resolve -- reset --hard HEAD~1\n  gthok " + name + " -- tag -d v1\n  gthok " + name + " -- config --get remote.origin.url"
 		cmd.Args = managementInvocationArgs
 		managementResolutionFlags(cmd, &options)
 		if name == "normalize" {
 			cmd.Flags().Bool("json", true, "print the normalization result as JSON (the only output format)")
 		} else {
+			cmd.Flags().BoolVar(&options.noTransforms, "no-transforms", false, "do not run trusted request transforms")
 			cmd.Flags().BoolVar(&options.asJSON, "json", false, "print classification, policy, hook selection and warnings as JSON")
 			cmd.Flags().BoolVar(&options.showSecrets, "show-secrets", false, "show secrets in explain output; never affects hook payload redaction")
-			cmd.Long += "\nTrusted transforms run before evaluation; hooks and the original gh command never run.\nWarnings are reported in text or --json without changing the decision."
+			cmd.Long += "\nTrusted transforms run before evaluation; hooks and the original git command never run.\nWarnings are reported in text or --json without changing the decision."
 		}
 		root.AddCommand(cmd)
 	}
 
-	shellInit := managementGroup("shell-init", "Print a gh shell function that runs gh through gthok exec (for eval in a shell rc file)", code)
+	shellInit := managementGroup("shell-init", "Print a git shell function that runs git through gthok exec (for eval in a shell rc file)", code)
 	for _, name := range []string{"zsh", "bash", "fish"} {
-		shellInit.AddCommand(managementCommand(name, "Print the "+name+" gh function", code, func(cmd *cobra.Command, _ []string) int {
-			fn := `function gh { gthok exec -- "$@"; }`
+		shellInit.AddCommand(managementCommand(name, "Print the "+name+" git function", code, func(cmd *cobra.Command, _ []string) int {
+			fn := `function git { gthok exec -- "$@"; }`
 			if cmd.Name() == "fish" {
-				fn = "function gh; gthok exec -- $argv; end"
+				fn = "function git; gthok exec -- $argv; end"
 			}
 			_, _ = fmt.Fprintln(os.Stdout, shellInitCaveat+fn)
 			return 0
@@ -350,7 +349,7 @@ Configuration/analysis failures exit 1; usage errors exit 2.`
 func managementResolutionFlags(cmd *cobra.Command, options *managementInspectOptions) {
 	cmd.Flags().BoolVar(&options.noResolve, "no-resolve", false, "disable local target resolution")
 	cmd.Flags().Bool("resolve", false, "deprecated: no-op; local target resolution is the default")
-	cmd.Flags().BoolVar(&options.allowAPI, "allow-api", false, "allow read-only API resolution (incompatible with --no-resolve)")
+	cmd.Flags().BoolVar(&options.allowAPI, "allow-api", false, "legacy flag; resolution remains local-only (incompatible with --no-resolve)")
 }
 
 func managementCommand(use, short string, code *int, run func(*cobra.Command, []string) int) *cobra.Command {
@@ -378,9 +377,9 @@ func managementCommandArgs(cmd *cobra.Command, args []string) error {
 }
 
 func managementInvocationArgs(cmd *cobra.Command, args []string) error {
-	// No gh argument may precede --; pflag leaves everything after it untouched.
+	// No git argument may precede --; pflag leaves everything after it untouched.
 	if cmd.ArgsLenAtDash() != 0 || len(args) == 0 {
-		return errors.New("provide gh arguments after --")
+		return errors.New("provide git arguments after --")
 	}
 	return nil
 }
@@ -395,7 +394,7 @@ func managementGroup(use, short string, code *int) *cobra.Command {
 }
 
 // shellInitCaveat is printed so it stays next to the function in rc files.
-const shellInitCaveat = `# gthok: gh typed in this shell runs through 'gthok exec'. gh started by scripts,
+const shellInitCaveat = `# gthok: git typed in this shell runs through 'gthok exec'. git started by scripts,
 # programs or agents that skip shell rc files is not covered; 'gthok shim install' is.
 `
 
@@ -493,13 +492,13 @@ func managementShim(command, bin string) int {
 		return managementFailure(err)
 	}
 	_, _ = fmt.Fprintln(os.Stdout, r.String("Installed gthok shim: "+result.ShimPath))
-	_, _ = fmt.Fprintln(os.Stdout, r.String("Real gh: "+result.RealGh))
+	_, _ = fmt.Fprintln(os.Stdout, r.String("Real git: "+result.RealGit))
 	_, _ = fmt.Fprintln(os.Stdout, r.String("PATH: "+result.Precedence))
 	if result.FixHint != "" {
 		_, _ = fmt.Fprintln(os.Stdout, r.String("Fix: "+result.FixHint))
 	}
 	_, _ = fmt.Fprintln(os.Stdout, "Shim probe passed. Shell rc files were not modified.")
-	_, _ = fmt.Fprintln(os.Stdout, "repos without a gthok config are unaffected: gh is exec'd directly")
+	_, _ = fmt.Fprintln(os.Stdout, "repos without a gthok config are unaffected: git is exec'd directly")
 	return 0
 }
 
@@ -571,11 +570,11 @@ func operationPatternWarnings(c *config.Config) []string {
 func configFailureBehavior(err error, env map[string]string) string {
 	if config.FailClosed(err, env) {
 		if env["GTHOK_FAIL_CLOSED"] == "1" {
-			return "Invalid config behavior: fail-closed (GTHOK_FAIL_CLOSED=1); gh will not run."
+			return "Invalid config behavior: fail-closed (GTHOK_FAIL_CLOSED=1); git will not run."
 		}
-		return "Invalid config behavior: fail-closed (user policy.mode: enforce); gh will not run."
+		return "Invalid config behavior: fail-closed (user policy.mode: enforce); git will not run."
 	}
-	return "Invalid config behavior: fail-open (observe or undetermined user mode); gh runs without hooks with a throttled warning."
+	return "Invalid config behavior: fail-open (observe or undetermined user mode); git runs without hooks with a throttled warning."
 }
 
 func managementDoctor(asJSON bool, version string) int {
@@ -587,9 +586,9 @@ func managementDoctor(asJSON bool, version string) int {
 	c, notes, cwd, loadErr := managementLoad(env)
 	noConfig := loadErr == nil && !config.HasConfig(cwd, env)
 	notes = append(notes, operationPatternWarnings(c)...)
-	override := env["GTHOK_REAL_GH"]
+	override := env["GTHOK_REAL_GIT"]
 	if override == "" && c != nil {
-		override = c.Runtime.RealGh
+		override = c.Runtime.RealGit
 	}
 	checks := install.Checks(install.DoctorOptions{Self: self, Version: version, PathEnv: env["PATH"], Override: override, BinDir: filepath.Join(env["HOME"], ".local", "bin"), StateDir: filepath.Join(config.Dir(env), "state"), Env: os.Environ(), Stdin: os.Stdin})
 	cfgCheck := install.Check{Name: "config", Status: install.StatusOK}

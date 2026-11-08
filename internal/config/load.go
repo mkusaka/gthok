@@ -18,7 +18,6 @@ const (
 	DefaultMode                      = ModeObserve
 	DefaultUnknownMutation           = UnknownAudit
 	DefaultUnknownInput              = UnknownAudit
-	DefaultProtectedUnknown          = UnknownDeny
 	DefaultHookTimeout               = 10 * time.Second
 	MaxHookTimeout                   = 10 * time.Minute
 	DefaultPreOnError                = OnErrorDeny
@@ -59,9 +58,6 @@ func (c *Config) ApplyDefaults() {
 	}
 	if c.Policy.UnknownInput == "" {
 		c.Policy.UnknownInput = DefaultUnknownInput
-	}
-	if c.Policy.ProtectedUnknown == "" {
-		c.Policy.ProtectedUnknown = DefaultProtectedUnknown
 	}
 	if c.Runtime.HookConcurrency == 0 {
 		c.Runtime.HookConcurrency = DefaultHookConcurrency
@@ -146,7 +142,7 @@ type userConfigError struct {
 
 func (e *userConfigError) Unwrap() error { return e.error }
 
-// FailClosed reports whether an invalid user config must prevent gh execution.
+// FailClosed reports whether an invalid user config must prevent git execution.
 func FailClosed(err error, env map[string]string) bool {
 	var failure *userConfigError
 	return err != nil && (env["GTHOK_FAIL_CLOSED"] == "1" || errors.As(err, &failure) && failure.enforce)
@@ -307,34 +303,4 @@ func (c *Config) HookCommandPath(h Hook) string {
 		return filepath.Join(c.Dir, p)
 	}
 	return p
-}
-
-// LoadGhAliases reads only aliases from config.yml; unrelated gh keys are legal.
-func LoadGhAliases(env map[string]string) (map[string]string, error) {
-	d := env["GH_CONFIG_DIR"]
-	if d == "" {
-		if x := env["XDG_CONFIG_HOME"]; x != "" {
-			d = filepath.Join(x, "gh")
-		} else {
-			d = filepath.Join(env["HOME"], ".config", "gh")
-		}
-	}
-	p := filepath.Join(d, "config.yml")
-	data, err := os.ReadFile(p)
-	if errors.Is(err, os.ErrNotExist) {
-		return map[string]string{}, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	var c struct {
-		Aliases map[string]string `yaml:"aliases"`
-	}
-	if err := yaml.Unmarshal(data, &c); err != nil {
-		return nil, fmt.Errorf("gh aliases %s: %w", p, err)
-	}
-	if c.Aliases == nil {
-		c.Aliases = map[string]string{}
-	}
-	return c.Aliases, nil
 }

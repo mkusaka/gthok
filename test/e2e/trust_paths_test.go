@@ -80,7 +80,7 @@ func TestPathTrustCLITransitions(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(c.Trust.Repositories, []string{s.cwd}) || !reflect.DeepEqual(c.Trust.Directories, []string{"~/"}) {
 		t.Fatalf("untrust --all changed path trust: %+v, err=%v", c, err)
 	}
-	setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+	setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 	for _, args := range [][]string{{"config", "validate"}, {"doctor", "--json"}, {"explain", "--", "version"}} {
 		result := s.management(nil, args...)
 		result.code(t, 0)
@@ -88,7 +88,7 @@ func TestPathTrustCLITransitions(t *testing.T) {
 			t.Fatalf("%v omitted path-trust note: %s", args, result.stdout)
 		}
 	}
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	dry = s.management(nil, "config", "untrust", "repo", "--dry-run")
 	dry.code(t, 0)

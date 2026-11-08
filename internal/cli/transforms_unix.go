@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-	"slices"
 	"sort"
 	"strings"
 
@@ -19,21 +18,8 @@ import (
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/protocol"
-	"github.com/mkusaka/gthok/internal/resolve"
 	"github.com/mkusaka/gthok/internal/transforms"
 )
-
-// localTargets fills a copy of result from env and local git only (no API).
-func localTargets(inv model.Invocation, result model.Result) (model.Result, *model.ResolvedContext) {
-	result.Operations = slices.Clone(result.Operations)
-	for i := range result.Operations {
-		result.Operations[i].Unresolved = slices.Clone(result.Operations[i].Unresolved)
-	}
-	r := &resolve.Resolver{Env: inv.Env, Cwd: inv.Cwd}
-	r.Fill(context.Background(), &result, nil, false)
-	local := r.Local()
-	return result, &local
-}
 
 type transformedRequest struct {
 	invocation model.Invocation
@@ -60,14 +46,8 @@ func runTransforms(ctx context.Context, c *config.Config, runner *hooks.Runner, 
 		cleanups = nil
 	}
 	for _, t := range c.Transforms {
-		subject := policy.Subject{Result: out.result, Argv: out.result.Source.Argv, Phase: config.PhasePre, Token: policy.TokenKind(out.invocation.Env), Env: out.invocation.Env}
+		subject := policy.Subject{Result: out.result, Argv: out.result.Source.Argv, Phase: config.PhasePre, Env: out.invocation.Env}
 		yes, _ := policy.Matches(t.Match, t.Unless, subject)
-		if maybe, _ := policy.MatchMaybe(t.Match, t.Unless, subject); !yes && maybe {
-			// Transforms can swap credentials, so an unknown repository must not
-			// select one: fill targets from env/local git, then require a definite match.
-			subject.Result, subject.Context = localTargets(out.invocation, out.result)
-			yes, _ = policy.Matches(t.Match, t.Unless, subject)
-		}
 		if !yes {
 			continue
 		}
@@ -206,14 +186,13 @@ type managementTransformed struct {
 	Env        []string          `json:"env,omitempty"`
 	EnvBy      map[string]string `json:"envBy,omitempty"`
 	EnvUnset   []string          `json:"envUnset,omitempty"`
-	TokenKind  string            `json:"tokenKind"`
 }
 
 func (a *managementAnalysis) transformed() *managementTransformed {
 	if len(a.transformIDs) == 0 {
 		return nil
 	}
-	value := &managementTransformed{Argv: a.redactor.Argv(a.result.Source.Argv), Operations: a.redactor.Result(a.result).Operations, TokenKind: policy.TokenKind(a.env)}
+	value := &managementTransformed{Argv: a.redactor.Argv(a.result.Source.Argv), Operations: a.redactor.Result(a.result).Operations}
 	for _, id := range a.transformIDs {
 		value.Transforms = append(value.Transforms, a.redactor.String(id))
 	}
@@ -253,7 +232,6 @@ func managementPrintTransformed(w io.Writer, a *managementAnalysis, showSecrets 
 		}
 		_, _ = fmt.Fprintln(w, terminalText(a.redactor.String("  env: "+strings.Join(entries, ", "))))
 	}
-	_, _ = fmt.Fprintln(w, "  tokenKind: "+value.TokenKind)
 	for i, op := range value.Operations {
 		_, _ = fmt.Fprintln(w, terminalText(fmt.Sprintf("  operation %d: texts=%s parameters=%s target=%s", i, managementCompact(op.Texts), managementCompact(op.Parameters), managementCompact(op.Target))))
 	}

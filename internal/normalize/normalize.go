@@ -1,66 +1,19 @@
-// Package normalize turns a gh invocation into a canonical model.Result by
-// dispatching to the L1 (native), L2 (rest) and L3 (graphql) normalizers.
-//
-// Normalize is pure: all I/O is injected through model.Invocation. Results
-// may contain secrets (tokens in argv/variables); redact at output boundaries
-// (hook input, logs, explain) with internal/redact.
+// Package normalize turns a Git invocation into the canonical operation model.
+// All I/O is injected through Invocation; output boundaries must redact secrets.
 package normalize
 
 import (
-	"errors"
-
 	"github.com/mkusaka/gthok/internal/model"
-	"github.com/mkusaka/gthok/internal/normalize/apiargs"
-	"github.com/mkusaka/gthok/internal/normalize/graphql"
-	"github.com/mkusaka/gthok/internal/normalize/native"
-	"github.com/mkusaka/gthok/internal/normalize/rest"
+	gitnormalize "github.com/mkusaka/gthok/internal/normalize/git"
 )
 
-// Normalize classifies inv. It never panics on malformed input; anything it
-// cannot understand becomes an explicit unknown operation.
 func Normalize(inv model.Invocation) (res model.Result) {
 	defer func() {
-		if r := recover(); r != nil {
+		if recover() != nil {
 			res = model.NewUnknown(model.LevelNone, model.UnknownParseError, "internal normalizer panic")
+			res.Registry = model.Registry{Git: "v2.56.0", Commit: "a018953688f1b10bddf91bff8747068f5f4746a4"}
 			res.Source = model.Source{Kind: "unknown", Argv: inv.Argv}
 		}
 	}()
-
-	expanded, alias, reason := native.ExpandAlias(inv.Argv, native.ExtensionAliases(inv))
-	if reason != model.UnknownNone {
-		res = model.NewUnknown(model.LevelL1, reason, "alias could not be expanded safely")
-		res.Source = model.Source{Kind: "unknown", Argv: inv.Argv, Alias: alias}
-		return res
-	}
-
-	if ext, ok := native.DeclaredExtension(inv, expanded); ok {
-		res = ext
-	} else if len(expanded) > 0 && expanded[0] == "api" {
-		req, err := apiargs.Parse(expanded[1:])
-		switch {
-		case errors.Is(err, apiargs.ErrHelp):
-			res = helpResult()
-		case err != nil:
-			res = model.NewUnknown(model.LevelL2, model.UnknownParseError, err.Error())
-			res.Source = model.Source{Kind: "unknown"}
-		case apiargs.IsGraphQL(req):
-			res = graphql.Normalize(inv, req)
-		default:
-			res = rest.Normalize(inv, req)
-		}
-	} else {
-		res = native.Normalize(inv, expanded)
-	}
-	res.SchemaVersion = model.SchemaVersion
-	res.Source.Argv = expanded
-	res.Source.Alias = alias
-	return res
-}
-
-func helpResult() model.Result {
-	return model.Result{
-		Classification: model.Classification{Level: model.LevelL2, Confidence: model.ConfidenceExact, Resolution: model.ResolutionComplete, MutationFree: true},
-		Operations:     []model.Operation{{Family: "help", Action: "help", Effect: model.EffectRead, Execution: model.ExecutionWillRun}},
-		Source:         model.Source{Kind: "command"},
-	}
+	return gitnormalize.Normalize(inv)
 }

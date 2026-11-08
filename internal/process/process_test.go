@@ -277,7 +277,7 @@ func childConfig(t testing.TB, mode string, n int) wrapperConfig {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return wrapperConfig{Mode: "run", Path: path, Args: []string{"gh", "space arg", "", "日本語", "--dash"}, Env: []string{helperKey + "=child", "GTHOK_CHILD_MODE=" + mode, "GTHOK_CHILD_N=" + strconv.Itoa(n), "EXACT=one two"}, Limit: 7, SpoolLimit: 1024, Timeout: 5 * time.Second}
+	return wrapperConfig{Mode: "run", Path: path, Args: []string{"git", "space arg", "", "日本語", "--dash"}, Env: []string{helperKey + "=child", "GTHOK_CHILD_MODE=" + mode, "GTHOK_CHILD_N=" + strconv.Itoa(n), "EXACT=one two"}, Limit: 7, SpoolLimit: 1024, Timeout: 5 * time.Second}
 }
 
 func wrapperCommand(t testing.TB, cfg wrapperConfig) *exec.Cmd {
@@ -415,7 +415,7 @@ func TestExitAndSpawnStatus(t *testing.T) {
 			t.Run(mode+"/"+kind, func(t *testing.T) {
 				cfg := childConfig(t, "exit", 0)
 				cfg.Mode = mode
-				cfg.Path = filepath.Join(t.TempDir(), "gh")
+				cfg.Path = filepath.Join(t.TempDir(), "git")
 				want := 126
 				switch kind {
 				case "missing":

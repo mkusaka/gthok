@@ -32,7 +32,7 @@ func writeTrustProject(t *testing.T, s *sandbox, command ...string) (string, []b
 		Version int             `yaml:"version"`
 		Policy  config.Policy   `yaml:"policy"`
 		Hooks   config.HookList `yaml:"hooks"`
-	}{Version: 1, Policy: config.Policy{Mode: config.ModeEnforce, UnknownMutation: "audit", ProtectedUnknown: "deny", Rules: []config.Rule{{ID: "project-deny", Decision: "deny", Match: config.Match{Commands: []string{"pr merge"}}}}}, Hooks: config.HookList{h}})
+	}{Version: 1, Policy: config.Policy{Mode: config.ModeEnforce, UnknownMutation: "audit", Rules: []config.Rule{{ID: "project-deny", Decision: "deny", Match: config.Match{Commands: []string{"push origin"}}}}}, Hooks: config.HookList{h}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,12 +75,12 @@ func TestProjectHookTrustTransitions(t *testing.T) {
 	s := newSandbox(t)
 	project, body := writeTrustProject(t, s)
 	assertIgnoredProjectHook(t, s, "untrusted")
-	result := s.gh(nil, "version")
+	result := s.git(nil, "version")
 	result.code(t, 0)
 	assertNoProjectHook(t, s)
-	s.gh(nil, "pr", "merge", "12", "-R", "acme/project").code(t, 77)
+	s.git(nil, "push", "origin", "12", "-R", "acme/project").code(t, 77)
 	if len(s.records()) != 1 {
-		t.Fatal("untrusted project policy did not prevent gh")
+		t.Fatal("untrusted project policy did not prevent git")
 	}
 	result = s.management(nil, "config", "trust")
 	result.code(t, 0)
@@ -88,7 +88,7 @@ func TestProjectHookTrustTransitions(t *testing.T) {
 		t.Fatalf("trust omitted activated command: %s", result.stdout)
 	}
 	assertNoProjectHook(t, s)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	if err := os.Remove(filepath.Join(s.root, "project.json")); err != nil {
 		t.Fatal(err)
@@ -97,22 +97,22 @@ func TestProjectHookTrustTransitions(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertIgnoredProjectHook(t, s, "changed since trust")
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
-	s.gh(nil, "pr", "merge", "12", "-R", "acme/project").code(t, 77)
+	s.git(nil, "push", "origin", "12", "-R", "acme/project").code(t, 77)
 	if len(s.records()) != 3 {
-		t.Fatal("edited project policy did not prevent gh")
+		t.Fatal("edited project policy did not prevent git")
 	}
 	s.management(nil, "config", "trust", project).code(t, 0)
 	s.management(nil, "config", "untrust", project).code(t, 0)
 	s.management(nil, "config", "untrust", project).code(t, 0)
 	assertIgnoredProjectHook(t, s, "untrusted")
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
 	if err := os.WriteFile(project, body, 0600); err != nil {
 		t.Fatal(err)
 	}
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
 }
 
@@ -157,13 +157,13 @@ func TestProjectTrustRelativeExecutableAcrossWorktrees(t *testing.T) {
 		}
 	}
 	assertNoProjectHook(t, s)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	if err := os.Remove(filepath.Join(s.root, "project.json")); err != nil {
 		t.Fatal(err)
 	}
 	s.cwd = second
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	if err := os.Remove(filepath.Join(s.root, "project.json")); err != nil {
 		t.Fatal(err)
@@ -172,12 +172,12 @@ func TestProjectTrustRelativeExecutableAcrossWorktrees(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertIgnoredProjectHook(t, s, "changed since trust")
-	result = s.gh(nil, "version")
+	result = s.git(nil, "version")
 	result.code(t, 0)
 	assertNoProjectHook(t, s)
-	s.gh(nil, "pr", "merge", "12", "-R", "acme/project").code(t, 77)
+	s.git(nil, "push", "origin", "12", "-R", "acme/project").code(t, 77)
 	assertNoProjectHook(t, s)
-	if len(s.records()) != 3 { // three version runs; the denied merge never reached gh
+	if len(s.records()) != 3 { // three version runs; the denied merge never reached git
 		t.Fatal("changed executable bypassed project deny rule")
 	}
 }
@@ -185,16 +185,16 @@ func TestProjectTrustRelativeExecutableAcrossWorktrees(t *testing.T) {
 func TestProjectTrustCorruption(t *testing.T) {
 	s := newSandbox(t)
 	writeTrustProject(t, s)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
 	s.management(nil, "config", "trust").code(t, 0)
 	if err := os.WriteFile(filepath.Join(filepath.Dir(s.cfg), "trust.json"), []byte("{"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	result := s.gh(nil, "version")
+	result := s.git(nil, "version")
 	result.code(t, 0)
 	assertNoProjectHook(t, s)
-	s.gh(nil, "pr", "merge", "12", "-R", "acme/project").code(t, 77)
+	s.git(nil, "push", "origin", "12", "-R", "acme/project").code(t, 77)
 	if len(s.records()) != 2 {
 		t.Fatal("corrupt trust store bypassed project policy")
 	}
@@ -203,7 +203,7 @@ func TestProjectTrustCorruption(t *testing.T) {
 	if !bytes.Contains(result.stdout, []byte("trust.json")) {
 		t.Fatalf("missing corrupt-store diagnostic: %s", result.stdout)
 	}
-	setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+	setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 	result = s.management(nil, "doctor", "--json")
 	result.code(t, 0)
 	var checks []struct {
@@ -242,7 +242,7 @@ func TestProjectTrustPathsAndUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.management(nil, "config", "trust", filepath.Join(alias, ".gthok.yaml")).code(t, 0)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	s.management(nil, "config", "untrust", project).code(t, 0)
 	data, err := os.ReadFile(filepath.Join(filepath.Dir(s.cfg), "trust.json"))
@@ -286,13 +286,13 @@ func TestProjectTrustSymlinkFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.management(nil, "config", "trust", project).code(t, 0)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	if err := os.Remove(filepath.Join(s.root, "project.json")); err != nil {
 		t.Fatal(err)
 	}
 	s.management(nil, "config", "untrust", project).code(t, 0)
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
 }
 
@@ -330,7 +330,7 @@ func TestProjectTrustListAndClearAll(t *testing.T) {
 		if err := os.WriteFile(project, version, 0600); err != nil {
 			t.Fatal(err)
 		}
-		s.gh(nil, "version").code(t, 0)
+		s.git(nil, "version").code(t, 0)
 		assertNoProjectHook(t, s)
 	}
 }
@@ -354,7 +354,7 @@ func TestProjectTrustIncludeEditRetainsRules(t *testing.T) {
 			t.Fatalf("trust list omitted included file %q: %s", want, list.stdout)
 		}
 	}
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	s.hookInput("project")
 	if err := os.Remove(filepath.Join(s.root, "project.json")); err != nil {
 		t.Fatal(err)
@@ -363,10 +363,10 @@ func TestProjectTrustIncludeEditRetainsRules(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertIgnoredProjectHook(t, s, "changed since trust")
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	assertNoProjectHook(t, s)
 	before := len(s.records())
-	s.gh(nil, "pr", "merge", "12", "-R", "acme/project").code(t, 77)
+	s.git(nil, "push", "origin", "12", "-R", "acme/project").code(t, 77)
 	if len(s.records()) != before {
 		t.Fatal("included-file edit bypassed project deny rule")
 	}
@@ -376,14 +376,14 @@ func TestProjectTrustIncludeEditRetainsRules(t *testing.T) {
 // A personal .gthok.local.yaml hook runs on the first invocation, without trust.
 func TestLocalConfigHookRunsWithoutTrust(t *testing.T) {
 	s := newSandbox(t)
-	h := fmt.Sprintf("{id: local, command: [%q], env: {FAKEGH_MODE: hook, FAKEGH_HOOK_RECORD: %q}}", fakeBinary, filepath.Join(s.root, "local.json"))
+	h := fmt.Sprintf("{id: local, command: [%q], env: {FAKEGIT_MODE: hook, FAKEGIT_HOOK_RECORD: %q}}", fakeBinary, filepath.Join(s.root, "local.json"))
 	if err := os.Mkdir(filepath.Join(s.cwd, ".git"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(s.cwd, ".gthok.local.yaml"), []byte("version: 1\nhooks: {pre: ["+h+"]}\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	if in := s.hookInput("local"); in.HookID != "local" {
 		t.Fatalf("local hook input: %+v", in)
 	}

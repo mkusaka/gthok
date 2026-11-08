@@ -27,7 +27,7 @@ func TestContinueOnErrorRunsGhAndPreservesStatus(t *testing.T) {
 			s := newSandbox(t)
 			secret := "ghp_" + strings.Repeat("w", 36)
 			s.env["GH_TOKEN"] = secret
-			s.env["FAKEGH_EXIT"] = strconv.Itoa(tc.exit)
+			s.env["FAKEGIT_EXIT"] = strconv.Itoa(tc.exit)
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = tc.mode
 				yes := true
@@ -35,11 +35,11 @@ func TestContinueOnErrorRunsGhAndPreservesStatus(t *testing.T) {
 				h := s.hook("advice", config.PhasePre)
 				h.ContinueOnError, h.RedactInput = true, tc.redactInput
 				h.OnError = config.OnErrorDeny
-				h.Env["FAKEGH_HOOK_DECISION"] = "deny"
-				h.Env["FAKEGH_HOOK_MESSAGE"] = "review required\n" + secret + "\x1b[31m"
+				h.Env["FAKEGIT_HOOK_DECISION"] = "deny"
+				h.Env["FAKEGIT_HOOK_MESSAGE"] = "review required\n" + secret + "\x1b[31m"
 				if tc.malfunction {
-					h.Env["FAKEGH_HOOK_EXIT"] = "23"
-					setBytes(h.Env, "FAKEGH_HOOK_STDERR_B64", []byte("discarded\nloading\nmissing tool "+secret+"\n"))
+					h.Env["FAKEGIT_HOOK_EXIT"] = "23"
+					setBytes(h.Env, "FAKEGIT_HOOK_STDERR_B64", []byte("discarded\nloading\nmissing tool "+secret+"\n"))
 				}
 				dependent := s.hook("dependent", config.PhasePre)
 				dependent.DependsOn = []string{"advice"}
@@ -48,8 +48,8 @@ func TestContinueOnErrorRunsGhAndPreservesStatus(t *testing.T) {
 					c.Hooks = append(c.Hooks, s.hook("audit", config.PhasePost))
 				}
 			})
-			args := []string{"pr", "view", "1", "-R", "o/r"}
-			got := s.gh(nil, args...)
+			args := []string{"show", "HEAD", "1", "-R", "o/r"}
+			got := s.git(nil, args...)
 			got.code(t, tc.exit)
 			s.onlyRecord(args, nil)
 			want := "gthok: warning from hook advice (continue-on-error)\n  review required\n  [REDACTED]\\x1b[31m\n"
@@ -95,14 +95,14 @@ func TestContinueOnErrorSuppressesWarningWhenDenied(t *testing.T) {
 		c.Logging.Enabled = &yes
 		advice := s.hook("advice", config.PhasePre)
 		advice.ContinueOnError = true
-		advice.Env["FAKEGH_HOOK_DECISION"] = "deny"
-		advice.Env["FAKEGH_HOOK_MESSAGE"] = "nonblocking review"
+		advice.Env["FAKEGIT_HOOK_DECISION"] = "deny"
+		advice.Env["FAKEGIT_HOOK_MESSAGE"] = "nonblocking review"
 		gate := s.hook("gate", config.PhasePre)
-		gate.Env["FAKEGH_HOOK_DECISION"] = "deny"
-		gate.Env["FAKEGH_HOOK_MESSAGE"] = "blocking review"
+		gate.Env["FAKEGIT_HOOK_DECISION"] = "deny"
+		gate.Env["FAKEGIT_HOOK_MESSAGE"] = "blocking review"
 		c.Hooks = []config.Hook{advice, gate}
 	})
-	got := s.gh(nil, "version")
+	got := s.git(nil, "version")
 	got.code(t, 77)
 	s.absentRecord()
 	if want := "gthok: denied by hook gate\n  - hook gate: blocking review\n"; string(got.stderr) != want {
@@ -120,7 +120,7 @@ func TestContinueOnErrorManagementVisibility(t *testing.T) {
 		c.Policy.Mode = config.ModeEnforce
 		h := s.hook("advice", config.PhasePre)
 		h.ContinueOnError = true
-		h.Env["FAKEGH_HOOK_DECISION"] = "deny"
+		h.Env["FAKEGIT_HOOK_DECISION"] = "deny"
 		c.Hooks = []config.Hook{h}
 	})
 	listed := s.management(nil, "hooks", "list")
@@ -161,7 +161,7 @@ func TestContinueOnErrorManagementVisibility(t *testing.T) {
 			}
 		}
 		if bytes.Contains(got.stderr, []byte("warning from")) {
-			t.Fatalf("hooks test must not print gh-runs-only warnings: %s", got.stderr)
+			t.Fatalf("hooks test must not print git-runs-only warnings: %s", got.stderr)
 		}
 	}
 	s.absentRecord()

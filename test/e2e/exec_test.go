@@ -22,7 +22,7 @@ func TestExecWithoutShimPreservesInvocation(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/exit=%d", path, code), func(t *testing.T) {
 				s := newSandbox(t)
 				s.env["PATH"] = filepath.Dir(s.real) // No shim on PATH.
-				s.env["FAKEGH_EXIT"] = strconv.Itoa(code)
+				s.env["FAKEGIT_EXIT"] = strconv.Itoa(code)
 				s.configure(func(c *config.Config) {
 					if path == "checked" || path == "supervised" {
 						yes := true
@@ -41,8 +41,8 @@ func TestExecWithoutShimPreservesInvocation(t *testing.T) {
 				args := []string{"version", "--phase", "post", "--exit-code=78", "--", "--show-secrets", "", "space argument"}
 				input := []byte{0, 'x', '\n', 255}
 				stdout, stderr := []byte{255, 'o', '\n'}, []byte{0, 'e', '\n'}
-				setBytes(s.env, "FAKEGH_STDOUT_B64", stdout)
-				setBytes(s.env, "FAKEGH_STDERR_B64", stderr)
+				setBytes(s.env, "FAKEGIT_STDOUT_B64", stdout)
+				setBytes(s.env, "FAKEGIT_STDERR_B64", stderr)
 				result := s.management(input, append([]string{"exec", "--"}, args...)...)
 				result.code(t, code)
 				if !bytes.Equal(result.stdout, stdout) || !bytes.Equal(result.stderr, stderr) {
@@ -55,8 +55,8 @@ func TestExecWithoutShimPreservesInvocation(t *testing.T) {
 				}
 				wantEnv["GTHOK_DEPTH"] = "1"
 				gotEnv := envMap(record.Env)
-				if record.Argv0 != "gh" || len(gotEnv) != len(wantEnv) {
-					t.Fatalf("argv0=%q env=%v, want gh / %v", record.Argv0, gotEnv, wantEnv)
+				if record.Argv0 != "git" || len(gotEnv) != len(wantEnv) {
+					t.Fatalf("argv0=%q env=%v, want git / %v", record.Argv0, gotEnv, wantEnv)
 				}
 				for k, v := range wantEnv {
 					if gotEnv[k] != v {
@@ -88,12 +88,12 @@ func TestExecPreservesSignals(t *testing.T) {
 			t.Run(fmt.Sprintf("supervised=%t/signal=%d", supervised, sig), func(t *testing.T) {
 				s := newSandbox(t)
 				s.env["PATH"] = filepath.Dir(s.real)
-				s.env["FAKEGH_SIGNAL"] = strconv.Itoa(int(sig))
+				s.env["FAKEGIT_SIGNAL"] = strconv.Itoa(int(sig))
 				if supervised {
 					s.configure(func(c *config.Config) { c.Hooks = []config.Hook{s.hook("post", "post")} })
 				}
 				s.management(nil, "exec", "--", "version").signaled(t, sig)
-				if record := s.onlyRecord([]string{"version"}, nil); record.Argv0 != "gh" {
+				if record := s.onlyRecord([]string{"version"}, nil); record.Argv0 != "git" {
 					t.Fatalf("argv0=%q", record.Argv0)
 				}
 				if supervised {
@@ -179,10 +179,10 @@ func TestExecRejectsShimOverridesAndMissingGh(t *testing.T) {
 			s := newSandbox(t)
 			s.env["PATH"] = s.bin
 			if kind == "environment" {
-				s.env["GTHOK_REAL_GH"] = filepath.Join(s.bin, "gh")
+				s.env["GTHOK_REAL_GIT"] = filepath.Join(s.bin, "git")
 			}
 			if kind == "config" {
-				s.configure(func(c *config.Config) { c.Runtime.RealGh = filepath.Join(s.bin, "gh") })
+				s.configure(func(c *config.Config) { c.Runtime.RealGit = filepath.Join(s.bin, "git") })
 			}
 			if kind == "missing" {
 				s.env["PATH"] = filepath.Join(s.root, "missing")
@@ -204,7 +204,7 @@ func TestShimInvocationProvenance(t *testing.T) {
 		c.Logging.Enabled = &yes
 		c.Hooks = []config.Hook{s.hook("pre", "pre")}
 	})
-	s.gh(nil, "version").code(t, 0)
+	s.git(nil, "version").code(t, 0)
 	if in := s.hookInput("pre"); in.Invocation.Via != "shim" {
 		t.Fatalf("shim via=%q", in.Invocation.Via)
 	}
@@ -213,34 +213,34 @@ func TestShimInvocationProvenance(t *testing.T) {
 	}
 }
 
-// Bare `gh` (no arguments) is passed through like any other invocation, via
+// Bare `git` (no arguments) is passed through like any other invocation, via
 // both the shim and the shell-function entry `gthok exec --`.
 func TestBareGhPassesThrough(t *testing.T) {
 	s := newSandbox(t)
-	s.gh(nil).code(t, 0)
+	s.git(nil).code(t, 0)
 	s.management(nil, "exec", "--").code(t, 0)
 	records := s.records()
-	if len(records) != 2 || len(records[0].Argv) != 0 || len(records[1].Argv) != 0 || records[1].Argv0 != "gh" {
-		t.Fatalf("bare gh records=%+v", records)
+	if len(records) != 2 || len(records[0].Argv) != 0 || len(records[1].Argv) != 0 || records[1].Argv0 != "git" {
+		t.Fatalf("bare git records=%+v", records)
 	}
 	s.management(nil, "exec").code(t, 0)
 }
 
-// `gh --version` adds a gthok line only on a terminal (see terminal tests);
+// `git --version` adds a gthok line only on a terminal (see terminal tests);
 // piped output stays byte-identical. `gthok exec` passes arguments through with
 // or without `--`.
 func TestVersionPipedUnchangedAndExecPassThrough(t *testing.T) {
 	s := newSandbox(t)
-	setBytes(s.env, "FAKEGH_STDOUT_B64", []byte("gh version 2.102.0 (fake)\n"))
+	setBytes(s.env, "FAKEGIT_STDOUT_B64", []byte("git version 2.102.0 (fake)\n"))
 	for _, args := range [][]string{{"--version"}, {"version"}} {
-		result := s.gh(nil, args...)
+		result := s.git(nil, args...)
 		result.code(t, 0)
-		if string(result.stdout) != "gh version 2.102.0 (fake)\n" {
+		if string(result.stdout) != "git version 2.102.0 (fake)\n" {
 			t.Fatalf("%v stdout=%q", args, result.stdout)
 		}
 	}
-	s.management(nil, "exec", "pr", "view", "1").code(t, 0)
-	if records := s.records(); len(records) != 3 || strings.Join(records[2].Argv, " ") != "pr view 1" {
+	s.management(nil, "exec", "show", "HEAD", "1").code(t, 0)
+	if records := s.records(); len(records) != 3 || strings.Join(records[2].Argv, " ") != "show HEAD 1" {
 		t.Fatalf("records=%+v", records)
 	}
 }

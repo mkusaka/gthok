@@ -26,7 +26,7 @@ func TestProjectFailurePreservesUserEnforcement(t *testing.T) {
 			s := newSandbox(t)
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode = config.ModeEnforce
-				c.Policy.Rules = []config.Rule{{ID: "user-deny", Decision: "deny", Match: config.Match{Commands: []string{"pr merge"}}}}
+				c.Policy.Rules = []config.Rule{{ID: "user-deny", Decision: "deny", Match: config.Match{Commands: []string{"push origin"}}}}
 				c.Hooks = []config.Hook{s.hook("user", "pre")}
 				yes := true
 				c.Logging.Enabled = &yes
@@ -38,7 +38,7 @@ func TestProjectFailurePreservesUserEnforcement(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(s.cwd, ".gthok.yaml"), []byte(project.body), 0600); err != nil {
 				t.Fatal(err)
 			}
-			result := s.gh(nil, "pr", "merge", "12", "-R", "acme/repo")
+			result := s.git(nil, "push", "origin", "12", "-R", "acme/repo")
 			result.code(t, 77)
 			if len(s.records()) != 0 || !bytes.Contains(result.stderr, []byte("denied by rule user-deny")) {
 				t.Fatalf("project disabled user policy: records=%+v stderr=%s", s.records(), result.stderr)
@@ -49,10 +49,10 @@ func TestProjectFailurePreservesUserEnforcement(t *testing.T) {
 				t.Fatalf("project failure not logged: %+v", logs)
 			}
 			if project.note == "ignored" {
-				s.gh(nil, "version").code(t, 0)
+				s.git(nil, "version").code(t, 0)
 				logs = s.logs()
 				if len(logs) != 2 || logs[1].Decision != "allow" || !strings.Contains(strings.Join(logs[1].Diagnostics, "\n"), "project config") {
-					t.Fatalf("decision logging lost project failure on allowed gh: %+v", logs)
+					t.Fatalf("decision logging lost project failure on allowed git: %+v", logs)
 				}
 			}
 			for _, args := range [][]string{{"config", "validate"}, {"explain", "--", "version"}, {"doctor", "--json"}} {
@@ -98,14 +98,14 @@ func TestInvalidUserConfigFailureMode(t *testing.T) {
 				behavior, wantCode = "fail-closed", 78
 			}
 			for run := range 2 {
-				result := s.gh(nil, "version")
+				result := s.git(nil, "version")
 				result.code(t, wantCode)
 				if tc.closed {
-					if len(s.records()) != 0 || !bytes.Contains(result.stderr, []byte("not running gh")) {
+					if len(s.records()) != 0 || !bytes.Contains(result.stderr, []byte("not running git")) {
 						t.Fatalf("fail-closed not enforced every time: %s", result.stderr)
 					}
 				} else if run == 0 {
-					if !bytes.Contains(result.stderr, []byte("running gh without hooks")) {
+					if !bytes.Contains(result.stderr, []byte("running git without hooks")) {
 						t.Fatalf("missing fail-open warning: %s", result.stderr)
 					}
 				} else if len(result.stderr) != 0 {
@@ -150,7 +150,7 @@ func TestHomeDotfilesDoNotBecomeProject(t *testing.T) {
 	}
 	for _, cwd := range []string{s.cwd, home} {
 		s.cwd = cwd
-		s.gh(nil, "version").code(t, 0)
+		s.git(nil, "version").code(t, 0)
 	}
 	if len(s.records()) != 2 {
 		t.Fatalf("home config affected passthrough: %+v", s.records())
@@ -167,9 +167,9 @@ func TestFailClosedEnvironmentRejectsInvalidProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	for range 2 {
-		result := s.gh(nil, "version")
+		result := s.git(nil, "version")
 		result.code(t, 78)
-		if !bytes.Contains(result.stderr, []byte("not running gh")) || len(s.records()) != 0 {
+		if !bytes.Contains(result.stderr, []byte("not running git")) || len(s.records()) != 0 {
 			t.Fatalf("CI override allowed invalid project: %s records=%+v", result.stderr, s.records())
 		}
 	}

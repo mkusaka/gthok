@@ -44,7 +44,7 @@ func TestRunAndExecFailureCleanup(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		opts := Options{Path: filepath.Join(tmp, "missing"), Args: []string{"gh"}, Stdin: spool, Capture: mode == "run"}
+		opts := Options{Path: filepath.Join(tmp, "missing"), Args: []string{"git"}, Stdin: spool, Capture: mode == "run"}
 		if mode == "exec" {
 			if err = Exec(opts); !errors.Is(err, syscall.ENOENT) {
 				t.Fatal(err)
@@ -131,7 +131,7 @@ func TestExecRefusesLivePumpAndRestoresStdin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = Exec(Options{Path: "/nonexistent-gthok-test/gh", Args: []string{"gh"}, Stdin: spool}); !errors.Is(err, syscall.ENOENT) {
+	if err = Exec(Options{Path: "/nonexistent-gthok-test/git", Args: []string{"git"}, Stdin: spool}); !errors.Is(err, syscall.ENOENT) {
 		t.Fatal(err)
 	}
 	if err = syscall.Fstat(0, &after); err != nil {

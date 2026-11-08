@@ -18,7 +18,7 @@ func TestHookInputsMatchPublishedSchema(t *testing.T) {
 		stdin []byte
 	}{
 		{name: "empty-argv"},
-		{name: "native-texts", args: []string{"pr", "create", "-R", "acme/project", "-t", "Title", "-b", "Body"}},
+		{name: "native-texts", args: []string{"commit", "--allow-empty", "-R", "acme/project", "-t", "Title", "-b", "Body"}},
 		{name: "stdin-texts", args: []string{"pr", "comment", "7", "-R", "acme/project", "--body-file", "-"}, stdin: []byte("comment body")},
 		{name: "REST-parameters", args: []string{"api", "repos/acme/project/issues", "-f", "title=Title", "-f", "body=Body", "-F", "labels[]=bug", "-F", "labels[]=docs"}},
 		{name: "GraphQL", args: []string{"api", "graphql", "-f", `query=mutation { addComment(input:{subjectId:"opaque",body:"Body"}) { clientMutationId } }`}},
@@ -36,7 +36,7 @@ func TestHookInputsMatchPublishedSchema(t *testing.T) {
 			result.code(t, 0)
 			var schema map[string]any
 			decodeJSON(t, result.stdout, &schema)
-			s.gh(tc.stdin, tc.args...).code(t, 0)
+			s.git(tc.stdin, tc.args...).code(t, 0)
 			for _, id := range []string{"first", "second", "post"} {
 				data, err := os.ReadFile(filepath.Join(s.root, id+".json"))
 				if err != nil {

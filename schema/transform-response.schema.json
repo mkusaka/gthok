@@ -18,7 +18,7 @@
       "description": "Environment edits; string values set variables and null unsets them.",
       "propertyNames": {
         "not": {
-          "pattern": "^(GTHOK_.*|DYLD_.*|GH_PATH|GH_CONFIG_DIR|XDG_CONFIG_HOME|HOME|PATH|LD_PRELOAD|LD_LIBRARY_PATH|GH_HOST|GH_REPO)$"
+          "pattern": "^(GTHOK_.*|GIT_.*|DYLD_.*|XDG_CONFIG_HOME|HOME|PATH|LD_PRELOAD|LD_LIBRARY_PATH)$"
         },
         "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
       },
@@ -31,13 +31,13 @@
     "set": {
       "additionalProperties": {},
       "propertyNames": {
-        "pattern": "^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/(repository|number))$"
+        "pattern": "^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/remote)$"
       },
       "type": "object"
     },
     "unset": {
       "items": {
-        "pattern": "^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/(repository|number))$",
+        "pattern": "^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/remote)$",
         "type": "string"
       },
       "type": "array",

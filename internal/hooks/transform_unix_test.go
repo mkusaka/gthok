@@ -113,7 +113,7 @@ func TestTransformWarningPropagation(t *testing.T) {
 		ok   bool
 	}{
 		{`printf '{"schemaVersion":1,"warning":"review this"}'`, true},
-		{`printf '{"schemaVersion":1,"warning":"review this","set":{"/operations/0/target/number":2}}'`, true},
+		{`printf '{"schemaVersion":1,"warning":"review this","set":{"/operations/0/target/remote":2}}'`, true},
 		{`printf '{"schemaVersion":1,"warning":"review this"}'; exit 3`, false},
 		{`printf '{"schemaVersion":1,"warning":"review this","unknown":true}'`, false},
 		{`printf '{"schemaVersion":1,"warning":42}'`, false},

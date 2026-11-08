@@ -9,7 +9,7 @@ import (
 
 func TestLocalConfig(t *testing.T) {
 	root := t.TempDir()
-	env := map[string]string{"HOME": root, "GTHOK_CONFIG_DIR": filepath.Join(root, "config")}
+	env := map[string]string{"HOME": root, "GTHOK_CONFIG_DIR": filepath.Join(root, "config"), "PATH": os.Getenv("PATH"), "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null"}
 	repo := filepath.Join(root, "repo")
 	writeFixture(t, filepath.Join(repo, "README"), "x\n")
 	trustGit(t, repo, "init", "-q")

@@ -32,17 +32,14 @@ type Input struct {
 }
 
 type InvocationInfo struct {
-	Via      string   `json:"via" enum:"shim,exec" doc:"Wrapper entry point: shim or explicit gthok exec; both enforce the same policy."`
-	Argv     []string `json:"argv,omitempty" doc:"Original arguments after argv[0]; absent means empty."`
-	Alias    string   `json:"alias,omitempty"`
-	Expanded []string `json:"expanded,omitempty"` // alias-expanded analysis argv
-	Cwd      string   `json:"cwd"`
-	IsTTY    bool     `json:"isTTY"` // stdout is a terminal
-	StdinTTY bool     `json:"stdinTTY"`
-	RealGh   string   `json:"realGh,omitempty"`
-	// TokenKind is the kind of env token gh will use: app|user|unknown|none
-	// (see config match.token). The token itself is never included.
-	TokenKind  string   `json:"tokenKind,omitempty" enum:"app,user,unknown,none" doc:"Credential kind from the environment token prefix; never the token itself."`
+	Via        string   `json:"via" enum:"shim,exec" doc:"Wrapper entry point: shim or explicit gthok exec; both enforce the same policy."`
+	Argv       []string `json:"argv,omitempty" doc:"Original arguments after argv[0]; absent means empty."`
+	Alias      string   `json:"alias,omitempty"`
+	Expanded   []string `json:"expanded,omitempty"` // alias-expanded analysis argv
+	Cwd        string   `json:"cwd"`
+	IsTTY      bool     `json:"isTTY"` // stdout is a terminal
+	StdinTTY   bool     `json:"stdinTTY"`
+	RealGit    string   `json:"realGit,omitempty"`
 	EnvChanged []string `json:"envChanged,omitempty" doc:"Sorted names of environment variables changed by request transforms; never their values."`
 }
 
@@ -53,7 +50,7 @@ type PolicyInfo struct {
 	Rules    []string `json:"rules,omitempty"` // matched rule IDs
 }
 
-// ExecResult describes how the real gh finished (post hooks only).
+// ExecResult describes how the real git finished (post hooks only).
 type ExecResult struct {
 	ExitCode   int     `json:"exitCode"`         // -1 when signaled
 	Signal     string  `json:"signal,omitempty"` // e.g. "SIGINT" when terminated by a signal
@@ -61,7 +58,7 @@ type ExecResult struct {
 	DurationMs int64   `json:"durationMs"`
 	Stdout     *Output `json:"stdout,omitempty"` // only when captureOutput
 	Stderr     *Output `json:"stderr,omitempty"`
-	StartError string  `json:"startError,omitempty"` // gh could not be started
+	StartError string  `json:"startError,omitempty"` // git could not be started
 }
 
 type Output struct {

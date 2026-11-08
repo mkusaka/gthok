@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,8 +19,8 @@ func TestOversizedAnalysisStillReplaysEveryByte(t *testing.T) {
 		c.Hooks = []config.Hook{s.hook("pre", "pre"), s.hook("post", "post")}
 	})
 	input := bytes.Repeat([]byte{0, 255, 'x', '\n'}, 512000)
-	args := []string{"api", "graphql", "--input", "-"}
-	result := s.gh(input, args...)
+	args := []string{"commit", "-F", "-"}
+	result := s.git(input, args...)
 	result.code(t, 0)
 	s.onlyRecord(args, input)
 	if s.hookInput("post").Classification.MutationFree {
@@ -36,9 +35,9 @@ func TestStdinTimeoutReplaysPrefixAndLiveRemainder(t *testing.T) {
 		c.Hooks = []config.Hook{s.hook("pre", "pre"), s.hook("post", "post")}
 	})
 	ready := filepath.Join(s.root, "child-started")
-	s.env["FAKEGH_STARTED"] = ready
-	args := []string{"api", "graphql", "--input", "-"}
-	cmd, cancel := s.command(filepath.Join(s.bin, "gh"), nil, args...)
+	s.env["FAKEGIT_STARTED"] = ready
+	args := []string{"commit", "-F", "-"}
+	cmd, cancel := s.command(filepath.Join(s.bin, "git"), nil, args...)
 	defer cancel()
 	reader, writer, err := os.Pipe()
 	if err != nil {
@@ -72,8 +71,8 @@ func TestStdinTimeoutReplaysPrefixAndLiveRemainder(t *testing.T) {
 func TestDisabledLoggingObserveFastPathPreservesUnanalysedStdin(t *testing.T) {
 	s := newSandbox(t)
 	input := []byte{0, 255, 'n', 'o', 't', ' ', 'J', 'S', 'O', 'N'}
-	args := []string{"api", "graphql", "--input", "-"}
-	result := s.gh(input, args...)
+	args := []string{"commit", "-F", "-"}
+	result := s.git(input, args...)
 	result.code(t, 0)
 	s.onlyRecord(args, input)
 	if len(result.stdout) != 0 || len(result.stderr) != 0 {
@@ -104,22 +103,22 @@ func TestUnneededStdinAnalysisStartsGhBeforeEOF(t *testing.T) {
 						c.Hooks = []config.Hook{h}
 					case "unrelated-pre":
 						h := s.hook("pre", "pre")
-						h.Match.Commands = config.StringList{"pr merge"}
+						h.Match.Commands = config.StringList{"push origin"}
 						c.Hooks = []config.Hook{h}
 					case "enforce-audit-only":
 						c.Policy.Mode = config.ModeEnforce
 						c.Policy.Rules = []config.Rule{{ID: "audit", Decision: "audit"}}
 					}
 				})
-				args := []string{"api", "graphql", "--input", "-"}
+				args := []string{"commit", "-F", "-"}
 				prefix, remainder := []byte(`{"query":"query {`), []byte(` viewer { login } }"}`)
 				if source == "field" {
-					args = []string{"api", "graphql", "-F", "query=@-"}
+					args = []string{"cat-file", "--batch"}
 					prefix, remainder = []byte("query {"), []byte(" viewer { login } }")
 				}
 				ready := filepath.Join(s.root, "child-started")
-				s.env["FAKEGH_STARTED"] = ready
-				cmd, cancel := s.command(filepath.Join(s.bin, "gh"), nil, args...)
+				s.env["FAKEGIT_STARTED"] = ready
+				cmd, cancel := s.command(filepath.Join(s.bin, "git"), nil, args...)
 				defer cancel()
 				reader, writer, err := os.Pipe()
 				if err != nil {
@@ -148,23 +147,10 @@ func TestUnneededStdinAnalysisStartsGhBeforeEOF(t *testing.T) {
 				result.code(t, 0)
 				s.onlyRecord(args, append(prefix, remainder...))
 				logs := s.logs()
-				if len(logs) != 1 || logs[0].Classification.MutationFree ||
-					len(logs[0].Operations) != 1 || !strings.Contains(logs[0].Operations[0].Detail, "stdin not captured") {
+				if len(logs) != 1 || logs[0].Classification.MutationFree || len(logs[0].Operations) != 1 {
 					t.Fatalf("uncaptured request log=%+v", logs)
 				}
 			})
 		}
 	}
-}
-
-func TestStdinAnalysisCanRevealMatchingDenyRule(t *testing.T) {
-	s := newSandbox(t)
-	s.configure(func(c *config.Config) {
-		c.Policy.Mode = config.ModeEnforce
-		c.Policy.Rules = []config.Rule{{ID: "merge", Decision: "deny", Match: config.Match{Operations: config.StringList{"pr.merge.*"}}}}
-	})
-	input := []byte(`{"query":"mutation { mergePullRequest(input:{pullRequestId:\"PR_test_node\"}) { clientMutationId } }"}`)
-	result := s.gh(input, "api", "graphql", "--input", "-")
-	result.code(t, 77)
-	s.absentRecord()
 }

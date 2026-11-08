@@ -11,11 +11,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mkusaka/gthok/internal/gitmeta"
 	"go.yaml.in/yaml/v3"
 )
 
 // projectForbidden are the top-level sections a project .gthok.yaml may not set.
-var projectForbidden = []string{"runtime", "logging", "extensions"}
+var projectForbidden = []string{"runtime", "logging"}
 
 // LoadEffective never executes hooks. Valid project policy always applies; only
 // content-trusted project hooks are active. Project failures retain user config.
@@ -359,7 +360,6 @@ func mergeProject(c, p *Config, n *yaml.Node, project, cwd string, env map[strin
 		c.Delegates = append(c.Delegates, d)
 	}
 	c.Policy.Rules = append(c.Policy.Rules, p.Policy.Rules...)
-	c.Policy.ProtectedRepositories = append(c.Policy.ProtectedRepositories, p.Policy.ProtectedRepositories...)
 	policy := field(n, "policy")
 	if field(policy, "mode") != nil {
 		if c.Policy.Mode == ModeEnforce && p.Policy.Mode == ModeObserve {
@@ -376,7 +376,6 @@ func mergeProject(c, p *Config, n *yaml.Node, project, cwd string, env map[strin
 	}{
 		{"unknownMutation", &c.Policy.UnknownMutation, p.Policy.UnknownMutation},
 		{"unknownInput", &c.Policy.UnknownInput, p.Policy.UnknownInput},
-		{"protectedUnknown", &c.Policy.ProtectedUnknown, p.Policy.ProtectedUnknown},
 	} {
 		if field(policy, pair.key) == nil {
 			continue
@@ -421,7 +420,7 @@ func ProjectPath(cwd string, env map[string]string) (string, error) {
 }
 
 // projectRoot returns the nearest directory (symlinks resolved) at or above
-// cwd that contains .git, stopping before home or at the filesystem root.
+// cwd that contains .git or is a bare repository, stopping before home.
 func projectRoot(cwd, home string) (string, error) {
 	d, err := filepath.Abs(cwd)
 	if err != nil {
@@ -450,6 +449,11 @@ func projectRoot(cwd, home string) (string, error) {
 		}
 		if !errors.Is(err, os.ErrNotExist) {
 			return "", err
+		}
+		if info, headErr := os.Stat(filepath.Join(d, "HEAD")); headErr == nil && info.Mode().IsRegular() {
+			if _, dir, _, bare, err := gitmeta.Repository(d, map[string]string{"HOME": home}); err == nil && bare && dir == d {
+				return d, nil
+			}
 		}
 		parent := filepath.Dir(d)
 		if d == parent {

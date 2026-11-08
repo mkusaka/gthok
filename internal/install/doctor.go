@@ -37,7 +37,7 @@ type DoctorOptions struct {
 	// BinDir is the fallback when state has no recorded shims.
 	BinDir   string
 	StateDir string
-	// Env is passed to diagnostics and inspected for GH_PATH / GTHOK_DEPTH.
+	// Env is passed to diagnostics and inspected for GTHOK_DEPTH.
 	// nil inherits the process environment. Non-nil (even empty) is exact.
 	Env []string
 	// Stdin defaults to os.Stdin and is inspected, never read.
@@ -60,11 +60,11 @@ func Checks(o DoctorOptions) []Check {
 		binary.Detail += "; development build: version unknown; features may differ from the docs"
 	}
 	checks := []Check{binary}
-	real, candidates, err := FindRealGh(DiscoverOptions{PathEnv: o.PathEnv, Self: o.Self, Override: o.Override})
+	real, candidates, err := FindRealGit(DiscoverOptions{PathEnv: o.PathEnv, Self: o.Self, Override: o.Override})
 	if err != nil {
-		checks = append(checks, Check{Name: "real-gh", Status: StatusFail, Detail: err.Error(), Fix: "Install GitHub CLI or set runtime.realGh / GTHOK_REAL_GH to its absolute executable path."})
+		checks = append(checks, Check{Name: "real-git", Status: StatusFail, Detail: err.Error(), Fix: "Install Git or set runtime.realGit / GTHOK_REAL_GIT to its absolute executable path."})
 	} else {
-		checks = append(checks, Check{Name: "real-gh", Status: StatusOK, Detail: real})
+		checks = append(checks, Check{Name: "real-git", Status: StatusOK, Detail: real})
 	}
 	state, shimErr := loadState(o.StateDir)
 	shims := make([]string, 0, len(state))
@@ -111,22 +111,8 @@ func Checks(o DoctorOptions) []Check {
 	if o.Override != "" {
 		for _, c := range candidates {
 			if c.Skipped == "gthok shim" {
-				risks = append(risks, "real gh override points at a gthok shim")
+				risks = append(risks, "real git override points at a gthok shim")
 			}
-		}
-	}
-	for _, entry := range env {
-		value, ok := strings.CutPrefix(entry, "GH_PATH=")
-		if !ok || value == "" {
-			continue
-		}
-		owned, ownErr := IsOwnedShim(value, o.Self, o.StateDir)
-		self, _ := os.Stat(o.Self)
-		candidate := inspectCandidate(value, self)
-		if owned || candidate.Skipped == "gthok shim" {
-			risks = append(risks, "GH_PATH points at a gthok shim; real gh propagates this path to extensions and credential helpers")
-		} else if ownErr != nil {
-			risks = append(risks, "cannot verify GH_PATH ownership: "+ownErr.Error())
 		}
 	}
 	if real != "" {
@@ -139,21 +125,21 @@ func Checks(o DoctorOptions) []Check {
 	}
 	if len(risks) > 0 {
 		recursion.Status, recursion.Detail = StatusFail, strings.Join(risks, "; ")
-		recursion.Fix = "Point the real gh override at GitHub CLI, unset shim-valued GH_PATH, and inspect nested gh invocations."
+		recursion.Fix = "Point the real Git override at Git, and inspect nested Git invocations."
 	}
 	checks = append(checks, recursion)
-	version := Check{Name: "gh-version", Status: StatusInfo, Detail: "Not checked: no real gh was discovered."}
+	version := Check{Name: "git-version", Status: StatusInfo, Detail: "Not checked: no real git was discovered."}
 	// Never execute a discovered known shim, even a renamed one caught by state.
 	owned, _ := IsOwnedShim(real, o.Self, o.StateDir)
 	if real != "" && !owned {
 		out, err := runDiagnostic(real, env, "--version")
 		if err != nil {
-			version.Status, version.Detail = StatusWarn, "gh --version failed: "+err.Error()
+			version.Status, version.Detail = StatusWarn, "git --version failed: "+err.Error()
 		} else {
-			version.Status, version.Detail = ghVersionStatus(out)
+			version.Status, version.Detail = gitVersionStatus(out)
 		}
 		if version.Status == StatusWarn {
-			version.Fix = "Use GitHub CLI " + ghBaseline + " or newer; " + ghBaseline + " is the verified normalization baseline."
+			version.Fix = "Use Git " + gitBaseline + "; " + gitBaseline + " is the verified normalization baseline."
 		}
 	}
 	checks = append(checks, version)
@@ -169,7 +155,7 @@ func Checks(o DoctorOptions) []Check {
 	} else {
 		detail += "/dev/tty unavailable (no controlling terminal or access denied); "
 	}
-	detail += "Unix job control uses the foreground process group; supervised gh must remain in that group."
+	detail += "Unix job control uses the foreground process group; supervised git must remain in that group."
 	if runtime.GOOS == "linux" {
 		info, err := os.Stat("/proc")
 		detail += fmt.Sprintf(" /proc available=%t.", err == nil && info.IsDir())
@@ -194,7 +180,7 @@ func RecordExecEntry(stateDir string, now time.Time) {
 
 // execEntryCheck reports `gthok exec` use within a week. Without an owned shim,
 // it downgrades the shim's PATH/ownership warnings to info: the user chose the
-// shell entry, whose gap (child-process gh) the check itself names.
+// shell entry, whose gap (child-process git) the check itself names.
 func execEntryCheck(stateDir string, checks []Check, now time.Time) *Check {
 	info, err := os.Stat(filepath.Join(stateDir, execEntryFile))
 	if err != nil || now.Sub(info.ModTime()) > 7*24*time.Hour {
@@ -208,42 +194,41 @@ func execEntryCheck(stateDir string, checks []Check, now time.Time) *Check {
 		}
 	}
 	if shimOK {
-		return &Check{Name: "shell-entry", Status: StatusInfo, Detail: used + "; the shim also covers gh started by scripts and other programs"}
+		return &Check{Name: "shell-entry", Status: StatusInfo, Detail: used + "; the shim also covers git started by scripts and other programs"}
 	}
 	for i := range checks {
 		if (checks[i].Name == "path-precedence" || checks[i].Name == "shim-ownership") && checks[i].Status == StatusWarn {
 			checks[i].Status = StatusInfo
 		}
 	}
-	return &Check{Name: "shell-entry", Status: StatusInfo, Detail: used + " (shell function or scripts); without the shim, gh started by scripts, programs or agents that skip shell rc files bypasses gthok", Fix: "Run gthok shim install to cover them."}
+	return &Check{Name: "shell-entry", Status: StatusInfo, Detail: used + " (shell function or scripts); without the shim, git started by scripts, programs or agents that skip shell rc files bypasses gthok", Fix: "Run gthok shim install to cover them."}
 }
 
-var ghVersionRE = regexp.MustCompile(`(?m)^gh version ([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-+][^ ]*)?(?: |$)`)
+var gitVersionRE = regexp.MustCompile(`(?m)^git version ([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-+][^ ]*)?(?: |$)`)
 
-// ghBaseline is the gh release the native registry was generated from
-// (internal/normalize/native/gen/go.mod); older minors warn.
+// gitBaseline is the exact Git release used to generate the grammar.
 const (
-	ghBaseline      = "2.103.3"
-	ghBaselineMinor = 103
+	gitBaseline      = "2.56.0"
+	gitBaselineMinor = 56
 )
 
-func ghVersionStatus(out string) (Status, string) {
-	m := ghVersionRE.FindStringSubmatch(out)
+func gitVersionStatus(out string) (Status, string) {
+	m := gitVersionRE.FindStringSubmatch(out)
 	if m == nil {
-		return StatusWarn, "Unrecognized gh version output: " + strings.TrimSpace(out)
+		return StatusWarn, "Unrecognized git version output: " + strings.TrimSpace(out)
 	}
 	var version [3]int
 	for i := range version {
 		n, err := strconv.Atoi(m[i+1])
 		if err != nil {
-			return StatusWarn, "Unrecognized gh version number"
+			return StatusWarn, "Unrecognized git version number"
 		}
 		version[i] = n
 	}
-	if version[0] < 2 || version[0] == 2 && version[1] < ghBaselineMinor {
-		return StatusWarn, "gh " + strings.Join(m[1:4], ".") + " predates the verified " + ghBaseline + " baseline"
+	if version != [3]int{2, gitBaselineMinor, 0} {
+		return StatusWarn, "git " + strings.Join(m[1:4], ".") + " differs from the verified " + gitBaseline + " baseline"
 	}
-	return StatusInfo, strings.TrimSpace(strings.SplitN(out, "\n", 2)[0]) + "; verified baseline is " + ghBaseline
+	return StatusInfo, strings.TrimSpace(strings.SplitN(out, "\n", 2)[0]) + "; verified baseline is " + gitBaseline
 }
 
 // Bounded diagnostics cannot grow stdout indefinitely or wait for inherited
@@ -264,7 +249,7 @@ func (w *diagnosticOutput) Write(p []byte) (int, error) {
 	return n, nil
 }
 
-// diagnosticTimeout bounds `gh --version` and probes; generous because a cold
+// diagnosticTimeout bounds `git --version` and probes; generous because a cold
 // start on a loaded machine can take seconds. Tests shorten it.
 var diagnosticTimeout = 10 * time.Second
 

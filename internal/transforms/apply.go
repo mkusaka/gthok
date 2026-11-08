@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"reflect"
 	"sort"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize"
-	"github.com/mkusaka/gthok/internal/normalize/apiargs"
 	"github.com/mkusaka/gthok/internal/protocol"
 )
 
@@ -34,10 +32,6 @@ type edit struct {
 type replacement struct {
 	span model.ArgSpan
 	args []string
-}
-type jsonTransport struct {
-	path   string
-	object map[string]any
 }
 
 // Apply is atomic: failure returns the original invocation and result. Cleanup
@@ -115,8 +109,6 @@ func Apply(inv model.Invocation, before model.Result, response protocol.Transfor
 	}
 	var replacements []replacement
 	var appended []string
-	jsonInputs := make(map[string]*jsonTransport)
-	api := apiargs.LocateArgs(next.Argv)
 	resources := make(map[string]edit)
 	for _, e := range edits {
 		resource := locatorResource(e.loc)
@@ -165,67 +157,8 @@ func Apply(inv model.Invocation, before model.Result, response protocol.Transfor
 			} else {
 				replacements = append(replacements, replacement{span: loc.Spans[0], args: args})
 			}
-		case "api-field":
-			key := apiargs.FieldKey(loc.Key)
-			found := false
-			for _, field := range api.Fields {
-				if field.Key == key || strings.HasPrefix(field.Key, key+"[") {
-					found = true
-					replacements = append(replacements, replacement{span: field.Span})
-				}
-			}
-			if !e.unset {
-				if before.Classification.Level == model.LevelL2 {
-					if _, ok := e.value.(string); !ok || loc.Text == "" {
-						return fail(fmt.Errorf("%w: REST field edits require text", ErrUnsupportedEdit))
-					}
-				}
-				if !found && before.Classification.Level == model.LevelL3 {
-					return fail(fmt.Errorf("%w: missing GraphQL field transport", ErrUnsupportedEdit))
-				}
-				encoded, err := encodeFields(key, e.value, false, makeFile)
-				if err != nil {
-					return fail(err)
-				}
-				appended = append(appended, encoded...)
-			}
-		case "json":
-			transport := jsonInputs[loc.Input]
-			if transport == nil {
-				data, err := inputBytes(inv, loc.Input)
-				if err != nil {
-					return fail(err)
-				}
-				transport = &jsonTransport{path: loc.Input}
-				transport.object, err = apiargs.DecodeObject(data)
-				if err != nil {
-					return fail(fmt.Errorf("%w: JSON input is unavailable", ErrUnsupportedEdit))
-				}
-				jsonInputs[loc.Input] = transport
-			}
-			if err := patchObject(transport.object, loc.Key, e.value, e.unset); err != nil {
-				return fail(err)
-			}
 		default:
 			return fail(fmt.Errorf("%w: missing write-back transport", ErrUnsupportedEdit))
-		}
-	}
-	for _, transport := range jsonInputs {
-		data, err := json.Marshal(transport.object)
-		if err != nil {
-			return fail(fmt.Errorf("%w: %v", ErrUnsupportedEdit, err))
-		}
-		if transport.path == "-" {
-			next.Stdin = model.StdinData{Status: model.StdinCaptured, Data: data}
-		} else {
-			path, err := makeFile(data)
-			if err != nil {
-				return fail(fmt.Errorf("%w: %v", ErrUnsupportedEdit, err))
-			}
-			for _, span := range api.Input {
-				replacements = append(replacements, replacement{span: span})
-			}
-			appended = append(appended, "--input", path)
 		}
 	}
 	next.Argv, err = rewrite(next.Argv, replacements, appended)
@@ -301,21 +234,20 @@ func parseEdits(before model.Result, response protocol.TransformResponse) ([]edi
 			return nil, fmt.Errorf("%w: %s has no editable source", ErrUnsupportedEdit, path)
 		}
 		e := edit{path: path, op: index, parts: parts, value: response.Set[path], unset: unset[path], loc: loc}
+		if parts[0] == "texts" {
+			if source := text(op.Texts, parts[1]); source != nil && (source.Truncated || source.Status != "") {
+				return nil, fmt.Errorf("%w: text input is incomplete", ErrUnsupportedEdit)
+			}
+		}
 		if parts[0] == "texts" && !e.unset {
 			if _, ok := e.value.(string); !ok {
 				return nil, fmt.Errorf("%w: text value must be a string", ErrUnsupportedEdit)
 			}
 		}
 		if parts[0] == "target" && !e.unset {
-			if parts[1] == "repository" {
-				value, ok := e.value.(string)
-				if !ok || len(strings.Split(value, "/")) != 2 || strings.ContainsAny(value, " \t\r\n") || strings.HasPrefix(value, "/") || strings.HasSuffix(value, "/") {
-					return nil, fmt.Errorf("%w: repository must be owner/name", ErrUnsupportedEdit)
-				}
-			} else if n, ok := positiveInteger(e.value); !ok {
-				return nil, fmt.Errorf("%w: number must be a positive integer", ErrUnsupportedEdit)
-			} else {
-				e.value = n
+			value, ok := e.value.(string)
+			if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") {
+				return nil, fmt.Errorf("%w: target must be a nonempty string", ErrUnsupportedEdit)
 			}
 		}
 		resource := locatorResource(loc)
@@ -354,11 +286,8 @@ func semanticValue(op model.Operation, parts []string) (any, bool) {
 		v, ok := op.Parameters[parts[1]]
 		return v, ok
 	case "target":
-		if parts[1] == "repository" {
-			return op.Target.Repository, op.Target.Repository != ""
-		}
-		if op.Target.Number != nil {
-			return *op.Target.Number, true
+		if parts[1] == "remote" {
+			return op.Target.Remote, op.Target.Remote != ""
 		}
 		return nil, false
 	case "texts":
@@ -422,20 +351,6 @@ func equal(a, b any) bool {
 	y, e2 := json.Marshal(b)
 	return e1 == nil && e2 == nil && string(x) == string(y)
 }
-func positiveInteger(value any) (int, bool) {
-	switch v := value.(type) {
-	case int:
-		return v, v > 0
-	case float64:
-		if v > 0 && v < float64(math.MaxInt) && math.Trunc(v) == v {
-			return int(v), true
-		}
-	case json.Number:
-		n, e := strconv.Atoi(string(v))
-		return n, e == nil && n > 0
-	}
-	return 0, false
-}
 func scalarString(v any) string {
 	if s, ok := v.(string); ok {
 		return s
@@ -443,9 +358,6 @@ func scalarString(v any) string {
 	return fmt.Sprint(v)
 }
 func locatorResource(loc model.EditLocator) string {
-	if loc.Kind == "json" || loc.Kind == "api-field" {
-		return loc.Kind + ":" + loc.Input + ":" + strings.Join(loc.Key, "\x00")
-	}
 	return loc.Kind + ":" + loc.Flag + ":" + fmt.Sprint(loc.Spans)
 }
 
@@ -501,123 +413,6 @@ func csvValue(v string) string {
 	}
 	return v
 }
-func fieldValue(value any) (string, string, error) {
-	if s, ok := value.(string); ok {
-		return "-f", s, nil
-	}
-	if value == nil {
-		return "-F", "null", nil
-	}
-	switch value.(type) {
-	case bool, int, int64, float64, json.Number:
-		return "-F", scalarString(value), nil
-	}
-	return "", "", fmt.Errorf("%w: field value has no scalar transport", ErrUnsupportedEdit)
-}
-
-func encodeFields(key string, value any, typed bool, makeFile func([]byte) (string, error)) ([]string, error) {
-	switch v := value.(type) {
-	case map[string]any:
-		if len(v) == 0 {
-			return nil, fmt.Errorf("%w: empty object requires JSON transport", ErrUnsupportedEdit)
-		}
-		keys := make([]string, 0, len(v))
-		for k := range v {
-			if k == "" || strings.ContainsAny(k, "[]") {
-				return nil, fmt.Errorf("%w: object key has no field transport", ErrUnsupportedEdit)
-			}
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		var args []string
-		for _, k := range keys {
-			fields, err := encodeFields(key+"["+k+"]", v[k], true, makeFile)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, fields...)
-		}
-		return args, nil
-	case []any:
-		if len(v) == 0 {
-			return []string{"-F", key + "[]"}, nil
-		}
-		var args []string
-		for _, entry := range v {
-			fields, err := encodeFields(key+"[]", entry, true, makeFile)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, fields...)
-		}
-		return args, nil
-	case []string:
-		if len(v) == 0 {
-			return []string{"-F", key + "[]"}, nil
-		}
-		var args []string
-		for _, entry := range v {
-			fields, err := encodeFields(key+"[]", entry, true, makeFile)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, fields...)
-		}
-		return args, nil
-	default:
-		// gh processes all raw fields before typed fields. Keep a container in
-		// one stage so mixed arrays retain order; files protect string scalars
-		// that typed magic would otherwise turn into numbers/bools/null.
-		if value, ok := value.(string); ok && typed {
-			_, numeric := strconv.Atoi(value)
-			if numeric == nil || value == "true" || value == "false" || value == "null" || strings.HasPrefix(value, "@") {
-				path, err := makeFile([]byte(value))
-				if err != nil {
-					return nil, fmt.Errorf("%w: %v", ErrUnsupportedEdit, err)
-				}
-				return []string{"-F", key + "=@" + path}, nil
-			}
-			return []string{"-F", key + "=" + value}, nil
-		}
-		flag, value, err := fieldValue(value)
-		if err != nil {
-			return nil, err
-		}
-		return []string{flag, key + "=" + value}, nil
-	}
-}
-func inputBytes(inv model.Invocation, path string) ([]byte, error) {
-	if path == "-" {
-		if inv.Stdin.Status == model.StdinCaptured {
-			return inv.Stdin.Data, nil
-		}
-	} else if inv.ReadFile != nil {
-		b, err := inv.ReadFile(path)
-		if err == nil {
-			return b, nil
-		}
-	}
-	return nil, fmt.Errorf("%w: input is unavailable", ErrUnsupportedEdit)
-}
-func patchObject(object map[string]any, path []string, value any, unset bool) error {
-	if len(path) == 0 {
-		return fmt.Errorf("%w: missing JSON key", ErrUnsupportedEdit)
-	}
-	for _, key := range path[:len(path)-1] {
-		child, ok := object[key].(map[string]any)
-		if !ok {
-			return fmt.Errorf("%w: missing JSON object", ErrUnsupportedEdit)
-		}
-		object = child
-	}
-	if unset {
-		delete(object, path[len(path)-1])
-	} else {
-		object[path[len(path)-1]] = value
-	}
-	return nil
-}
-
 func rewrite(argv []string, replacements []replacement, appended []string) ([]string, error) {
 	sort.Slice(replacements, func(i, j int) bool { return replacements[i].span.Start < replacements[j].span.Start })
 	var merged []replacement
@@ -671,6 +466,12 @@ type semanticProjection struct {
 	Execution     model.Execution
 	Origin        model.Origin
 	UnknownReason model.UnknownReason
+	Scopes        []model.Scope
+	Capabilities  []model.Capability
+	Coverage      model.Coverage
+	Evidence      string
+	Detail        string
+	Unresolved    []model.Unresolved
 	Target        model.Target
 	Parameters    map[string]any
 	Texts         [3]projectedText
@@ -703,16 +504,7 @@ func projection(op model.Operation, editedPaths []edit) semanticProjection {
 			texts[e.loc.Text] = true
 		}
 	}
-	if parameters["mergeMethod"] {
-		parameters["method"] = true
-	}
-	if parameters["commitHeadline"] {
-		parameters["commitHeadlinePresent"] = true
-	}
-	if parameters["commitBody"] {
-		parameters["commitBodyPresent"] = true
-	}
-	p := semanticProjection{Family: op.Family, Action: op.Action, Effect: op.Effect, Execution: op.Execution, Origin: op.Origin, UnknownReason: op.UnknownReason, Target: op.Target, Parameters: make(map[string]any)}
+	p := semanticProjection{Family: op.Family, Action: op.Action, Effect: op.Effect, Execution: op.Execution, Origin: op.Origin, UnknownReason: op.UnknownReason, Scopes: op.Scopes, Capabilities: op.Capabilities, Coverage: op.Coverage, Evidence: op.Evidence, Detail: op.Detail, Unresolved: op.Unresolved, Target: op.Target, Parameters: make(map[string]any)}
 	for key, value := range op.Parameters {
 		if !parameters[key] {
 			p.Parameters[key] = value
@@ -725,19 +517,8 @@ func projection(op model.Operation, editedPaths []edit) semanticProjection {
 			}
 		}
 	}
-	if targets["repository"] {
-		p.Target.Repository = ""
-		p.Target.Owner = ""
-		p.Target.Host = ""
-	}
-	if targets["number"] {
-		p.Target.Number = nil
-	}
-	if parameters["base"] {
-		p.Target.BaseBranch = ""
-	}
-	if parameters["head"] {
-		p.Target.HeadBranch = ""
+	if targets["remote"] {
+		p.Target.Remote = ""
 	}
 	return p
 }
@@ -746,7 +527,7 @@ func roundTrip(before, after model.Result, edits []edit) error {
 	bad := func() error {
 		return fmt.Errorf("%w: edited request changed an unedited semantic value", ErrUnsupportedEdit)
 	}
-	if before.Classification.Level != after.Classification.Level || before.Classification.Confidence != after.Classification.Confidence || before.Classification.MutationFree != after.Classification.MutationFree || len(before.Operations) != len(after.Operations) {
+	if before.Classification.Level != after.Classification.Level || before.Classification.Confidence != after.Classification.Confidence || before.Classification.MutationFree != after.Classification.MutationFree || before.Classification.RetrySafe != after.Classification.RetrySafe || before.Classification.Coverage != after.Classification.Coverage || len(before.Operations) != len(after.Operations) {
 		return bad()
 	}
 	for i, a := range before.Operations {

@@ -7,7 +7,7 @@ import (
 )
 
 func TestParseTransformResponse(t *testing.T) {
-	for _, data := range []string{"", " \n", `{"schemaVersion":1}`, `{"schemaVersion":1,"set":{"/operations/0/texts/title/value":"new","/operations/1/parameters/a~1b~0c":true},"unset":["/operations/2/target/number"]}`} {
+	for _, data := range []string{"", " \n", `{"schemaVersion":1}`, `{"schemaVersion":1,"set":{"/operations/0/texts/title/value":"new","/operations/1/parameters/a~1b~0c":true},"unset":["/operations/2/target/remote"]}`} {
 		if _, err := ParseTransformResponse([]byte(data)); err != nil {
 			t.Fatalf("valid %q: %v", data, err)
 		}
@@ -15,12 +15,12 @@ func TestParseTransformResponse(t *testing.T) {
 	for _, data := range []string{
 		`null`, `[]`, `{}`, `{"schemaVersion":0}`, `{"schemaVersion":2}`, `{"schemaVersion":1.0}`, `{"schemaVersion":999999999999999999999}`,
 		`{"schemaVersion":1,"decision":"allow"}`, `{"schemaVersion":1} {"schemaVersion":1}`, `{"schemaVersion":1}garbage`,
-		`{"schemaVersion":1,"schemaVersion":1}`, `{"schemaVersion":1,"set":{"/operations/0/target/number":1,"/operations/0/target/number":2}}`,
+		`{"schemaVersion":1,"schemaVersion":1}`, `{"schemaVersion":1,"set":{"/operations/0/target/remote":1,"/operations/0/target/remote":2}}`,
 		`{"schemaVersion":1,"set":null}`, `{"schemaVersion":1,"unset":null}`,
 		`{"schemaVersion":1,"set":{"/operations/0/texts/body/value":"x"},"unset":["/operations/0/texts/body/value"]}`,
-		`{"schemaVersion":1,"unset":["/operations/0/target/number","/operations/0/target/number"]}`,
+		`{"schemaVersion":1,"unset":["/operations/0/target/remote","/operations/0/target/remote"]}`,
 		`{"schemaVersion":1,"set":{"/operations/01/texts/title/value":"x"}}`,
-		`{"schemaVersion":1,"unset":["/operations/-/target/number"]}`,
+		`{"schemaVersion":1,"unset":["/operations/-/target/remote"]}`,
 		`{"schemaVersion":1,"unset":["/operations/0/target/host"]}`,
 		`{"schemaVersion":1,"unset":["/operations/0/parameters/a/b"]}`,
 		`{"schemaVersion":1,"unset":["/operations/0/parameters/a~2b"]}`,
@@ -76,8 +76,8 @@ func TestParseTransformEnvironment(t *testing.T) {
 	}
 	for _, name := range []string{
 		"", "1CUSTOM", "A=B", "A-B", "A.B", "A B", "A\n", "A\x00B", "日本語",
-		"GTHOK_", "GTHOK_EVENT_ID", "GH_PATH", "GH_CONFIG_DIR", "XDG_CONFIG_HOME", "HOME", "PATH",
-		"LD_PRELOAD", "LD_LIBRARY_PATH", "DYLD_", "DYLD_INSERT_LIBRARIES", "GH_HOST", "GH_REPO",
+		"GTHOK_", "GTHOK_EVENT_ID", "GIT_DIR", "GIT_CONFIG_GLOBAL", "XDG_CONFIG_HOME", "HOME", "PATH",
+		"LD_PRELOAD", "LD_LIBRARY_PATH", "DYLD_", "DYLD_INSERT_LIBRARIES", "GIT_WORK_TREE", "GIT_NAMESPACE",
 	} {
 		for _, value := range []any{token, nil} {
 			data, err := json.Marshal(map[string]any{"schemaVersion": 1, "env": map[string]any{name: value}})

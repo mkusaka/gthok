@@ -1,4 +1,4 @@
-// Package install discovers real gh and manages explicitly owned PATH shims.
+// Package install discovers real git and manages explicitly owned PATH shims.
 package install
 
 import (
@@ -20,10 +20,10 @@ type Candidate struct {
 	Skipped  string
 }
 
-// FindRealGh returns the first usable PATH-facing path, not its resolved target.
+// FindRealGit returns the first usable PATH-facing path, not its resolved target.
 // Retaining the symlink path allows Homebrew upgrades without pinning a Cellar.
 // All entries, including duplicate installations, are returned for diagnostics.
-func FindRealGh(o DiscoverOptions) (string, []Candidate, error) {
+func FindRealGit(o DiscoverOptions) (string, []Candidate, error) {
 	self, err := os.Stat(o.Self)
 	if err != nil {
 		return "", nil, fmt.Errorf("identify gthok executable %q: %w", o.Self, err)
@@ -34,7 +34,7 @@ func FindRealGh(o DiscoverOptions) (string, []Candidate, error) {
 			c.Skipped = "override must be an absolute path"
 		}
 		if c.Skipped != "" {
-			return "", []Candidate{c}, fmt.Errorf("invalid real gh override %q: %s", o.Override, c.Skipped)
+			return "", []Candidate{c}, fmt.Errorf("invalid real git override %q: %s", o.Override, c.Skipped)
 		}
 		return c.Path, []Candidate{c}, nil
 	}
@@ -43,10 +43,10 @@ func FindRealGh(o DiscoverOptions) (string, []Candidate, error) {
 	// Split rather than SplitList: even an entirely empty PATH denotes '.'.
 	for _, dir := range strings.Split(o.PathEnv, string(os.PathListSeparator)) {
 		if !filepath.IsAbs(dir) {
-			candidates = append(candidates, Candidate{Path: filepath.Join(dir, "gh"), Skipped: "relative or empty PATH entry skipped"})
+			candidates = append(candidates, Candidate{Path: filepath.Join(dir, "git"), Skipped: "relative or empty PATH entry skipped"})
 			continue
 		}
-		c := inspectCandidate(filepath.Join(dir, "gh"), self)
+		c := inspectCandidate(filepath.Join(dir, "git"), self)
 		candidates = append(candidates, c)
 		if first == "" && c.Skipped == "" {
 			first = c.Path
@@ -59,7 +59,7 @@ func FindRealGh(o DiscoverOptions) (string, []Candidate, error) {
 	for _, c := range candidates {
 		fmt.Fprintf(&detail, "; %s: %s", c.Path, c.Skipped)
 	}
-	return "", candidates, fmt.Errorf("no real gh executable found on PATH%s", detail.String())
+	return "", candidates, fmt.Errorf("no real git executable found on PATH%s", detail.String())
 }
 
 func inspectCandidate(path string, self os.FileInfo) Candidate {

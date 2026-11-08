@@ -10,7 +10,6 @@ import (
 )
 
 var hookID = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
-var extensionName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 var matchEnvName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 // Validate aggregates independent failures with paths suitable for diagnostics.
@@ -42,8 +41,6 @@ func (c *Config) Validate() error {
 	match := func(p string, m Match) {
 		globs(p+".operation", m.Operations, false)
 		globs(p+".command", m.Commands, false)
-		globs(p+".repositories", m.Repositories, true)
-		globs(p+".hosts", m.Hosts, false)
 		for name, pattern := range m.Env {
 			key := fmt.Sprintf("%s.env[%q]", p, name)
 			if !matchEnvName.MatchString(name) {
@@ -62,17 +59,11 @@ func (c *Config) Validate() error {
 				add(key, "invalid glob: "+err.Error())
 			}
 		}
-		for i, v := range m.Methods {
-			enum(fmt.Sprintf("%s.method[%d]", p, i), v, "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE", "CONNECT")
-		}
 		for i, v := range m.Effects {
 			enum(fmt.Sprintf("%s.effect[%d]", p, i), v, "read", "write", "unknown")
 		}
 		for i, v := range m.Levels {
-			enum(fmt.Sprintf("%s.level[%d]", p, i), v, "L1", "L2", "L3", "none")
-		}
-		for i, v := range m.Tokens {
-			enum(fmt.Sprintf("%s.token[%d]", p, i), v, "app", "user", "unknown", "none")
+			enum(fmt.Sprintf("%s.level[%d]", p, i), v, "L1", "none")
 		}
 		for i, v := range m.Results {
 			enum(fmt.Sprintf("%s.result[%d]", p, i), v, ResultSuccess, ResultFailure)
@@ -83,7 +74,7 @@ func (c *Config) Validate() error {
 			}
 		}
 	}
-	// gh has not run yet for rules and pre hooks, so outcome filters cannot apply.
+	// git has not run yet for rules and pre hooks, so outcome filters cannot apply.
 	outcomeOnlyPost := func(p string, m Match) {
 		if len(m.Results) > 0 {
 			add(p+".result", "allowed only for post hooks")
@@ -117,8 +108,6 @@ func (c *Config) Validate() error {
 	enum("policy.mode", c.Policy.Mode, ModeObserve, ModeEnforce)
 	enum("policy.unknownMutation", c.Policy.UnknownMutation, UnknownAllow, UnknownAudit, UnknownDeny)
 	enum("policy.unknownInput", c.Policy.UnknownInput, UnknownAllow, UnknownAudit, UnknownDeny)
-	enum("policy.protectedUnknown", c.Policy.ProtectedUnknown, UnknownAllow, UnknownAudit, UnknownDeny)
-	globs("policy.protectedRepositories", c.Policy.ProtectedRepositories, true)
 	rules := map[string]bool{}
 	for i, r := range c.Policy.Rules {
 		p := fmt.Sprintf("policy.rules[%d]", i)
@@ -211,20 +200,6 @@ func (c *Config) Validate() error {
 		match(p+".match", t.Match)
 		outcomeOnlyPost(p+".match", t.Match)
 		unless(p, t.Unless, false)
-	}
-	extensions := make(map[string]bool)
-	for i, e := range c.Extensions {
-		p := fmt.Sprintf("extensions[%d]", i)
-		if !extensionName.MatchString(e.Name) {
-			add(p+".name", "must match ^[A-Za-z0-9][A-Za-z0-9._-]*$")
-		}
-		if extensions[e.Name] {
-			add(p+".name", "duplicate extension "+e.Name)
-		}
-		extensions[e.Name] = true
-		if e.Effect != "" {
-			enum(p+".effect", e.Effect, "read", "write", "unknown")
-		}
 	}
 	for i, d := range c.Delegates {
 		p := fmt.Sprintf("delegates[%d]", i)

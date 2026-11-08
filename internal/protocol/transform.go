@@ -9,10 +9,10 @@ import (
 	"strings"
 )
 
-const TransformPathPattern = `^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/(repository|number))$`
+const TransformPathPattern = `^/operations/(0|[1-9][0-9]*)/(texts/(title|body|notes)/value|parameters/([^/~]|~[01])+|target/remote)$`
 
 const TransformEnvNamePattern = `^[A-Za-z_][A-Za-z0-9_]*$`
-const TransformEnvForbiddenPattern = `^(GTHOK_.*|DYLD_.*|GH_PATH|GH_CONFIG_DIR|XDG_CONFIG_HOME|HOME|PATH|LD_PRELOAD|LD_LIBRARY_PATH|GH_HOST|GH_REPO)$`
+const TransformEnvForbiddenPattern = `^(GTHOK_.*|GIT_.*|DYLD_.*|XDG_CONFIG_HOME|HOME|PATH|LD_PRELOAD|LD_LIBRARY_PATH)$`
 
 var transformPath = regexp.MustCompile(TransformPathPattern)
 var transformEnvName = regexp.MustCompile(TransformEnvNamePattern)

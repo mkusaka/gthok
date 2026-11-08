@@ -14,7 +14,7 @@ import (
 )
 
 // A repository's .gthok.yaml or .gthok.local.yaml cannot loosen the user's
-// enforcement: the real request is still denied before gh starts, and a
+// enforcement: the real request is still denied before git starts, and a
 // project hook runs only when the user config trusts the repository.
 func TestOverlaysCannotWeakenUserEnforcement(t *testing.T) {
 	for _, tc := range []struct {
@@ -24,7 +24,7 @@ func TestOverlaysCannotWeakenUserEnforcement(t *testing.T) {
 	}{
 		{name: "no overlay", note: "Configuration valid"},
 		{name: "project observe", project: "version: 1\npolicy: {mode: observe}\n", note: "project policy.mode would weaken global policy; ignored"},
-		{name: "project allows unknowns", project: "version: 1\npolicy: {unknownMutation: allow, unknownInput: allow, protectedUnknown: allow}\n", note: "project policy.protectedUnknown would weaken global policy; ignored"},
+		{name: "project allows unknowns", project: "version: 1\npolicy: {unknownMutation: allow, unknownInput: allow}\n", note: "project policy.unknownInput would weaken global policy; ignored"},
 		{name: "project runtime and logging", project: "version: 1\nruntime: {hookConcurrency: 1}\nlogging: {enabled: false}\n", note: "cannot set runtime"},
 		{name: "project trusts itself", project: "version: 1\npolicy: {mode: observe}\ntrust: {repositories: [{cwd}]}\n{hook}", note: "cannot set trust.repositories (user config only)"},
 		{name: "untrusted project hook", project: "version: 1\n{hook}", note: "hook project-hook ignored (untrusted)"},
@@ -38,10 +38,10 @@ func TestOverlaysCannotWeakenUserEnforcement(t *testing.T) {
 				t.Fatal(err)
 			}
 			marker := filepath.Join(s.root, "project-hook.json")
-			hook := fmt.Sprintf("hooks:\n  pre:\n  - id: project-hook\n    match: {operation: repo.delete}\n    command: [%q]\n    env: {FAKEGH_MODE: hook, FAKEGH_HOOK_RECORD: %q}\n", fakeBinary, marker)
+			hook := fmt.Sprintf("hooks:\n  pre:\n  - id: project-hook\n    match: {command: branch}\n    command: [%q]\n    env: {FAKEGIT_MODE: hook, FAKEGIT_HOOK_RECORD: %q}\n", fakeBinary, marker)
 			s.configure(func(c *config.Config) {
 				c.Policy.Mode, c.Policy.UnknownMutation = config.ModeEnforce, config.UnknownDeny
-				c.Policy.Rules = []config.Rule{{ID: "no-delete", Match: config.Match{Operations: config.StringList{"repo.delete"}}, Decision: "deny", Reason: "user policy"}}
+				c.Policy.Rules = []config.Rule{{ID: "no-delete", Match: config.Match{Commands: config.StringList{"branch"}}, Decision: "deny", Reason: "user policy"}}
 			})
 			if tc.userTrust { // as YAML: a marshalled Trust carries include, which user configs reject
 				f, err := os.OpenFile(s.cfg, os.O_APPEND|os.O_WRONLY, 0)
@@ -69,10 +69,10 @@ func TestOverlaysCannotWeakenUserEnforcement(t *testing.T) {
 				deniedBy string
 				args     []string
 			}{
-				{"rule no-delete", []string{"repo", "delete", "acme/widgets", "--yes"}},
-				{"policy unknownMutation", []string{"api", "-X", "POST", "repos/acme/widgets/frobnicate"}},
+				{"rule no-delete", []string{"branch", "-D", "acme/widgets", "--yes"}},
+				{"policy unknownMutation", []string{"push", "--future-option"}},
 			} {
-				got := s.gh(nil, req.args...)
+				got := s.git(nil, req.args...)
 				got.code(t, 77)
 				s.absentRecord()
 				if !bytes.HasPrefix(got.stderr, []byte("gthok: denied by "+req.deniedBy)) {

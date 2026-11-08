@@ -10,10 +10,9 @@ import (
 )
 
 const (
-	DefaultMode             = config.ModeObserve
-	DefaultUnknownMutation  = config.UnknownAudit
-	DefaultUnknownInput     = config.UnknownAudit
-	DefaultProtectedUnknown = config.UnknownDeny
+	DefaultMode            = config.ModeObserve
+	DefaultUnknownMutation = config.UnknownAudit
+	DefaultUnknownInput    = config.UnknownAudit
 )
 
 type Decision = protocol.Decision
@@ -122,9 +121,6 @@ func Evaluate(p config.Policy, s Subject) Evaluation {
 		if op.UnknownReason != model.UnknownNone {
 			add(i, protocol.DecisionAllow, "unknown classification: "+string(op.UnknownReason)+"; "+op.Detail, "", "")
 		}
-		if repo, _ := targetValues(op, s); repo == "" && op.Effect != model.EffectRead {
-			add(i, protocol.DecisionAllow, "target repository unresolved", "", "")
-		}
 		if len(op.Unresolved) != 0 {
 			fields := make([]string, 0, len(op.Unresolved))
 			for _, u := range op.Unresolved {
@@ -188,15 +184,6 @@ func Evaluate(p config.Policy, s Subject) Evaluation {
 			add(i, handling(p.UnknownInput, DefaultUnknownInput), "unknownInput policy: "+cause, DenialPolicy, "unknownInput")
 		} else if unknown {
 			add(i, handling(p.UnknownMutation, DefaultUnknownMutation), "unclassified-write: unknownMutation policy", DenialPolicy, "unknownMutation")
-		}
-		if len(p.ProtectedRepositories) == 0 || op.Effect == model.EffectRead {
-			continue
-		}
-		repo, _ := targetValues(op, s)
-		if repo == "" && !RepositoryLess(s.Result.Classification.Level, op) {
-			add(i, handling(p.ProtectedUnknown, DefaultProtectedUnknown), "target repository unresolved; cannot prove it is not protected", DenialPolicy, "protectedUnknown")
-		} else if unknown && anyMatch(p.ProtectedRepositories, repo, MatchRepo) {
-			add(i, handling(p.ProtectedUnknown, DefaultProtectedUnknown), "unclassified-write targets protected repository "+repo, DenialPolicy, "protectedRepositories")
 		}
 	}
 	for _, op := range e.PerOp {

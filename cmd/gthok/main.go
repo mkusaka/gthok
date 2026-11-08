@@ -1,5 +1,5 @@
-// Command gthok is both the gthok management CLI and, when invoked as "gh",
-// a transparent wrapper around the real GitHub CLI.
+// Command gthok is both the gthok management CLI and, when invoked as "git",
+// a transparent wrapper around the real Git executable.
 package main
 
 import (
@@ -34,7 +34,7 @@ func resolveBuildInfo(version, commit string, info *debug.BuildInfo) (string, st
 func main() {
 	info, _ := debug.ReadBuildInfo()
 	resolvedVersion, resolvedCommit := resolveBuildInfo(version, commit, info)
-	if filepath.Base(os.Args[0]) == "gh" {
+	if filepath.Base(os.Args[0]) == "git" {
 		cli.Version = resolvedVersion
 		os.Exit(cli.Wrapper(os.Args[1:]))
 	}

@@ -14,7 +14,7 @@ type EnableOptions struct{ BinDir, Self, PathEnv, StateDir string }
 type EnableResult struct {
 	ShimPath   string
 	Created    bool
-	RealGh     string
+	RealGit    string
 	OnPath     bool
 	Precedence string
 	FixHint    string
@@ -76,13 +76,13 @@ func shimPath(binDir string) (string, error) {
 	if binDir == "" {
 		return "", errors.New("BinDir is required")
 	}
-	path, err := filepath.Abs(filepath.Join(binDir, "gh"))
+	path, err := filepath.Abs(filepath.Join(binDir, "git"))
 	if err != nil {
 		return "", err
 	}
 	// Canonicalize the parent so state survives alternate spellings of BinDir.
 	if parent, err := filepath.EvalSymlinks(filepath.Dir(path)); err == nil {
-		path = filepath.Join(parent, "gh")
+		path = filepath.Join(parent, "git")
 	}
 	return path, nil
 }
@@ -203,7 +203,7 @@ func Enable(o EnableOptions) (EnableResult, error) {
 			return result, fmt.Errorf("%s exists and is not managed by gthok (%s); remove it or choose --bin-dir", path, detail)
 		}
 	}
-	_, candidates, err := FindRealGh(DiscoverOptions{PathEnv: o.PathEnv, Self: self})
+	_, candidates, err := FindRealGit(DiscoverOptions{PathEnv: o.PathEnv, Self: self})
 	if err != nil {
 		return result, err
 	}
@@ -220,11 +220,11 @@ func Enable(o EnableOptions) (EnableResult, error) {
 		if err != nil || owned || oldSelf != nil && os.SameFile(oldSelf, info) {
 			continue
 		}
-		result.RealGh = candidate.Path
+		result.RealGit = candidate.Path
 		break
 	}
-	if result.RealGh == "" {
-		return result, errors.New("no real gh executable found after excluding owned shims")
+	if result.RealGit == "" {
+		return result, errors.New("no real git executable found after excluding owned shims")
 	}
 	if existsErr == nil {
 		current, err := os.Readlink(path)
@@ -283,9 +283,9 @@ func stableTarget(self string) string {
 }
 
 // miseLatest maps a mise install (.../installs/<tool>/<version>/...) to the
-// .../installs/<tool>/latest/... link mise maintains, so upgrades keep the gh
+// .../installs/<tool>/latest/... link mise maintains, so upgrades keep the git
 // shim working. A mise shim cannot be the target: it dispatches on argv[0],
-// which is "gh" here. latest is the newest installed version, not necessarily
+// which is "git" here. latest is the newest installed version, not necessarily
 // the one a mise.toml pins.
 func miseLatest(parts []string, name, self string) string {
 	for i := len(parts) - 3; i >= 1; i-- {
@@ -369,12 +369,12 @@ func pathPrecedence(shim, pathEnv string) (bool, string, string) {
 	var first string
 	onPath := false
 	for _, dir := range strings.Split(pathEnv, string(os.PathListSeparator)) {
-		p, err := filepath.Abs(filepath.Join(dir, "gh"))
+		p, err := filepath.Abs(filepath.Join(dir, "git"))
 		if err != nil {
 			continue
 		}
 		if parent, err := filepath.EvalSymlinks(filepath.Dir(p)); err == nil {
-			p = filepath.Join(parent, "gh")
+			p = filepath.Join(parent, "git")
 		}
 		if p == shim {
 			onPath = true
@@ -389,7 +389,7 @@ func pathPrecedence(shim, pathEnv string) (bool, string, string) {
 		}
 	}
 	if first == shim {
-		return onPath, shim + " is the first executable gh on PATH", ""
+		return onPath, shim + " is the first executable git on PATH", ""
 	}
 	detail := filepath.Dir(shim) + " is not on PATH"
 	if onPath {
@@ -403,7 +403,7 @@ func pathPrecedence(shim, pathEnv string) (bool, string, string) {
 	return onPath, detail, "export PATH=" + bin + ":\"$PATH\""
 }
 
-// ProbeShim verifies the wrapper's probe protocol without invoking normal gh.
+// ProbeShim verifies the wrapper's probe protocol without invoking normal git.
 func ProbeShim(shim string, env []string) error {
 	probeEnv := make([]string, 0, len(env)+1)
 	for _, e := range env {

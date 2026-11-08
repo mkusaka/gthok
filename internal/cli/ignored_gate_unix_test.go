@@ -53,30 +53,6 @@ func TestIgnoredGateDecisions(t *testing.T) {
 	}
 }
 
-func TestIgnoredGateResolutionAndStdin(t *testing.T) {
-	c := &config.Config{IgnoredHooks: []config.IgnoredHook{{Hook: config.Hook{ID: "gate", Match: config.Match{Commands: []string{"pr view"}, Repositories: []string{"acme/repo"}, Hosts: []string{"github.com"}}}, GateBlocked: true}}}
-	c.ApplyDefaults()
-	result := normalize.Normalize(model.Invocation{Argv: []string{"pr", "view", "1"}})
-	result.Operations[0].Target.Repository = ""
-	result.Operations[0].Target.Host = ""
-	subject := policy.Subject{Result: result, Argv: result.Source.Argv}
-	if !needsLocal(c, subject) {
-		t.Fatal("inactive gate constraints did not request local resolution")
-	}
-	need := resolutionNeeds(c, subject, 0)
-	if strings.Join(need, ",") != "target.repository,target.host" {
-		t.Fatalf("gate resolution=%v", need)
-	}
-	if !evaluateConfig(c, subject).WouldDeny {
-		t.Fatal("unresolved gate must match conservatively like an active hook")
-	}
-	c.IgnoredHooks[0].Match = config.Match{Commands: []string{"api"}}
-	result = normalize.Normalize(model.Invocation{Argv: []string{"api", "repos/acme/repo/issues", "--input", "-"}})
-	if spool, skipped := shouldSpool(c, result, nil); !spool || skipped {
-		t.Fatalf("gate stdin bypass: spool=%t skipped=%t", spool, skipped)
-	}
-}
-
 func TestIgnoredHookWarningReasonsAndDigestThrottle(t *testing.T) {
 	c := &config.Config{IgnoredProject: &config.IgnoredProject{Path: "/project/.gthok.yaml", Digest: "one"}, IgnoredHooks: []config.IgnoredHook{
 		{Hook: config.Hook{ID: "gate"}, Reason: "changed since trust", GateBlocked: true},

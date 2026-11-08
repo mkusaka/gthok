@@ -1,6 +1,6 @@
 //go:build unix
 
-// Package cli wires the management commands and transparent gh wrapper.
+// Package cli wires the management commands and transparent git wrapper.
 package cli
 
 import (
@@ -16,9 +16,10 @@ import (
 	"time"
 
 	"github.com/mkusaka/gthok/internal/config"
+	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/model"
-	"github.com/mkusaka/gthok/internal/normalize/native"
+	native "github.com/mkusaka/gthok/internal/normalize/git"
 	"github.com/mkusaka/gthok/internal/policy"
 	"github.com/mkusaka/gthok/internal/process"
 	"github.com/mkusaka/gthok/internal/protocol"
@@ -35,7 +36,7 @@ func environment() map[string]string {
 	return env
 }
 
-// Helpers share one invocation token, never injected into the user's gh command.
+// Helpers share one invocation token, never injected into the user's git command.
 func nestedEnvironment(env map[string]string) (map[string]string, func(), error) {
 	token, cleanup, err := install.NewNestedToken(config.Dir(env))
 	if err != nil {
@@ -49,16 +50,16 @@ func nestedEnvironment(env map[string]string) (map[string]string, func(), error)
 	return values, cleanup, nil
 }
 
-func realGh(c *config.Config, env map[string]string) (string, error) {
+func realGit(c *config.Config, env map[string]string) (string, error) {
 	self, err := os.Executable()
 	if err != nil {
 		return "", err
 	}
-	override := env["GTHOK_REAL_GH"]
+	override := env["GTHOK_REAL_GIT"]
 	if override == "" && c != nil {
-		override = c.Runtime.RealGh
+		override = c.Runtime.RealGit
 	}
-	real, candidates, err := install.FindRealGh(install.DiscoverOptions{Self: self, PathEnv: env["PATH"], Override: override})
+	real, candidates, err := install.FindRealGit(install.DiscoverOptions{Self: self, PathEnv: env["PATH"], Override: override})
 	if err != nil && override == "" && len(candidates) > 0 {
 		var skipped []string
 		for _, candidate := range candidates {
@@ -70,16 +71,17 @@ func realGh(c *config.Config, env map[string]string) (string, error) {
 		if len(skipped) > 0 {
 			detail = strings.Join(skipped, ", ")
 		}
-		err = fmt.Errorf("real gh not found on PATH (skipped: %s). Install GitHub CLI, or set runtime.realGh / GTHOK_REAL_GH. Run 'gthok doctor' for details", detail)
+		err = fmt.Errorf("real git not found on PATH (skipped: %s). Install Git, or set runtime.realGit / GTHOK_REAL_GIT. Run 'gthok doctor' for details", detail)
 	}
 	return real, err
 }
 
-func invocation(c *config.Config, args []string, env map[string]string, cwd string, stdin model.StdinData) model.Invocation {
+func invocation(c *config.Config, args []string, env map[string]string, cwd string, stdin model.StdinData, resolveAliases bool) model.Invocation {
 	inv := model.Invocation{Argv: args, Env: env, Cwd: cwd, Stdin: stdin}
+	g, err := gitargs.Parse(args)
 	inv.ReadFile = func(path string) ([]byte, error) {
 		if !filepath.IsAbs(path) {
-			path = filepath.Join(cwd, path)
+			path = filepath.Join(g.Dir(cwd), path)
 		}
 		f, err := os.Open(path)
 		if err != nil {
@@ -99,17 +101,10 @@ func invocation(c *config.Config, args []string, env map[string]string, cwd stri
 		}
 		return data, nil
 	}
-	if len(c.Extensions) > 0 {
-		inv.Extensions = make(map[string]model.Effect, len(c.Extensions))
-		for _, e := range c.Extensions {
-			inv.Extensions[e.Name] = model.Effect(e.Effect)
+	if resolveAliases && err == nil && g.Command != "" && !native.IsBuiltinCommand(g.Command) {
+		if real, err := realGit(c, env); err == nil {
+			inv.Aliases = loadGitAliases(real, g, cwd, env)
 		}
-	}
-	// Declared extensions also need aliases: a same-named alias makes the
-	// target ambiguous, even behind root flags or default aliases like co.
-	if len(c.Extensions) > 0 || len(args) > 0 && !strings.HasPrefix(args[0], "-") && !native.IsBuiltinCommand(args[0]) {
-		// Failed alias loading leaves a non-built-in command explicitly unknown.
-		inv.Aliases, _ = config.LoadGhAliases(env)
 	}
 	return inv
 }
@@ -125,7 +120,7 @@ func expandedArgv(inv model.Invocation) []string {
 func hookInput(inv model.Invocation, real string, result model.Result, ctx *model.ResolvedContext, evaluation policy.Evaluation, eventID string) protocol.Input {
 	return protocol.Input{
 		SchemaVersion: model.SchemaVersion, EventID: eventID,
-		Invocation:     protocol.InvocationInfo{Via: "shim", Argv: inv.Argv, Alias: result.Source.Alias, Expanded: result.Source.Argv, Cwd: inv.Cwd, RealGh: real, IsTTY: install.IsTTY(os.Stdout), StdinTTY: install.IsTTY(os.Stdin), TokenKind: policy.TokenKind(inv.Env)},
+		Invocation:     protocol.InvocationInfo{Via: "shim", Argv: inv.Argv, Alias: result.Source.Alias, Expanded: result.Source.Argv, Cwd: inv.Cwd, RealGit: real, IsTTY: install.IsTTY(os.Stdout), StdinTTY: install.IsTTY(os.Stdin)},
 		Classification: result.Classification, Operations: result.Operations, Errors: result.Errors, Context: ctx,
 		Policy: &protocol.PolicyInfo{Mode: evaluation.Mode, Decision: evaluation.Decision, Reasons: evaluation.Reasons, Rules: evaluation.Rules},
 	}
