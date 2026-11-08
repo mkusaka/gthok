@@ -16,6 +16,7 @@ import (
 
 	"github.com/mkusaka/gthok/internal/config"
 	"github.com/mkusaka/gthok/internal/delegates"
+	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/hooks"
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/logging"
@@ -274,12 +275,16 @@ func wrapper(args []string, argv0, via string) int {
 	}
 	subject := policy.Subject{Result: result, Argv: result.Source.Argv, Env: inv.Env}
 	if cfg.Runtime.ResolveAPI != "never" {
-		resolveCwd, resolveEnv := effectiveContext(inv.Argv, cwd, helperEnv)
-		resolver := &resolve.Resolver{Env: resolveEnv, Cwd: resolveCwd, RealGit: real, Timeout: cfg.Runtime.ResolveTimeout.D()}
-		local := resolver.Local()
-		resolved = &local
-		record.Diagnostics = append(record.Diagnostics, resolver.Fill(ctx, &result, nil, false)...)
-		subject.Result, subject.Context = result, resolved
+		globals, parseErr := gitargs.Parse(expandedArgv(inv))
+		if parseErr != nil {
+			record.Diagnostics = append(record.Diagnostics, parseErr.Error())
+		} else {
+			resolver := &resolve.Resolver{Env: helperEnv, Cwd: inv.Cwd, Global: globals.Tokens, RealGit: real, Timeout: cfg.Runtime.ResolveTimeout.D()}
+			local := resolver.Local()
+			resolved = &local
+			record.Diagnostics = append(record.Diagnostics, resolver.Fill(ctx, &result, nil, false)...)
+			subject.Result, subject.Context = result, resolved
+		}
 	}
 	evaluation := evaluateConfig(cfg, subject)
 	input := hookInput(inv, real, result, resolved, evaluation, eventID)

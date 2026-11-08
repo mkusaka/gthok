@@ -100,6 +100,7 @@ type sandbox struct {
 }
 
 type invocationRecord struct {
+	Kind        string   `json:"kind"`
 	Argv0       string   `json:"argv0"`
 	Argv        []string `json:"argv"`
 	Env         []string `json:"env"`
@@ -232,7 +233,7 @@ func (o outcome) signaled(t *testing.T, want syscall.Signal) {
 	}
 }
 
-func (s *sandbox) records() []invocationRecord {
+func (s *sandbox) allRecords() []invocationRecord {
 	s.t.Helper()
 	data, err := os.ReadFile(s.record)
 	if errors.Is(err, os.ErrNotExist) {
@@ -255,11 +256,34 @@ func (s *sandbox) records() []invocationRecord {
 	return records
 }
 
+// Request/delegate assertions must not count the resolver's fixed local probes.
+func (s *sandbox) records() []invocationRecord {
+	s.t.Helper()
+	var records []invocationRecord
+	for _, record := range s.allRecords() {
+		if record.Kind != "resolver" {
+			records = append(records, record)
+		}
+	}
+	return records
+}
+
+func (s *sandbox) resolverRecords() []invocationRecord {
+	s.t.Helper()
+	var records []invocationRecord
+	for _, record := range s.allRecords() {
+		if record.Kind == "resolver" {
+			records = append(records, record)
+		}
+	}
+	return records
+}
+
 func (s *sandbox) onlyRecord(args []string, input []byte) invocationRecord {
 	s.t.Helper()
 	records := s.records()
 	if len(records) != 1 {
-		s.t.Fatalf("real git invocations=%d, want 1", len(records))
+		s.t.Fatalf("request/delegate executions=%d, want 1", len(records))
 	}
 	r := records[0]
 	if !reflect.DeepEqual(r.Argv, args) {
@@ -283,7 +307,7 @@ func (s *sandbox) onlyRecord(args []string, input []byte) invocationRecord {
 func (s *sandbox) absentRecord() {
 	s.t.Helper()
 	if records := s.records(); len(records) != 0 {
-		s.t.Fatalf("real git unexpectedly executed %d times", len(records))
+		s.t.Fatalf("request/delegate unexpectedly executed %d times", len(records))
 	}
 }
 

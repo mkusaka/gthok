@@ -38,7 +38,9 @@ func TestOfflineNormalizeDoesNotStartGitOrTransforms(t *testing.T) {
 	if result.SchemaVersion != 1 || result.NormalizerVersion == "" || result.Registry.Git != "v2.56.0" || len(result.Operations) != 1 {
 		t.Fatalf("result: %+v", result)
 	}
-	s.absentRecord()
+	if records := s.allRecords(); len(records) != 0 {
+		t.Fatalf("offline normalization started Git: %+v", records)
+	}
 	if err := os.Remove(local); err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +55,9 @@ func TestOfflineNormalizeDoesNotStartGitOrTransforms(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(s.root, "transform.json")); err != nil {
 		t.Fatal("explain omitted trusted transform")
 	}
-	s.absentRecord()
+	if records := s.allRecords(); len(records) != 0 {
+		t.Fatalf("--no-resolve started Git: %+v", records)
+	}
 }
 
 func TestExecDoesNotStripLeadingGit(t *testing.T) {
@@ -63,6 +67,9 @@ func TestExecDoesNotStripLeadingGit(t *testing.T) {
 	}
 	s.management(nil, "exec", "--", "git", "status").code(t, 0)
 	s.onlyRecord([]string{"git", "status"}, nil)
+	if len(s.allRecords()) != 1 {
+		t.Fatal("no-config fast path started a helper")
+	}
 }
 
 func TestEffectiveProjectPolicyAndFastPath(t *testing.T) {
@@ -121,8 +128,12 @@ func TestEffectiveProjectPolicyAndFastPath(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(s.cwd, ".gthok.yaml"), deny, 0600); err != nil {
 				t.Fatal(err)
 			}
+			beforeRecords := len(s.allRecords())
 			s.git(nil, args...).code(t, 0)
 			s.onlyRecord(args, nil)
+			if len(s.allRecords()) != beforeRecords+1 {
+				t.Fatal("no-config fast path started a helper")
+			}
 			afterLog, err := os.ReadFile(logPath)
 			if err != nil || !bytes.Equal(beforeLog, afterLog) {
 				t.Fatal("no-config fast path wrote a log")

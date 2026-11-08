@@ -13,6 +13,7 @@ import (
 
 	"github.com/mkusaka/gthok/internal/config"
 	"github.com/mkusaka/gthok/internal/delegates"
+	"github.com/mkusaka/gthok/internal/gitargs"
 	"github.com/mkusaka/gthok/internal/hooks"
 	"github.com/mkusaka/gthok/internal/install"
 	"github.com/mkusaka/gthok/internal/logging"
@@ -100,38 +101,38 @@ func managementAnalyze(args []string, resolveTargets, allowAPI, transform, offli
 		a.envChanged, a.envBy, a.envEdited = applied.envChanged(), applied.envBy, applied.envEdited
 	}
 	if resolveTargets {
-		helperEnv := env
-		if allowAPI {
-			a.real, err = realGit(c, env)
-			if err != nil {
-				a.cleanup()
-				return nil, err
-			}
-			var cleanup func()
-			helperEnv, cleanup, err = nestedEnvironment(env)
-			if err != nil {
-				a.cleanup()
-				return nil, err
-			}
-			defer cleanup()
+		a.real, err = realGit(c, env)
+		if err != nil {
+			a.cleanup()
+			return nil, err
 		}
-		resolveCwd, resolveEnv := effectiveContext(a.invocation.Argv, cwd, helperEnv)
-		r := &resolve.Resolver{Env: resolveEnv, Cwd: resolveCwd, RealGit: a.real, Timeout: c.Runtime.ResolveTimeout.D()}
-		local := r.Local()
-		a.context = &local
-		var need []string
-		seen := make(map[string]bool)
-		for _, op := range a.result.Operations {
-			for _, unresolved := range op.Unresolved {
-				if !seen[unresolved.Field] {
-					seen[unresolved.Field] = true
-					need = append(need, unresolved.Field)
+		helperEnv, cleanup, err := nestedEnvironment(env)
+		if err != nil {
+			a.cleanup()
+			return nil, err
+		}
+		defer cleanup()
+		globals, parseErr := gitargs.Parse(expandedArgv(a.invocation))
+		if parseErr != nil {
+			a.diagnostics = append(a.diagnostics, parseErr.Error())
+		} else {
+			r := &resolve.Resolver{Env: helperEnv, Cwd: a.invocation.Cwd, Global: globals.Tokens, RealGit: a.real, Timeout: c.Runtime.ResolveTimeout.D()}
+			local := r.Local()
+			a.context = &local
+			var need []string
+			seen := make(map[string]bool)
+			for _, op := range a.result.Operations {
+				for _, unresolved := range op.Unresolved {
+					if !seen[unresolved.Field] {
+						seen[unresolved.Field] = true
+						need = append(need, unresolved.Field)
+					}
 				}
 			}
+			ctx, cancel := context.WithTimeout(context.Background(), c.Runtime.ResolveTimeout.D())
+			a.diagnostics = r.Fill(ctx, &a.result, need, allowAPI)
+			cancel()
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), c.Runtime.ResolveTimeout.D())
-		a.diagnostics = r.Fill(ctx, &a.result, need, allowAPI)
-		cancel()
 	}
 	a.evaluation = evaluateConfig(c, a.subject(""))
 	return a, nil

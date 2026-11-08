@@ -23,6 +23,7 @@ import (
 )
 
 type record struct {
+	Kind         string                 `json:"kind"`
 	Argv0        string                 `json:"argv0"`
 	Argv         []string               `json:"argv"`
 	Env          []string               `json:"env"`
@@ -40,8 +41,13 @@ type requestFile struct {
 }
 
 func main() {
+	if resolverQuery(os.Args[1:], os.Environ()) {
+		writeRecord(nil, "resolver")
+		// Sandboxes have no real Git metadata; never apply request behavior to probes.
+		os.Exit(128)
+	}
 	if os.Getenv("FAKEGIT_MODE") == "pty" {
-		writeRecord(terminal())
+		writeRecord(terminal(), "execution")
 		return
 	}
 	if value := os.Getenv("FAKEGIT_CATCH_TERM_EXIT"); value != "" {
@@ -78,7 +84,7 @@ func main() {
 		emit(os.Stderr, "FAKEGIT_HOOK_STDERR_B64")
 		os.Exit(integer("FAKEGIT_HOOK_EXIT"))
 	}
-	writeRecord(input)
+	writeRecord(input, "execution")
 	ready(os.Getenv("FAKEGIT_READY"))
 	if os.Getenv("FAKEGIT_OUTPUT_BEFORE_SLEEP") == "1" {
 		emit(os.Stdout, "FAKEGIT_STDOUT_B64")
@@ -99,12 +105,16 @@ func main() {
 	os.Exit(integer("FAKEGIT_EXIT"))
 }
 
-func writeRecord(input []byte) {
+func writeRecord(input []byte, kind string) {
 	cwd, err := os.Getwd()
 	must(err)
 	sum := sha256.Sum256(input)
 	if path := os.Getenv("FAKEGIT_RECORD"); path != "" {
-		body, err := json.Marshal(record{Argv0: os.Args[0], Argv: os.Args[1:], Env: os.Environ(), Cwd: cwd, StdinBase64: base64.StdEncoding.EncodeToString(input), StdinSHA256: hex.EncodeToString(sum[:]), StdinLength: len(input), PID: os.Getpid(), RequestFiles: readRequestFiles()})
+		var files map[string]requestFile
+		if kind == "execution" {
+			files = readRequestFiles()
+		}
+		body, err := json.Marshal(record{Kind: kind, Argv0: os.Args[0], Argv: os.Args[1:], Env: os.Environ(), Cwd: cwd, StdinBase64: base64.StdEncoding.EncodeToString(input), StdinSHA256: hex.EncodeToString(sum[:]), StdinLength: len(input), PID: os.Getpid(), RequestFiles: files})
 		must(err)
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		must(err)
