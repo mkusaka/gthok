@@ -66,8 +66,7 @@ type ActionEntry struct {
 	Git    []string      `json:"git"`
 }
 
-// Version describes release metadata. The current version command displays it
-// as text, not JSON; this contract is for consumers storing that metadata.
+// Version is the release metadata printed by gthok version --json.
 type Version struct {
 	Version string `json:"version"`
 	Commit  string `json:"commit,omitempty"`

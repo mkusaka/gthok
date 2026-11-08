@@ -41,6 +41,12 @@ type requestFile struct {
 }
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "--version" && os.Getenv("GTHOK_VERSION_QUERY") == "1" {
+		writeRecord(nil, "version")
+		_, err := fmt.Fprintln(os.Stdout, "git version 2.56.0")
+		must(err)
+		return
+	}
 	if resolverQuery(os.Args[1:], os.Environ()) {
 		writeRecord(nil, "resolver")
 		// Sandboxes have no real Git metadata; never apply request behavior to probes.

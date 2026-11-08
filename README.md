@@ -16,6 +16,14 @@ Install Git first. The grammar is pinned to **Git v2.56.0**, commit
 `a018953688f1b10bddf91bff8747068f5f4746a4`. Binaries support Linux and macOS,
 amd64 and arm64, without CGO. Windows is not supported.
 
+The full pipeline checks the real Git release once per invocation. With an
+unverified version, `runtime.gitCompatibility: conservative` (default) retains
+classification but reduces coverage and disables mutation-free/retry-safe
+claims. `verified-only` makes operations unknown so your unknown-operation
+policy applies; it does not block Git by itself. No-config passthrough and
+`--no-resolve` skip the probe. `gthok doctor` reports path/version/compatibility.
+See [compatibility](docs/compatibility.md) for details.
+
 ```sh
 brew install mkusaka/tap/gthok
 # Or use mise; no plugin needed:
@@ -190,17 +198,17 @@ local-only: neither diagnostic makes a remote query to learn the remote's refs.
 | `gthok config trust/untrust` | Review or revoke executable trust. |
 | `gthok shim install/uninstall [--bin-dir DIR]` | Manage only the owned PATH shim. |
 | `gthok shell-init bash/zsh/fish` | Print an interactive-shell function. |
-| `gthok doctor [--json]` | Installation/config/executable checks. |
+| `gthok doctor [--json]` | Installation/config/executable checks, including real Git path/version/compatibility. |
 | `gthok actions [glob] [--json]` | Actions, effects, example scopes and Git routes. A literal prefix also works. |
 | `gthok docs [id]`, `docs --all`, `docs search "query"` | Embedded offline Markdown and top-five JSON search. |
 | `gthok schema <name>` | Print a Draft 2020-12 schema. |
-| `gthok version` | Text release, commit, Go and platform metadata. |
+| `gthok version [--json]` | Release, commit, Go and platform metadata (text by default). |
 
 Schemas: `config`, `project`, `local`, `hook-input`, `hook-response`,
 `transform-response`, `normalize-result`, `explain`, `hooks-test`, `doctor`,
 `actions`, `docs`, `version`, `log`. The aliases `project-config` and
-`local-config` remain supported. `version` is a metadata schema; the current
-version CLI has no JSON mode. Regenerate with `go generate ./internal/schema`.
+`local-config` remain supported. `version` describes `gthok version --json`.
+Regenerate with `go generate ./internal/schema`.
 
 ## Exit codes
 

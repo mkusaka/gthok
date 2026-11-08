@@ -69,7 +69,7 @@ func managementDocsCommand(code *int, version string) *cobra.Command {
 		return managementJSON(index.Search(args[0], version, 5), nil)
 	})
 	search.Args = cobra.ExactArgs(1)
-	search.Example = "  gthok docs search \"GH_TOKEN gain\""
+	search.Example = "  gthok docs search \"force push lease\""
 	docs.AddCommand(search)
 	return docs
 }

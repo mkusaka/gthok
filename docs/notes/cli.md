@@ -8,6 +8,7 @@ not by the management command framework.
 
 Normalize emits JSON. Explain runs trusted transforms but not hooks/request;
 --no-transforms avoids transform execution. Hooks test runs transforms/hooks
-but not request/delegates. Doctor can emit JSON checks; version currently emits
-text only. See [README](../../README.md#cli-reference) for the command list and
+but not request/delegates. Doctor can emit JSON checks. Version emits text by
+default; `gthok version --json` emits release metadata matching the version schema.
+See [README](../../README.md#cli-reference) for the command list and
 [exit status](../exit-status.md) for management versus wrapper status codes.

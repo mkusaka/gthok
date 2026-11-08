@@ -107,9 +107,11 @@ Exit status and signals match the shim: content denial 77, hook/config error den
 		return managementDoctor(doctorJSON, version)
 	})
 	doctor.Flags().BoolVar(&doctorJSON, "json", false, "print diagnostic checks as JSON")
+	var versionJSON bool
 	versionCmd := managementCommand("version", "Show version, commit, Go version and platform", code, func(_ *cobra.Command, _ []string) int {
-		return managementVersion(version, commit)
+		return managementVersion(version, commit, versionJSON)
 	})
+	versionCmd.Flags().BoolVar(&versionJSON, "json", false, "print version metadata as JSON")
 
 	hookCommands := managementGroup("hooks", "List configured hooks or run them against a git command", code)
 	var listJSON bool
@@ -196,7 +198,7 @@ Configuration/analysis failures exit 1; usage errors exit 2.`
 		cmd := managementCommand(name+" [flags] -- <git args>", short, code, func(cmd *cobra.Command, args []string) int {
 			return managementInspect(cmd.Name(), args, options)
 		})
-		cmd.Long = short + ".\nLocal context is resolved by default without network access. Use --no-resolve\nto skip local resolution."
+		cmd.Long = short + ".\nLocal context is resolved by default without network access. Use --no-resolve\nto skip local resolution and Git version probing."
 		cmd.Example = "  gthok " + name + " -- push origin main --force-with-lease\n  gthok " + name + " --no-resolve -- reset --hard HEAD~1\n  gthok " + name + " -- tag -d v1\n  gthok " + name + " -- config --get remote.origin.url"
 		cmd.Args = managementInvocationArgs
 		managementResolutionFlags(cmd, &options)
@@ -347,7 +349,7 @@ Configuration/analysis failures exit 1; usage errors exit 2.`
 }
 
 func managementResolutionFlags(cmd *cobra.Command, options *managementInspectOptions) {
-	cmd.Flags().BoolVar(&options.noResolve, "no-resolve", false, "disable local target resolution")
+	cmd.Flags().BoolVar(&options.noResolve, "no-resolve", false, "disable local target resolution and Git version probing")
 	cmd.Flags().Bool("resolve", false, "deprecated: no-op; local target resolution is the default")
 	cmd.Flags().BoolVar(&options.allowAPI, "allow-api", false, "legacy flag; resolution remains local-only (incompatible with --no-resolve)")
 }
@@ -398,9 +400,12 @@ const shellInitCaveat = `# gthok: git typed in this shell runs through 'gthok ex
 # programs or agents that skip shell rc files is not covered; 'gthok shim install' is.
 `
 
-func managementVersion(version, commit string) int {
+func managementVersion(version, commit string, asJSON bool) int {
 	if version == "" {
 		version = "dev"
+	}
+	if asJSON {
+		return managementJSON(schema.Version{Version: version, Commit: commit, Go: runtime.Version(), OS: runtime.GOOS, Arch: runtime.GOARCH}, nil)
 	}
 	_, _ = fmt.Fprintf(os.Stdout, "gthok %s\n", version)
 	if commit != "" {

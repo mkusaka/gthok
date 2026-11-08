@@ -148,13 +148,14 @@ type Hook struct {
 }
 
 type Runtime struct {
-	HookConcurrency int      `yaml:"hookConcurrency" json:"hookConcurrency" doc:"Maximum hooks running at once within a parallel group; default 4."`
-	StdinMaxBytes   int64    `yaml:"stdinMaxBytes" json:"stdinMaxBytes"`   // analysis spool limit, default 8 MiB
-	StdinTimeout    Duration `yaml:"stdinTimeout" json:"stdinTimeout"`     // default 3s
-	FileMaxBytes    int64    `yaml:"fileMaxBytes" json:"fileMaxBytes"`     // --input/@file read limit, default 8 MiB
-	CaptureLimit    int64    `yaml:"captureLimit" json:"captureLimit"`     // post-hook stdout/stderr capture, default 1 MiB
-	ResolveTimeout  Duration `yaml:"resolveTimeout" json:"resolveTimeout"` // local resolver query timeout, default 2s
-	ResolveAPI      string   `yaml:"resolveAPI" json:"resolveAPI" enum:"auto,never" doc:"auto (default): resolve local Git metadata; never: disable implicit local resolution."`
+	HookConcurrency  int      `yaml:"hookConcurrency" json:"hookConcurrency" doc:"Maximum hooks running at once within a parallel group; default 4."`
+	StdinMaxBytes    int64    `yaml:"stdinMaxBytes" json:"stdinMaxBytes"`   // analysis spool limit, default 8 MiB
+	StdinTimeout     Duration `yaml:"stdinTimeout" json:"stdinTimeout"`     // default 3s
+	FileMaxBytes     int64    `yaml:"fileMaxBytes" json:"fileMaxBytes"`     // --input/@file read limit, default 8 MiB
+	CaptureLimit     int64    `yaml:"captureLimit" json:"captureLimit"`     // post-hook stdout/stderr capture, default 1 MiB
+	ResolveTimeout   Duration `yaml:"resolveTimeout" json:"resolveTimeout"` // local resolver query timeout, default 2s
+	ResolveAPI       string   `yaml:"resolveAPI" json:"resolveAPI" enum:"auto,never" doc:"auto (default): resolve local Git metadata; never: disable implicit local resolution."`
+	GitCompatibility string   `yaml:"gitCompatibility" json:"gitCompatibility" enum:"conservative,verified-only" doc:"conservative (default): retain classification with reduced safety guarantees on unverified Git; verified-only: classify operations as unknown. Neither mode blocks execution by itself."`
 	// RealGit optionally pins the real git path (otherwise discovered on PATH).
 	RealGit string `yaml:"realGit" json:"realGit,omitempty" doc:"Absolute path of the real git; discovered on PATH when empty."`
 }

@@ -196,9 +196,10 @@ func wrapper(args []string, argv0, via string) int {
 		record.Decision = "passthrough-nested"
 		return execLogged()
 	}
+	compatibility := checkGitCompatibility(cfg, real, env)
 	inv := invocation(cfg, args, env, cwd, model.StdinData{Status: model.StdinNotCaptured}, true)
 	result := normalizeInvocation(cfg, inv)
-	spoolNeeded, stdinSkipped := shouldSpool(cfg, result, env)
+	spoolNeeded, stdinSkipped := shouldSpool(cfg, compatibility.apply(result), env)
 	if spoolNeeded {
 		spool, spoolErr := process.SpoolStdin(os.Stdin, cfg.Runtime.StdinMaxBytes, cfg.Runtime.StdinTimeout.D())
 		if spool == nil {
@@ -222,7 +223,7 @@ func wrapper(args []string, argv0, via string) int {
 	defer releaseNested()
 	runner := &hooks.Runner{Hooks: cfg.Hooks, BaseDir: cfg.Dir, Concurrency: cfg.Runtime.HookConcurrency, Env: hookEnv, RealGit: real, Redact: redactor.String, Redactor: redactor, Source: via}
 	ctx, stopHelpers := watchHelpers(helperSignals, len(cfg.Hooks) > 0 || len(cfg.Transforms) > 0)
-	transformed := runTransforms(ctx, cfg, runner, inv, result, real, eventID, via, cfg.Runtime.ResolveAPI != "never")
+	transformed := runTransforms(ctx, cfg, runner, inv, result, real, eventID, via, cfg.Runtime.ResolveAPI != "never", compatibility)
 	defer transformed.cleanup()
 	if transformed.denial != nil {
 		caught := stopHelpers()
@@ -285,6 +286,8 @@ func wrapper(args []string, argv0, via string) int {
 			subject.Result, subject.Context = result, resolved
 		}
 	}
+	result = compatibility.apply(result)
+	subject.Result = result
 	evaluation := evaluateConfig(cfg, subject)
 	input := hookInput(inv, real, result, resolved, evaluation, eventID)
 	input.Invocation.Via = via
