@@ -53,7 +53,7 @@ func TestRoundTripRejectsUneditedGitSemantics(t *testing.T) {
 	before := normalize.Normalize(model.Invocation{Argv: []string{"push", "origin", "main"}})
 	for _, mutate := range []func(*model.Result){
 		func(r *model.Result) { r.Operations[0].Action = "ref.delete" },
-		func(r *model.Result) { r.Operations[0].Effect = model.EffectWrite },
+		func(r *model.Result) { r.Operations[0].Effect = model.EffectRead },
 		func(r *model.Result) { r.Operations[0].Scopes = []model.Scope{model.ScopeLocalRef} },
 		func(r *model.Result) { r.Operations[0].Capabilities = []model.Capability{model.CapabilityExternalExec} },
 		func(r *model.Result) { r.Operations[0].Target.Remote = "other" },

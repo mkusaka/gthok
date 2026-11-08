@@ -18,13 +18,13 @@ type Spec struct {
 
 var curated = func() map[string]Spec {
 	out := make(map[string]Spec)
-	for _, action := range []string{"remote.push.update", "remote.push.delete", "remote.push.mirror", "ref.branch.create", "ref.branch.delete", "ref.branch.list", "ref.update", "ref.delete", "worktree.reset.hard", "worktree.clean", "history.commit.create", "history.commit.amend", "config.set", "config.get", "status.show", "unknown"} {
+	for _, action := range []string{"remote.push.update", "remote.push.delete", "remote.push.mirror", "ref.branch.create", "ref.branch.delete", "ref.branch.list", "ref.update", "ref.delete", "worktree.reset.hard", "worktree.clean", "history.commit.create", "history.commit.amend", "config.set", "config.get", "status.show", "git.help.read", "git.version.read", "git.info.read", "unknown"} {
 		family := action
 		if i := strings.LastIndex(action, "."); i >= 0 {
 			family = action[:i]
 		}
 		effect := model.EffectWrite
-		if action == "ref.branch.list" || action == "config.get" || action == "status.show" {
+		if action == "ref.branch.list" || action == "config.get" || action == "status.show" || strings.HasPrefix(action, "git.") {
 			effect = model.EffectRead
 		}
 		if action == "unknown" {
@@ -34,6 +34,17 @@ var curated = func() map[string]Spec {
 	}
 	return out
 }()
+
+// Register adds catalogue entries. Semantics files call it from init(); a
+// duplicate action with a different identity panics at startup.
+func Register(specs ...Spec) {
+	for _, spec := range specs {
+		if old, ok := curated[spec.Action]; ok && old != spec {
+			panic("actions: conflicting registration for " + spec.Action)
+		}
+		curated[spec.Action] = spec
+	}
+}
 
 func Must(action string) Spec {
 	spec, ok := curated[action]

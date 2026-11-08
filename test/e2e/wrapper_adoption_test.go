@@ -66,7 +66,7 @@ func TestAnyConfigEnablesDefaultLogging(t *testing.T) {
 			}
 			s.git(nil, "version").code(t, 0)
 			logs := s.logs()
-			if len(logs) != 1 || logs[0].Decision != "audit" {
+			if len(logs) != 1 || logs[0].Decision != "allow" {
 				t.Fatalf("configured invocation was not logged: %+v", logs)
 			}
 		})

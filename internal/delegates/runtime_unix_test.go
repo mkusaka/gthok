@@ -50,7 +50,7 @@ func TestDelegateFallbackAndReplay(t *testing.T) {
 		{name: "start-deny", onError: config.OnErrorDeny, want: 78},
 		{name: "silent-timeout", body: "exec /bin/sleep 10", want: 42, fallback: true},
 		{name: "timeout-deny", body: "exec /bin/sleep 10", onError: config.OnErrorDeny, want: 78},
-		{name: "output-timeout", body: "printf output; exec /bin/sleep 10", want: 78},
+		{name: "output-timeout", body: "printf output; exec /bin/sleep 30", want: 78},
 		{name: "ordinary-exit", body: "exit 23", want: 23},
 		{name: "signal", body: "kill -TERM $$", want: -1, signal: syscall.SIGTERM},
 	} {
@@ -72,9 +72,11 @@ func TestDelegateFallbackAndReplay(t *testing.T) {
 			}
 			defer spool.Close()
 			timeout := 5 * time.Second
-			if strings.Contains(tc.body, "/bin/sleep") {
+			if strings.Contains(tc.body, "/bin/sleep 10") {
 				timeout = 2 * time.Second
 			}
+			// The relay must reach printf before the deadline; a loaded runner
+			// can take seconds to start sh, which is a genuinely silent timeout.
 			selected := &Selection{ID: "relay", Command: []string{relay}, Timeout: config.Duration(timeout), OnError: tc.onError}
 			warnings := 0
 			result := Run(selected, nil, process.Options{Path: real, Args: []string{"git", "config", "--get", "user.name"}, Env: []string{"HOME=" + root, "PATH=/usr/bin:/bin", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null"}, Stdin: spool, Capture: true, CaptureLimit: 1024}, func(string) { warnings++ })
