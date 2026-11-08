@@ -143,6 +143,15 @@ func TestRealGitDelegateFallbackOnce(t *testing.T) {
 		t.Fatalf("fallback output: %s", got.stdout)
 	}
 	data, err := os.ReadFile(marker)
+	version, _ := exec.Command(real, "--version").Output()
+	if !strings.HasPrefix(string(version), "git version 2.56.0") {
+		// Unverified Git versions are conservative: nothing is retrySafe, so
+		// no delegate may run (runtime.gitCompatibility).
+		if !os.IsNotExist(err) {
+			t.Fatalf("delegate ran on unverified %s: %q", version, data)
+		}
+		return
+	}
 	if err != nil || string(data) != "attempt\n" {
 		t.Fatal("delegate retried", string(data), err)
 	}

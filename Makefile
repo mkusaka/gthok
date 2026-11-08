@@ -51,4 +51,4 @@ generate-check: generate
 	git diff --exit-code
 registry:
 	@test -n "$(GIT_SRC)" || { echo "registry: set GIT_SRC to the Git v2.56.0 source tree" >&2; exit 1; }
-	go run ./internal/registry/gen -git-src "$(GIT_SRC)" -out internal/registry/data
+	go run ./internal/registry/gen -git-src "$(GIT_SRC)" -out internal/registry/data -verify

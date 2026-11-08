@@ -59,6 +59,15 @@ jobs:
           git --version
       - name: Check formatting
         run: make fmt
+      - name: Fetch pinned Git source for registry regeneration
+        # Only where the runner's git is the pinned release: -verify compares
+        # against `git <cmd> --git-completion-helper` output.
+        if: matrix.os == 'linux' && matrix.arch == 'amd64'
+        run: |
+          git version | grep -qx 'git version 2.56.0' || { echo "::notice::runner git is not 2.56.0; skipping registry check"; exit 0; }
+          git clone --quiet --depth 1 --branch v2.56.0 https://github.com/git/git.git "$RUNNER_TEMP/git-src"
+          test "$(git -C "$RUNNER_TEMP/git-src" rev-parse HEAD)" = a018953688f1b10bddf91bff8747068f5f4746a4
+          echo "GIT_SRC=$RUNNER_TEMP/git-src" >> "$GITHUB_ENV"
       - name: Check generated files
         run: make generate-check
       - name: Test
