@@ -137,3 +137,35 @@ func TestLastArgDefaultAndLowLevelCallbacks(t *testing.T) {
 		}
 	}
 }
+
+func TestExclusiveOptions(t *testing.T) {
+	for _, tt := range []struct {
+		args    []string
+		invalid bool
+	}{
+		{[]string{"cherry-pick", "--continue", "--abort"}, true},
+		{[]string{"cat-file", "-e", "-p", "HEAD"}, true},
+		{[]string{"commit", "-a", "-i"}, true},
+		{[]string{"commit", "-m", "x", "-F", "msg"}, true},
+		{[]string{"grep", "--no-index", "--cached", "x"}, true},
+		{[]string{"push", "--mirror", "--tags", "origin"}, true},
+		{[]string{"push", "--branches", "--delete", "origin", "x"}, true},
+		{[]string{"maintenance", "run", "--auto", "--schedule=daily"}, true},
+		{[]string{"am", "--continue", "--resolved"}, false}, // same CMDMODE value
+		{[]string{"cat-file", "-e", "-e", "HEAD"}, false},
+		{[]string{"commit", "-p", "--interactive"}, false}, // one member
+		{[]string{"commit", "-a", "--no-include"}, false},
+		{[]string{"merge-tree", "--quiet", "--no-messages", "a", "b"}, false},
+		{[]string{"cherry-pick", "--continue"}, false},
+	} {
+		_, err := Parse(tt.args)
+		e, ok := err.(*syntaxError)
+		if got := ok && e.reason == model.UnknownInvalidCombination; got != tt.invalid {
+			t.Errorf("%q: invalid=%v err=%v", tt.args, got, err)
+		}
+	}
+	r := Normalize(model.Invocation{Argv: []string{"rebase", "--continue", "--abort"}})
+	if len(r.Operations) != 1 || r.Operations[0].UnknownReason != model.UnknownInvalidCombination || r.Classification.Coverage == model.CoverageSemantic {
+		t.Fatalf("normalize: %+v", r)
+	}
+}

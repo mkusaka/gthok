@@ -91,7 +91,61 @@ func parseCommand(g gitargs.Global) (ParsedCommand, error) {
 	}
 	err := p.parseArgs(entry.Grammar, g.Args, len(g.Tokens)+1)
 	p.retainBundles()
+	if err == nil && !p.Help {
+		err = p.checkExclusive(entry.Grammar)
+	}
 	return p, err
+}
+
+// checkExclusive rejects option groups Git refuses together (CMDMODE and
+// die_for_incompatible_opt), along the parsed subcommand path. A member such
+// as "-u/--update" lists spellings of one choice.
+func (p ParsedCommand) checkExclusive(g registry.Grammar) error {
+	path := p.Path[1:]
+	for {
+		for _, group := range g.Exclusive {
+			var seen []string
+			for _, member := range group {
+				for _, spelling := range strings.Split(member, "/") {
+					if p.given(spelling) {
+						seen = append(seen, spelling)
+						break
+					}
+				}
+			}
+			if len(seen) > 1 {
+				return parseError(model.UnknownInvalidCombination, "options %s and %s cannot be used together", seen[0], seen[1])
+			}
+		}
+		if len(path) == 0 {
+			return nil
+		}
+		next := false
+		for _, sub := range g.Subcommands {
+			if sub.Name == path[0] {
+				g, path, next = sub.Grammar, path[1:], true
+				break
+			}
+		}
+		if !next {
+			return nil
+		}
+	}
+}
+
+// given reports whether the last occurrence of spelling ("-u", "--no-index",
+// "--task=") leaves it in effect.
+func (p ParsedCommand) given(spelling string) bool {
+	name := strings.TrimSuffix(strings.TrimLeft(spelling, "-"), "=")
+	if p.Has(name) {
+		return true
+	}
+	base, ok := strings.CutPrefix(name, "no-")
+	if !ok {
+		return false
+	}
+	o, found := p.Option(base)
+	return found && o.Negated
 }
 
 func hasFlag(flags []string, flag string) bool {

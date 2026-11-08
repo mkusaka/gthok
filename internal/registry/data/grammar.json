@@ -4447,8 +4447,7 @@
     ],
     "exclusive": [
       [
-        "--continue",
-        "--resolved",
+        "--continue/--resolved",
         "--skip",
         "--abort",
         "--quit",

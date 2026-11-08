@@ -138,7 +138,7 @@ type Operation struct {
 	Evidence   string       `json:"evidence,omitempty"`
 	Unresolved []Unresolved `json:"unresolved,omitempty"`
 	// UnknownReason is set (non-empty) iff Family == "unknown" or Effect == unknown.
-	UnknownReason UnknownReason `json:"unknownReason,omitempty" enum:"unknown-command,unknown-flag,external-command,shell-alias,alias-loop,parse-error,input-unavailable,input-too-large,malformed-request,interactive,remote-state,unverified-version" doc:"Machine-readable reason for an unknown or opaque classification."`
+	UnknownReason UnknownReason `json:"unknownReason,omitempty" enum:"unknown-command,unknown-flag,external-command,shell-alias,alias-loop,parse-error,input-unavailable,input-too-large,malformed-request,interactive,remote-state,unverified-version,invalid-option-combination" doc:"Machine-readable reason for an unknown or opaque classification."`
 	// Detail is free-form human-readable explanation.
 	Detail string `json:"detail,omitempty"`
 	// Origin ties the operation back to its source (command path).
@@ -173,19 +173,20 @@ type Text struct {
 type UnknownReason string
 
 const (
-	UnknownNone             UnknownReason = ""
-	UnknownCommand          UnknownReason = "unknown-command"    // git subcommand not in registry
-	UnknownFlag             UnknownReason = "unknown-flag"       // unrecognised option made parsing unsafe
-	UnknownExternal         UnknownReason = "external-command"   // git-<name> on PATH / arbitrary executable
-	UnknownShellAlias       UnknownReason = "shell-alias"        // alias starting with "!"
-	UnknownAliasLoop        UnknownReason = "alias-loop"         // alias expansion cycle / depth limit
-	UnknownParseError       UnknownReason = "parse-error"        // arguments could not be parsed
-	UnknownInputUnavailable UnknownReason = "input-unavailable"  // stdin / file input not read
-	UnknownInputTooLarge    UnknownReason = "input-too-large"    // spool/size limit exceeded
-	UnknownMalformed        UnknownReason = "malformed-request"  // structurally invalid but not a parse error
-	UnknownInteractive      UnknownReason = "interactive"        // effect chosen later interactively (rebase -i todo, add -p)
-	UnknownRemoteState      UnknownReason = "remote-state"       // depends on remote refs not resolved locally
-	UnknownUnverified       UnknownReason = "unverified-version" // real git differs from the pinned registry
+	UnknownNone               UnknownReason = ""
+	UnknownCommand            UnknownReason = "unknown-command"            // git subcommand not in registry
+	UnknownFlag               UnknownReason = "unknown-flag"               // unrecognised option made parsing unsafe
+	UnknownExternal           UnknownReason = "external-command"           // git-<name> on PATH / arbitrary executable
+	UnknownShellAlias         UnknownReason = "shell-alias"                // alias starting with "!"
+	UnknownAliasLoop          UnknownReason = "alias-loop"                 // alias expansion cycle / depth limit
+	UnknownParseError         UnknownReason = "parse-error"                // arguments could not be parsed
+	UnknownInputUnavailable   UnknownReason = "input-unavailable"          // stdin / file input not read
+	UnknownInputTooLarge      UnknownReason = "input-too-large"            // spool/size limit exceeded
+	UnknownMalformed          UnknownReason = "malformed-request"          // structurally invalid but not a parse error
+	UnknownInteractive        UnknownReason = "interactive"                // effect chosen later interactively (rebase -i todo, add -p)
+	UnknownRemoteState        UnknownReason = "remote-state"               // depends on remote refs not resolved locally
+	UnknownUnverified         UnknownReason = "unverified-version"         // real git differs from the pinned registry
+	UnknownInvalidCombination UnknownReason = "invalid-option-combination" // options Git rejects together
 )
 
 // FamilyUnknown is the family of operations that could not be classified.

@@ -684,7 +684,8 @@
               "malformed-request",
               "interactive",
               "remote-state",
-              "unverified-version"
+              "unverified-version",
+              "invalid-option-combination"
             ],
             "type": "string"
           },

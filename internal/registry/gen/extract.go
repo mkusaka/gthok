@@ -112,7 +112,9 @@ func parseInitializer(ts []token, file, owner string) (registry.Grammar, error) 
 	if err != nil {
 		return g, err
 	}
-	groups := map[string][]string{}
+	// Git only rejects CMDMODE options that set different values, so options
+	// sharing a defval are one member: "--continue/--resolved".
+	groups, modes := map[string][]string{}, map[string]map[string]int{}
 	for _, part := range parts {
 		if len(part) == 0 {
 			continue
@@ -179,7 +181,16 @@ func parseInitializer(ts []token, file, owner string) (registry.Grammar, error) 
 		}
 		g.Options = append(g.Options, o)
 		if slices.Contains(fs, "PARSE_OPT_CMDMODE") {
-			groups[o.Value] = append(groups[o.Value], spelling(o))
+			defval := text(values["defval"])
+			if modes[o.Value] == nil {
+				modes[o.Value] = map[string]int{}
+			}
+			if i, ok := modes[o.Value][defval]; ok {
+				groups[o.Value][i] += "/" + spelling(o)
+			} else {
+				modes[o.Value][defval] = len(groups[o.Value])
+				groups[o.Value] = append(groups[o.Value], spelling(o))
+			}
 		}
 	}
 	for _, key := range sortedKeys(groups) {

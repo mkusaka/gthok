@@ -98,7 +98,11 @@ unprovided/oversized input, future interactive choice, remote state or
 unverified Git version. `unknownReason` values are `unknown-command`,
 `unknown-flag`, `external-command`, `shell-alias`, `alias-loop`, `parse-error`,
 `input-unavailable`, `input-too-large`, `malformed-request`, `interactive`,
-`remote-state`, `unverified-version`. Unknown known syntax must not be labeled
+`remote-state`, `unverified-version`, `invalid-option-combination`. The last
+means the registry's `exclusive` groups (CMDMODE options with different values,
+`die_for_incompatible_opt`) say Git will refuse the options together; Git exits
+before acting, and gthok reports a conservative unknown operation instead of
+guessing which option wins. Unknown known syntax must not be labeled
 opaque merely because its semantic adapter is incomplete. Some adapters retain
 a known write effect with opaque input: do not ignore `unknownReason`.
 
