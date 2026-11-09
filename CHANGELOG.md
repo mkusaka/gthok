@@ -15,8 +15,6 @@ All notable changes to gthok. Add entries under **Unreleased**;
   provenance, Linux deb/rpm packages, a Homebrew formula, and a GitHub Action.
 - Installable through mise's GitHub backend: `mise use github:mkusaka/gthok`.
 
-[Unreleased]: https://github.com/mkusaka/gthok/commits/main
-
 ### Documentation and contracts
 
 - Replaced inherited documentation and examples with Git operation, matcher,
@@ -26,3 +24,5 @@ All notable changes to gthok. Add entries under **Unreleased**;
 - Added tested protected-force-push, history-audit and commit-trailer examples.
 - Recognized fetch-pack hand options, safe reflog display options and bisect
   start/terms options while preserving arbitrary bisect-run child arguments.
+
+[Unreleased]: https://github.com/mkusaka/gthok/commits/main
