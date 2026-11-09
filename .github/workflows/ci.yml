@@ -75,6 +75,12 @@ jobs:
         env:
           # Keep subprocess version probes from competing with other test packages.
           GOFLAGS: -p=1
+      - name: Differential survey against pinned Git
+        if: matrix.os == 'linux' && matrix.arch == 'amd64'
+        run: make differential
+        env:
+          GTHOK_DIFF_CASES: '300'
+          GTHOK_DIFF_SEED: '17'
       - name: Race test
         run: make race
         env:

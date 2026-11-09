@@ -41,6 +41,12 @@ fuzz:
 		echo "fuzz $${t%%:*}"; \
 		go test -run '^$$' -fuzz "^$${t%%:*}$$" -fuzztime $$time $$pkg; \
 	done
+.PHONY: differential
+GTHOK_DIFF_CASES ?= 300
+GTHOK_DIFF_SEED ?= 17
+differential:
+	GTHOK_DIFF_CASES="$(GTHOK_DIFF_CASES)" GTHOK_DIFF_SEED="$(GTHOK_DIFF_SEED)" go test -count=1 -v -timeout=50m -run '^TestDifferential$$' ./test/differential
+
 bench:
 	go test -run '^$$' -bench . -benchmem ./...
 schema:

@@ -1,0 +1,42 @@
+name: Differential survey
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: differential-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  differential:
+    name: linux/amd64
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions: {}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Verify native platform
+        run: |
+          test "$(go env GOOS)" = linux
+          test "$(go env GOARCH)" = amd64
+          git --version
+      - name: Differential survey against pinned Git
+        run: make differential
+        env:
+          GTHOK_DIFF_CASES: '3000'
+          GTHOK_DIFF_SEED: ${{ github.run_number }}
