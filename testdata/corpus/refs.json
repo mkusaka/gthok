@@ -1,5 +1,37 @@
 [
   {
+    "name": "tag-delete-no-names",
+    "argv": ["tag", "--delete"],
+    "want": {
+      "operations": [{"action": "ref.delete", "effect": "write", "coverage": "semantic", "target": {"refs": {"kind": "none", "complete": true}}}],
+      "classification": {"resolution": "complete", "mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "tag-short-delete-no-names",
+    "argv": ["tag", "-d"],
+    "want": {
+      "operations": [{"action": "ref.delete", "effect": "write", "coverage": "semantic", "target": {"refs": {"kind": "none", "complete": true}}}],
+      "classification": {"resolution": "complete", "mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "tag-verify-no-names",
+    "argv": ["tag", "--verify"],
+    "want": {
+      "operations": [{"action": "ref.tag.verify", "effect": "read", "coverage": "semantic", "target": {"refs": {"kind": "none", "complete": true}}}],
+      "classification": {"resolution": "complete", "mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
+    "name": "tag-short-verify-no-names",
+    "argv": ["tag", "-v"],
+    "want": {
+      "operations": [{"action": "ref.tag.verify", "effect": "read", "coverage": "semantic", "target": {"refs": {"kind": "none", "complete": true}}}],
+      "classification": {"resolution": "complete", "mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
     "name": "branch-delete-shares-ref-delete-action",
     "argv": ["branch", "-D", "x"],
     "want": {

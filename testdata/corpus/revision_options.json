@@ -1,5 +1,29 @@
 [
   {
+    "name": "log-glob-separate-value",
+    "argv": ["log", "--glob", "refs/heads/*"],
+    "want": {
+      "operations": [{"action": "git.log.read", "effect": "read", "coverage": "semantic"}],
+      "classification": {"resolution": "complete", "mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
+    "name": "log-exclude-separate-value",
+    "argv": ["log", "--exclude", "x", "--all"],
+    "want": {
+      "operations": [{"action": "git.log.read", "effect": "read", "coverage": "semantic"}],
+      "classification": {"resolution": "complete", "mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
+    "name": "log-exclude-hidden-separate-value",
+    "argv": ["log", "--exclude-hidden", "receive", "--all"],
+    "want": {
+      "operations": [{"action": "git.log.read", "effect": "read", "coverage": "semantic"}],
+      "classification": {"resolution": "complete", "mutationFree": true, "retrySafe": true}
+    }
+  },
+  {
     "name": "log-combined-diff-revision-not-config",
     "argv": ["log", "-1", "-c", "core.pager=cat"],
     "want": {

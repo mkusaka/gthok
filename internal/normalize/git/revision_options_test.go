@@ -66,6 +66,62 @@ func TestMergeDiffOptions(t *testing.T) {
 	}
 }
 
+func TestRevisionPseudoOptionValues(t *testing.T) {
+	for _, command := range []string{
+		"annotate", "blame", "format-patch", "format-rev", "last-modified", "log", "pickaxe",
+		"reflog", "reflog show", "rev-list", "shortlog", "show", "whatchanged",
+		"rev-parse", "stash show", "stash list",
+	} {
+		for _, tt := range []struct{ name, value string }{
+			{"glob", "refs/heads/*"}, {"exclude", "x"}, {"exclude-hidden", "receive"},
+		} {
+			prefix := strings.Fields(command)
+			for _, attached := range []bool{false, true} {
+				args := append([]string(nil), prefix...)
+				if attached {
+					args = append(args, "--"+tt.name+"="+tt.value)
+				} else {
+					args = append(args, "--"+tt.name, tt.value)
+				}
+				args = append(args, "--all", "HEAD")
+				t.Run(strings.Join(args, " "), func(t *testing.T) {
+					p, err := Parse(args)
+					o, ok := p.Option(tt.name)
+					if err != nil || len(p.Unknown) != 0 || !ok || !o.HasValue || o.Value != tt.value || !p.Has("all") || !reflect.DeepEqual(p.Values(), []string{"HEAD"}) {
+						t.Fatalf("parsed: %+v, %v", p, err)
+					}
+					r := Normalize(model.Invocation{Argv: args})
+					if len(r.Errors) != 0 {
+						t.Fatal(r)
+					}
+					for _, op := range r.Operations {
+						if op.UnknownReason != model.UnknownNone || op.Coverage != model.CoverageSemantic {
+							t.Fatal(r)
+						}
+					}
+				})
+			}
+			if p, err := Parse(append(append([]string(nil), prefix...), "--"+tt.name)); err == nil {
+				t.Errorf("accepted missing %s value for %s: %+v", tt.name, command, p)
+			}
+		}
+		for _, name := range []string{"branches", "tags", "remotes"} {
+			for _, attached := range []bool{false, true} {
+				flag := "--" + name
+				if attached {
+					flag += "=topic*"
+				}
+				args := append(strings.Fields(command), flag, "HEAD")
+				p, err := Parse(args)
+				o, ok := p.Option(name)
+				if err != nil || !ok || o.HasValue != attached || o.Definition.Arity != "optional" || !hasFlag(o.Definition.Flags, "ATTACHED_VALUE") || !reflect.DeepEqual(p.Values(), []string{"HEAD"}) {
+					t.Errorf("optional attached-only value changed for %q: %+v, %v", args, p, err)
+				}
+			}
+		}
+	}
+}
+
 func TestReflogLogOptions(t *testing.T) {
 	for _, prefix := range [][]string{{"reflog"}, {"reflog", "show"}} {
 		for _, options := range []string{
@@ -114,6 +170,19 @@ func TestRevisionOptionsRealGit(t *testing.T) {
 	run(dir, "", "add", "file")
 	run(dir, "", "commit", "-mfirst")
 	run(dir, "", "branch", "core.pager=cat")
+	for _, prefix := range [][]string{
+		{"log"}, {"rev-list"}, {"show"}, {"whatchanged", "--i-still-use-this"}, {"reflog"}, {"reflog", "show"},
+	} {
+		for _, options := range []string{"--glob refs/heads/*", "--exclude x --all", "--exclude-hidden receive --all"} {
+			separate := strings.Fields(options)
+			attached := append([]string{separate[0] + "=" + separate[1]}, separate[2:]...)
+			got := run(dir, "", append(append([]string(nil), prefix...), separate...)...)
+			want := run(dir, "", append(append([]string(nil), prefix...), attached...)...)
+			if got != want {
+				t.Fatalf("git %q %s differs from attached value: got %q, want %q", prefix, options, got, want)
+			}
+		}
+	}
 	for _, tt := range mergeDiffCases {
 		if tt.args != "log --combined-all-paths" { // Git requires -c or --cc with this flag.
 			run(dir, "", strings.Fields(tt.args)...)

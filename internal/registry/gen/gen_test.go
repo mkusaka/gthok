@@ -194,6 +194,50 @@ int handle_options(const char **argv) {
 	}
 }
 
+func TestManualLongOptOverridesAttached(t *testing.T) {
+	f, err := fixture(t, `
+int handle_revision_opt(const char **argv) {
+ if (starts_with(arg, "--glob=") || starts_with(arg, "--exclude=") ||
+     starts_with(arg, "--exclude-hidden=")) { forward(argv[0]); }
+ if (!strcmp(arg, "--branches") || starts_with(arg, "--branches=") ||
+     !strcmp(arg, "--tags") || starts_with(arg, "--tags=") ||
+     !strcmp(arg, "--remotes") || starts_with(arg, "--remotes=")) { forward(argv[0]); }
+}
+int handle_revision_pseudo_opt(const char **argv) {
+ if (parse_long_opt("glob", argv, &value)) { use(value); }
+ else if (parse_long_opt("exclude", argv, &value)) { use(value); }
+ else if (parse_long_opt("exclude-hidden", argv, &value)) { use(value); }
+ else if (skip_prefix(arg, "--branches=", &value)) { use(value); }
+ else if (skip_prefix(arg, "--tags=", &value)) { use(value); }
+ else if (skip_prefix(arg, "--remotes=", &value)) { use(value); }
+}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, names := range [][]string{
+		{"handle_revision_opt", "handle_revision_pseudo_opt"},
+		{"handle_revision_pseudo_opt", "handle_revision_opt"},
+	} {
+		options, err := manualOptions(f, names...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(options) != 6 {
+			t.Fatalf("options: %+v", options)
+		}
+		for _, o := range options {
+			optional := slices.Contains([]string{"branches", "tags", "remotes"}, o.Long)
+			arity := "required"
+			if optional {
+				arity = "optional"
+			}
+			if o.Arity != arity || slices.Contains(o.Flags, "ATTACHED_VALUE") != optional {
+				t.Errorf("%v: option %+v", names, o)
+			}
+		}
+	}
+}
+
 func TestManualMergeDiffOptions(t *testing.T) {
 	f, err := fixture(t, `
 int diff_merges_parse_opts(struct rev_info *revs, const char **argv) {

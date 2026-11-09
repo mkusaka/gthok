@@ -274,7 +274,8 @@ func refsTag(c *Context) []model.Operation {
 		return []model.Operation{op}
 	}
 	if len(args) == 0 {
-		return rrInvalid(op, "tag name required")
+		op.Target.Refs = &model.TargetSet{Kind: model.SetNone, Complete: true}
+		return []model.Operation{op}
 	}
 	if mode != "create" {
 		if len(args) == 1 {

@@ -2317,9 +2317,6 @@
         "type": "manual",
         "arity": "required",
         "negatable": false,
-        "flags": [
-          "ATTACHED_VALUE"
-        ],
         "source": {
           "file": "revision.c",
           "line": 2365,
@@ -2344,9 +2341,6 @@
         "type": "manual",
         "arity": "required",
         "negatable": false,
-        "flags": [
-          "ATTACHED_VALUE"
-        ],
         "source": {
           "file": "revision.c",
           "line": 2365,
@@ -2476,9 +2470,6 @@
         "type": "manual",
         "arity": "required",
         "negatable": false,
-        "flags": [
-          "ATTACHED_VALUE"
-        ],
         "source": {
           "file": "revision.c",
           "line": 2362,

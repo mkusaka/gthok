@@ -107,6 +107,31 @@ func TestRefsModes(t *testing.T) {
 	}
 }
 
+func TestTagNoNames(t *testing.T) {
+	for _, flag := range []string{"--delete", "-d", "--verify", "-v"} {
+		t.Run(flag, func(t *testing.T) {
+			r := Normalize(model.Invocation{Argv: []string{"tag", flag}})
+			if len(r.Errors) != 0 || len(r.Operations) != 1 || r.Classification.Resolution != model.ResolutionComplete {
+				t.Fatal(r)
+			}
+			op := r.Operations[0]
+			action, effect := "ref.delete", model.EffectWrite
+			if flag == "--verify" || flag == "-v" {
+				action, effect = "ref.tag.verify", model.EffectRead
+			}
+			if op.Action != action || op.Effect != effect || op.Coverage != model.CoverageSemantic || op.UnknownReason != model.UnknownNone || !reflect.DeepEqual(op.Target.Refs, &model.TargetSet{Kind: model.SetNone, Complete: true}) || len(op.Capabilities) != 0 || len(op.Unresolved) != 0 {
+				t.Fatal(r)
+			}
+		})
+	}
+	for _, flag := range []string{"--delete", "-d"} {
+		r := Normalize(model.Invocation{Argv: []string{"branch", flag}})
+		if r.Operations[0].UnknownReason != model.UnknownParseError || r.Operations[0].Detail != "branch name required" {
+			t.Fatal("branch must still require a name:", r)
+		}
+	}
+}
+
 func TestRefsScopesAndCapabilities(t *testing.T) {
 	for _, tt := range []struct {
 		args   []string
@@ -259,6 +284,38 @@ func rrRealGit(t *testing.T) func(string, string, ...string) string {
 			t.Fatalf("git %q: %v\n%s", args, err, out)
 		}
 		return strings.TrimSpace(string(out))
+	}
+}
+
+func TestRefsNoNamesAgainstRealGit(t *testing.T) {
+	run, dir, home := rrRealGit(t), t.TempDir(), t.TempDir()
+	run(dir, "", "init", "-q", "-b", "main")
+	run(dir, "", "commit", "-q", "--allow-empty", "-m", "initial")
+	run(dir, "", "tag", "--no-sign", "keep")
+	before := run(dir, "", "show-ref", "--tags")
+	for _, args := range [][]string{
+		{"tag", "--delete"}, {"tag", "-d"}, {"tag", "--verify"}, {"tag", "-v"},
+		{"branch", "--delete"}, {"branch", "-d"},
+	} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			cmd := exec.Command("git", args...)
+			cmd.Dir = dir
+			cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + home, "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_TERMINAL_PROMPT=0"}
+			out, err := cmd.CombinedOutput()
+			if args[0] == "tag" {
+				if err != nil || len(out) != 0 {
+					t.Fatalf("git %q: %v\n%s", args, err, out)
+				}
+			} else {
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || exit.ExitCode() != 128 || !strings.Contains(string(out), "branch name required") {
+					t.Fatalf("git %q must reject missing branch names: %v\n%s", args, err, out)
+				}
+			}
+			if after := run(dir, "", "show-ref", "--tags"); after != before {
+				t.Fatalf("no-name invocation changed tags: before %s, after %s", before, after)
+			}
+		})
 	}
 }
 

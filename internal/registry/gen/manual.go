@@ -11,8 +11,8 @@ import (
 // argument consumption, not help/completion text, for shared adapter grammars.
 func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 	type variants struct {
-		option                   registry.Option
-		bare, attached, required bool
+		option                             registry.Option
+		bare, attached, required, separate bool
 	}
 	options := map[string]variants{}
 	for _, name := range names {
@@ -87,6 +87,7 @@ func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 			v.attached = v.attached || attached
 			v.bare = v.bare || !attached
 			v.required = v.required || required
+			v.separate = v.separate || kind == "parse_long_opt"
 			options[s] = v
 		}
 	}
@@ -99,7 +100,8 @@ func manualOptions(f *sourceFile, names ...string) ([]registry.Option, error) {
 		} else if v.attached {
 			v.option.Arity = "optional"
 		}
-		if v.attached {
+		// parse_long_opt accepts a separate value even when a forwarding check only matches '='.
+		if v.attached && !v.separate {
 			v.option.Flags = []string{"ATTACHED_VALUE"}
 		}
 		if key == "--exec-path" {
