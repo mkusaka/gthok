@@ -5,6 +5,8 @@ All notable changes to gthok. Add entries under **Unreleased**;
 
 ## [Unreleased]
 
+## [v0.0.1] - 2026-11-09
+
 ### Added
 
 - Initial gthok 0.0.1: a transparent Git wrapper that normalizes Git operations
@@ -25,4 +27,5 @@ All notable changes to gthok. Add entries under **Unreleased**;
 - Recognized fetch-pack hand options, safe reflog display options and bisect
   start/terms options while preserving arbitrary bisect-run child arguments.
 
-[Unreleased]: https://github.com/mkusaka/gthok/commits/main
+[Unreleased]: https://github.com/mkusaka/gthok/compare/v0.0.1...HEAD
+[v0.0.1]: https://github.com/mkusaka/gthok/releases/tag/v0.0.1
