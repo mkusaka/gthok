@@ -1,0 +1,117 @@
+[
+  {
+    "name": "edit-ignores-dry-run",
+    "argv": ["add", "--dry-run", "--force", "-e", "v1"],
+    "want": {
+      "operations": [{
+        "family": "index.add",
+        "action": "index.add.update",
+        "effect": "write",
+        "scopes": ["index", "objects"],
+        "capabilities": ["index-refresh", "external-exec", "interactive", "editor"],
+        "coverage": "opaque",
+        "unknownReason": "interactive",
+        "parameters": {"dryRun": false, "pathspecs": ["v1"]}
+      }],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "stage-edit-ignores-dry-run",
+    "argv": ["stage", "--edit", "--renormalize", "-n"],
+    "want": {
+      "operations": [{
+        "action": "index.add.update",
+        "effect": "write",
+        "scopes": ["index", "objects"],
+        "capabilities": ["index-refresh", "external-exec", "interactive", "editor"],
+        "coverage": "opaque",
+        "unknownReason": "interactive",
+        "parameters": {"dryRun": false},
+        "origin": {"command": ["stage"]}
+      }],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "edit-precedes-refresh-and-dry-run",
+    "argv": ["add", "--refresh", "--edit", "-n", "v1"],
+    "want": {
+      "operations": [{
+        "action": "index.add.update",
+        "effect": "write",
+        "scopes": ["index", "objects"],
+        "coverage": "opaque",
+        "unknownReason": "interactive",
+        "parameters": {"dryRun": false}
+      }]
+    }
+  },
+  {
+    "name": "refresh-ignores-dry-run",
+    "argv": ["add", "--refresh", "-n", "v1"],
+    "want": {
+      "operations": [{
+        "action": "index.add.refresh",
+        "effect": "write",
+        "scopes": ["index"],
+        "capabilities": ["index-refresh"],
+        "coverage": "semantic",
+        "parameters": {"dryRun": false}
+      }],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "patch-rejects-dry-run",
+    "argv": ["add", "--patch", "--dry-run", "v1"],
+    "want": {
+      "operations": [{
+        "action": "unknown",
+        "effect": "unknown",
+        "coverage": "conservative",
+        "unknownReason": "invalid-option-combination"
+      }],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "stage-interactive-rejects-dry-run-before-edit",
+    "argv": ["stage", "--edit", "--interactive", "--dry-run"],
+    "want": {
+      "operations": [{
+        "action": "unknown",
+        "effect": "unknown",
+        "coverage": "conservative",
+        "unknownReason": "invalid-option-combination"
+      }],
+      "classification": {"mutationFree": false, "retrySafe": false}
+    }
+  },
+  {
+    "name": "negated-edit-preserves-dry-run",
+    "argv": ["add", "-e", "--no-edit", "-n", "v1"],
+    "want": {
+      "operations": [{
+        "action": "index.add.preview",
+        "effect": "read",
+        "scopes": ["index"],
+        "capabilities": ["index-refresh"],
+        "coverage": "semantic",
+        "parameters": {"dryRun": true}
+      }]
+    }
+  },
+  {
+    "name": "negated-patch-preserves-dry-run",
+    "argv": ["add", "-p", "--no-patch", "-n", "v1"],
+    "want": {
+      "operations": [{
+        "action": "index.add.preview",
+        "effect": "read",
+        "coverage": "semantic",
+        "parameters": {"dryRun": true}
+      }]
+    }
+  }
+]

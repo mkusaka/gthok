@@ -448,16 +448,26 @@ func whClean(c *Context) []model.Operation {
 
 func whAdd(c *Context) []model.Operation {
 	p := c.Parsed
-	action := "index.add.update"
-	if p.Has("refresh") {
-		action = "index.add.refresh"
+	interactive := p.Has("patch") || p.Has("interactive")
+	if interactive && p.Has("dry-run") {
+		op := whOperation(c, model.FamilyUnknown, "add")
+		op.Coverage, op.UnknownReason = model.CoverageConservative, model.UnknownInvalidCombination
+		op.Detail = "options --dry-run and --interactive/--patch cannot be used together"
+		return []model.Operation{op}
 	}
-	if p.Has("dry-run") {
+	// Git handles interactive/edit modes first; refresh also ignores dry-run.
+	edit := p.Has("edit") && !interactive
+	refresh := p.Has("refresh") && !interactive && !edit
+	dryRun := p.Has("dry-run") && !edit && !refresh
+	action := "index.add.update"
+	if refresh {
+		action = "index.add.refresh"
+	} else if dryRun {
 		action = "index.add.preview"
 	}
 	op := whOperation(c, action, "add", model.ScopeIndex)
 	op.Capabilities = []model.Capability{model.CapabilityIndexRefresh}
-	if !p.Has("refresh") && !p.Has("dry-run") {
+	if !refresh && !dryRun {
 		op.Scopes = append(op.Scopes, model.ScopeObjects)
 		whFilters(&op)
 	}
@@ -471,14 +481,14 @@ func whAdd(c *Context) []model.Operation {
 		}
 	}
 	op.Parameters["all"], op.Parameters["update"] = all, p.Has("update") || p.Has("renormalize")
-	op.Parameters["dryRun"], op.Parameters["intentToAdd"] = p.Has("dry-run"), p.Has("intent-to-add")
+	op.Parameters["dryRun"], op.Parameters["intentToAdd"] = dryRun, p.Has("intent-to-add")
 	if o, ok := p.Option("chmod"); ok && !o.Negated {
 		op.Parameters["chmod"] = o.Value
 	}
 	whPaths(c, &op, p.Values())
-	if p.Has("patch") || p.Has("interactive") || p.Has("edit") {
+	if interactive || edit {
 		whInteractive(&op)
-		if p.Has("edit") {
+		if edit {
 			op.Capabilities = append(op.Capabilities, model.CapabilityEditor)
 		}
 	}

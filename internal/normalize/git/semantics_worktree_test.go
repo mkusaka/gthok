@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mkusaka/gthok/internal/model"
 	"github.com/mkusaka/gthok/internal/normalize/actions"
@@ -176,8 +177,72 @@ func TestWorktreeCleanAndIndexModes(t *testing.T) {
 	}
 }
 
+func TestAddDryRunModes(t *testing.T) {
+	for _, tc := range []struct {
+		args   []string
+		action string
+		editor bool
+	}{
+		{[]string{"add", "--dry-run", "--force", "-e", "v1"}, "index.add.update", true},
+		{[]string{"stage", "--edit", "--renormalize", "-n"}, "index.add.update", true},
+		{[]string{"add", "-en", "v1"}, "index.add.update", true},
+		{[]string{"add", "--refresh", "--edit", "-n", "v1"}, "index.add.update", true},
+		{[]string{"add", "--refresh", "-n", "v1"}, "index.add.refresh", false},
+		{[]string{"stage", "-n", "--refresh", "v1"}, "index.add.refresh", false},
+		{[]string{"add", "-e", "--no-edit", "-n", "v1"}, "index.add.preview", false},
+		{[]string{"add", "-p", "--no-patch", "-n", "v1"}, "index.add.preview", false},
+		{[]string{"add", "-i", "--no-interactive", "-n", "v1"}, "index.add.preview", false},
+		{[]string{"add", "--refresh", "--no-refresh", "-n", "v1"}, "index.add.preview", false},
+		{[]string{"add", "--renormalize", "-n", "v1"}, "index.add.preview", false},
+	} {
+		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+			scopes := []model.Scope{model.ScopeIndex}
+			if tc.editor {
+				scopes = append(scopes, model.ScopeObjects)
+			}
+			op := whCheckCase(t, whCase{tc.args, tc.action, scopes, map[string]any{"dryRun": tc.action == "index.add.preview"}})
+			if slices.Contains(op.Capabilities, model.CapabilityEditor) != tc.editor || slices.Contains(op.Capabilities, model.CapabilityInteractive) != tc.editor {
+				t.Fatalf("editor/interactive capabilities: %+v", op)
+			}
+			if tc.editor && (op.Coverage != model.CoverageOpaque || op.UnknownReason != model.UnknownInteractive || !slices.Contains(op.Capabilities, model.CapabilityExternalExec)) {
+				t.Fatalf("edit must retain interactive and filter handling: %+v", op)
+			}
+		})
+	}
+	for _, args := range [][]string{
+		{"add", "-p", "-n", "v1"},
+		{"add", "--dry-run", "--interactive", "v1"},
+		{"add", "-nep", "v1"},
+		{"stage", "--edit", "--interactive", "--dry-run"},
+	} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			r := Normalize(model.Invocation{Argv: args})
+			if len(r.Operations) != 1 {
+				t.Fatal(r)
+			}
+			op := r.Operations[0]
+			if op.Action != model.FamilyUnknown || op.Effect != model.EffectUnknown || op.Coverage != model.CoverageConservative || op.UnknownReason != model.UnknownInvalidCombination || !strings.Contains(op.Detail, "cannot be used together") {
+				t.Fatalf("invalid option combination: %+v", op)
+			}
+			if r.Classification.MutationFree || r.Classification.RetrySafe {
+				t.Fatal("invalid combination marked safe", r)
+			}
+		})
+	}
+	for _, args := range [][]string{
+		{"add", "-n", "--no-dry-run", "-p", "v1"},
+		{"add", "--refresh", "-p", "v1"},
+		{"add", "--refresh", "-e", "-p", "v1"},
+	} {
+		op := whCheckCase(t, whCase{args, "index.add.update", []model.Scope{model.ScopeIndex, model.ScopeObjects}, map[string]any{"dryRun": false}})
+		if op.UnknownReason != model.UnknownInteractive || slices.Contains(op.Capabilities, model.CapabilityEditor) {
+			t.Fatalf("patch mode takes precedence over edit/refresh: %+v", op)
+		}
+	}
+}
+
 func TestStageMatchesAdd(t *testing.T) {
-	for _, args := range [][]string{{"file"}, {"-A"}, {"-p"}, {"-n", "file"}, {"--refresh", "file"}} {
+	for _, args := range [][]string{{"file"}, {"-A"}, {"-p"}, {"-n", "file"}, {"--refresh", "file"}, {"--edit", "--renormalize", "-n"}, {"--refresh", "-n", "file"}, {"-p", "-n"}} {
 		add := Normalize(model.Invocation{Argv: append([]string{"add"}, args...)})
 		stage := Normalize(model.Invocation{Argv: append([]string{"stage"}, args...)})
 		if !reflect.DeepEqual(stage.Classification, add.Classification) || len(stage.Operations) != len(add.Operations) {
@@ -327,6 +392,102 @@ func TestWorktreeEmptyPathspecFileCanSelectWholeTree(t *testing.T) {
 		if !slices.Contains(op.Scopes, model.ScopeLocalRef) || op.Coverage != model.CoverageOpaque {
 			t.Fatalf("unavailable pathspec input must include an empty input's effects: %+v", op)
 		}
+	}
+}
+
+func TestAddDryRunModesAgainstGit(t *testing.T) {
+	binary, err := exec.LookPath("git")
+	if err != nil {
+		t.Skip("git unavailable")
+	}
+	for _, tc := range []struct {
+		args    []string
+		write   bool
+		refresh bool
+		reject  bool
+	}{
+		{args: []string{"add", "--dry-run", "--force", "-e", "v1"}, write: true},
+		{args: []string{"stage", "--edit", "--renormalize", "-n"}, write: true},
+		{args: []string{"add", "-en", "v1"}, write: true},
+		{args: []string{"add", "--refresh", "--edit", "-n", "v1"}, write: true},
+		{args: []string{"add", "--refresh", "-n", "v1"}, write: true, refresh: true},
+		{args: []string{"stage", "-n", "--refresh", "v1"}, write: true, refresh: true},
+		{args: []string{"add", "-p", "-n", "v1"}, reject: true},
+		{args: []string{"add", "--dry-run", "--interactive", "v1"}, reject: true},
+		{args: []string{"add", "-nep", "v1"}, reject: true},
+		{args: []string{"stage", "--edit", "--interactive", "--dry-run"}, reject: true},
+		{args: []string{"add", "-e", "--no-edit", "-n", "v1"}},
+		{args: []string{"add", "-p", "--no-patch", "-n", "v1"}},
+		{args: []string{"add", "-i", "--no-interactive", "-n", "v1"}},
+		{args: []string{"add", "--refresh", "--no-refresh", "-n", "v1"}},
+		{args: []string{"add", "--renormalize", "-n", "v1"}},
+		{args: []string{"add", "-u", "-n", "v1"}},
+		{args: []string{"add", "-A", "-n", "v1"}},
+		{args: []string{"add", "--resolved", "-n", "v1"}},
+		{args: []string{"add", "--chmod=+x", "-n", "v1"}},
+		{args: []string{"add", "-N", "-n", "v1"}},
+	} {
+		t.Run(strings.Join(tc.args, " "), func(t *testing.T) {
+			dir := t.TempDir()
+			env := []string{"PATH=" + os.Getenv("PATH"), "HOME=" + t.TempDir(), "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL=/dev/null", "GIT_TERMINAL_PROMPT=0", "GIT_EDITOR=true", "LC_ALL=C"}
+			git := func(args ...string) string {
+				t.Helper()
+				cmd := exec.Command(binary, args...)
+				cmd.Dir, cmd.Env = dir, env
+				out, err := cmd.CombinedOutput()
+				if err != nil {
+					t.Fatalf("git %q: %v: %s", args, err, out)
+				}
+				return strings.TrimSpace(string(out))
+			}
+			git("init", "-q")
+			path := filepath.Join(dir, "v1")
+			if err := os.WriteFile(path, []byte("original\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			mtime := time.Unix(946684800, 0)
+			if err := os.Chtimes(path, mtime, mtime); err != nil {
+				t.Fatal(err)
+			}
+			git("add", "v1")
+			indexPath := filepath.Join(dir, ".git", "index")
+			before, err := os.ReadFile(indexPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.refresh {
+				if err := os.Chtimes(path, mtime.Add(time.Hour), mtime.Add(time.Hour)); err != nil {
+					t.Fatal(err)
+				}
+			} else if err := os.WriteFile(path, []byte("modified\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			cmd := exec.Command(binary, tc.args...)
+			cmd.Dir, cmd.Env = dir, env
+			out, err := cmd.CombinedOutput()
+			if tc.reject {
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || exit.ExitCode() != 128 || !strings.Contains(string(out), "cannot be used together") {
+					t.Fatalf("expected incompatible options: %v: %s", err, out)
+				}
+			} else if err != nil {
+				t.Fatalf("git %q: %v: %s", tc.args, err, out)
+			}
+			after, err := os.ReadFile(indexPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if changed := !reflect.DeepEqual(before, after); changed != tc.write {
+				t.Fatalf("index changed = %v; want %v", changed, tc.write)
+			}
+			want := "original"
+			if tc.write && !tc.refresh {
+				want = "modified"
+			}
+			if got := git("show", ":v1"); got != want {
+				t.Fatalf("staged content = %q; want %q", got, want)
+			}
+		})
 	}
 }
 
