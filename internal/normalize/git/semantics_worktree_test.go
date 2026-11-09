@@ -400,6 +400,10 @@ func TestAddDryRunModesAgainstGit(t *testing.T) {
 	if err != nil {
 		t.Skip("git unavailable")
 	}
+	// Cases use options of the pinned release (add --resolved is new in 2.56).
+	if out, _ := exec.Command(binary, "version").Output(); strings.TrimSpace(string(out)) != "git version 2.56.0" {
+		t.Skipf("requires git 2.56.0, got %q", out)
+	}
 	for _, tc := range []struct {
 		args    []string
 		write   bool
